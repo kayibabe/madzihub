@@ -2,7 +2,7 @@
 setlocal EnableDelayedExpansion
 title SRWB Operations Dashboard — Stopping
 
-cd /d "C:\WebApps\opsapp"
+cd /d "D:\WebApps\opsapp"
 
 :: Silent mode flag (used when called from start.bat --silent)
 set SILENT=0

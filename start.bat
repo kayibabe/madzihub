@@ -2,7 +2,7 @@
 setlocal EnableDelayedExpansion
 title SRWB Operations Dashboard — Starting
 
-cd /d "C:\WebApps\opsapp"
+cd /d "D:\WebApps\opsapp"
 
 echo.
 echo  =====================================================
@@ -98,10 +98,10 @@ if %ERRORLEVEL% NEQ 0 (
 :: ── Wait for server to be ready (up to 15 seconds) ────────────────────────
 echo         Waiting for server to be ready...
 set READY=0
-for /l %%i in (1,1,15) do (
+for /l %%i in (1,1,30) do (
     if !READY!==0 (
         timeout /t 1 /nobreak >nul
-        curl -s -o nul -w "%%{http_code}" http://localhost:8000/health 2>nul | findstr "200" >nul
+        powershell -NoProfile -Command "try { $r = Invoke-WebRequest -Uri 'http://localhost:8000/health' -UseBasicParsing -TimeoutSec 1 -ErrorAction Stop; exit 0 } catch { exit 1 }" >nul 2>&1
         if !ERRORLEVEL!==0 set READY=1
     )
 )
@@ -115,7 +115,7 @@ if !READY!==0 (
 
 :: ── Open browser ──────────────────────────────────────────────────────────
 echo  [4/4] Opening dashboard in browser...
-start "" "http://localhost:8000"
+powershell -NoProfile -Command "Start-Process 'http://localhost:8000'"
 
 :: ── Show PID and summary ──────────────────────────────────────────────────
 set /p SERVER_PID=<data\srwb.pid

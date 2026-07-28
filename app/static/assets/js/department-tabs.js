@@ -73,11 +73,35 @@
 
   function comingSoonHTML(d){
     var cards = d.modules.map(function(m){
+      var statusClass = m.status === 'dev'  ? 'dept-soon-card-status-dev'
+                      : m.status === 'q3'   ? 'dept-soon-card-status-q3'
+                      : 'dept-soon-card-status-plan';
+      var statusLabel = m.status === 'dev'  ? '● In Development'
+                      : m.status === 'q3'   ? '⏱ Q3 FY2526'
+                      : '○ Planned';
       return '<div class="dept-soon-card">'
-           + '<span class="dept-soon-card-tag">Planned</span>'
            + '<div class="dept-soon-card-ico">'+ico(m.i)+'</div>'
            + '<h4 class="dept-soon-card-title">'+m.t+'</h4>'
-           + '<p class="dept-soon-card-desc">'+m.d+'</p></div>';
+           + '<p class="dept-soon-card-desc">'+m.d+'</p>'
+           + '<span class="dept-soon-card-status '+statusClass+'">'+statusLabel+'</span>'
+           + '</div>';
+    }).join('');
+
+    var timelineItems = [
+      { dot:'done',   label:'Architecture &amp; Data Mapping', desc:'KPIs, data sources and field-level mappings confirmed across all five zones.', tag:'Done' },
+      { dot:'active', label:'Data Collection', desc:'Zone offices onboarding monthly return workflows; historical backfill in progress.', tag:'In Progress' },
+      { dot:'next',   label:'Build &amp; Internal Review', desc:'Dashboard components built, tested and signed off by each department head.', tag:'Planned' },
+      { dot:'next',   label:'Go Live', desc:'Workspace activated — filters respond to FY, zone and period just like Operations.', tag:'Upcoming' }
+    ].map(function(s,i){
+      var dotContent = s.dot==='done' ? '✓' : s.dot==='active' ? '●' : (i+1)+'';
+      var dotClass   = 'soon-tl-dot-'+s.dot;
+      var tagClass   = s.dot==='done' ? 'soon-tl-tag-done' : s.dot==='active' ? 'soon-tl-tag-active' : 'soon-tl-tag-next';
+      return '<div class="soon-tl-item">'
+           + '<div class="soon-tl-dot '+dotClass+'">'+dotContent+'</div>'
+           + '<div class="soon-tl-body">'
+           + '<div class="soon-tl-label">'+s.label+'<span class="soon-tl-tag '+tagClass+'">'+s.tag+'</span></div>'
+           + '<div class="soon-tl-desc">'+s.desc+'</div>'
+           + '</div></div>';
     }).join('');
 
     return '<div class="dept-soon-wrap">'
@@ -92,11 +116,15 @@
       + '</div>'
       + '<div class="dept-soon-section-label">Modules on the roadmap</div>'
       + '<div class="dept-soon-grid">'+cards+'</div>'
+      + '<div class="soon-timeline" style="margin:0 0 24px;padding:20px 24px;background:var(--ds-surface);border:1px solid var(--ds-border);border-radius:14px">'
+      +   '<div class="soon-timeline-title">Delivery Roadmap</div>'
+      +   timelineItems
+      + '</div>'
       + '<div class="dept-soon-foot">'
       +   '<svg viewBox="0 0 24 24" fill="none"><path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/></svg>'
-      +   '<div class="dept-soon-foot-txt"><b>This module is under active development.</b> '
+      +   '<div class="dept-soon-foot-txt"><b>This workspace is under active development.</b> '
       +     'The filters above (financial year, zone and period) are already wired in — '
-      +     'as soon as the data feeds are connected, this workspace will respond to them just like Operations does today.</div>'
+      +     'as soon as the data feeds are connected, every view here will respond to them just like Operations does today.</div>'
       +   '<button type="button" onclick="switchDepartment(\'operations\')">Back to Operations</button>'
       + '</div>'
       + '</div>';

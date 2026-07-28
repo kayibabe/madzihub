@@ -213,6 +213,16 @@ def _by_zone(rows):
         _d_comm = round(sum(r.disconnected_commercial for r in lv))
         _d_cwp  = round(sum(r.disconnected_cwp        for r in lv))
         _d_raw  = round(sum(r.total_disconnected      for r in lv))
+        _z_post_ind  = round(sum(r.active_post_individual  or 0 for r in lv))
+        _z_post_inst = round(sum(r.active_post_inst        or 0 for r in lv))
+        _z_post_com  = round(sum(r.active_post_commercial  or 0 for r in lv))
+        _z_post_cwp  = round(sum(r.active_post_cwp         or 0 for r in lv))
+        _z_prep_ind  = round(sum(r.active_prep_individual  or 0 for r in lv))
+        _z_prep_inst = round(sum(r.active_prep_inst        or 0 for r in lv))
+        _z_prep_com  = round(sum(r.active_prep_commercial  or 0 for r in lv))
+        _z_prep_cwp  = round(sum(r.active_prep_cwp         or 0 for r in lv))
+        _z_post = _z_post_ind + _z_post_inst + _z_post_com + _z_post_cwp
+        _z_pre  = _z_prep_ind + _z_prep_inst + _z_prep_com + _z_prep_cwp
         entry = {
             "zone": zone, "color": ZONE_COLORS.get(zone,"#64748b"),
             "vol_produced":      round(vol,1),
@@ -225,11 +235,11 @@ def _by_zone(rows):
             "disconnected_inst":       _d_inst,
             "disconnected_commercial": _d_comm,
             "disconnected_cwp":        _d_cwp,
-            "active_customers":  round(sum(r.active_customers  for r in lv)),
-            "active_postpaid":   round(sum(r.active_postpaid   for r in lv)),
-            "active_prepaid":    round(sum(r.active_prepaid    for r in lv)),
-            "active_post_cwp":   round(sum(r.active_post_cwp   for r in lv)),
-            "active_prep_cwp":   round(sum(r.active_prep_cwp   for r in lv)),
+            "active_customers":  _z_post + _z_pre,
+            "active_postpaid":   _z_post,
+            "active_prepaid":    _z_pre,
+            "active_post_cwp":   _z_post_cwp,
+            "active_prep_cwp":   _z_prep_cwp,
             "pop_supply_area":   round(sum(r.pop_supply_area   for r in lv)),
             "pop_supplied":      round(sum(r.pop_supplied      for r in lv)),
             "pct_pop_supplied":  round((sum(r.pop_supplied for r in lv) / sum(r.pop_supply_area for r in lv) * 100), 1) if sum(r.pop_supply_area for r in lv) else 0,
@@ -366,17 +376,31 @@ def _monthly(rows):
             "disconnected_inst":       _md_inst,
             "disconnected_commercial": _md_comm,
             "disconnected_cwp":        _md_cwp,
-            "active_customers":       round(sum(r.active_customers        for r in lv)),
-            "active_postpaid":        round(sum(r.active_postpaid         for r in lv)),
-            "active_prepaid":         round(sum(r.active_prepaid          for r in lv)),
-            "active_post_individual": round(sum(r.active_post_individual  for r in lv)),
-            "active_prep_individual": round(sum(r.active_prep_individual  for r in lv)),
-            "active_post_inst":       round(sum(r.active_post_inst        for r in lv)),
-            "active_prep_inst":       round(sum(r.active_prep_inst        for r in lv)),
-            "active_post_commercial": round(sum(r.active_post_commercial  for r in lv)),
-            "active_prep_commercial": round(sum(r.active_prep_commercial  for r in lv)),
-            "active_post_cwp":        round(sum(r.active_post_cwp         for r in lv)),
-            "active_prep_cwp":        round(sum(r.active_prep_cwp         for r in lv)),
+            "active_post_individual": round(sum(r.active_post_individual  or 0 for r in lv)),
+            "active_prep_individual": round(sum(r.active_prep_individual  or 0 for r in lv)),
+            "active_post_inst":       round(sum(r.active_post_inst        or 0 for r in lv)),
+            "active_prep_inst":       round(sum(r.active_prep_inst        or 0 for r in lv)),
+            "active_post_commercial": round(sum(r.active_post_commercial  or 0 for r in lv)),
+            "active_prep_commercial": round(sum(r.active_prep_commercial  or 0 for r in lv)),
+            "active_post_cwp":        round(sum(r.active_post_cwp         or 0 for r in lv)),
+            "active_prep_cwp":        round(sum(r.active_prep_cwp         or 0 for r in lv)),
+            # Derive totals from class breakdowns so they always reconcile
+            "active_postpaid": (round(sum(r.active_post_individual or 0 for r in lv)) +
+                                round(sum(r.active_post_inst       or 0 for r in lv)) +
+                                round(sum(r.active_post_commercial or 0 for r in lv)) +
+                                round(sum(r.active_post_cwp        or 0 for r in lv))),
+            "active_prepaid":  (round(sum(r.active_prep_individual or 0 for r in lv)) +
+                                round(sum(r.active_prep_inst       or 0 for r in lv)) +
+                                round(sum(r.active_prep_commercial or 0 for r in lv)) +
+                                round(sum(r.active_prep_cwp        or 0 for r in lv))),
+            "active_customers": (round(sum(r.active_post_individual or 0 for r in lv)) +
+                                 round(sum(r.active_post_inst       or 0 for r in lv)) +
+                                 round(sum(r.active_post_commercial or 0 for r in lv)) +
+                                 round(sum(r.active_post_cwp        or 0 for r in lv)) +
+                                 round(sum(r.active_prep_individual or 0 for r in lv)) +
+                                 round(sum(r.active_prep_inst       or 0 for r in lv)) +
+                                 round(sum(r.active_prep_commercial or 0 for r in lv)) +
+                                 round(sum(r.active_prep_cwp        or 0 for r in lv))),
             "pop_supply_area":        round(sum(r.pop_supply_area         for r in lv)),
             "perm_staff":             round(sum(r.perm_staff              for r in lv)),
             "temp_staff":             round(sum(r.temp_staff              for r in lv)),
@@ -782,11 +806,11 @@ def panel_customers(zones:Optional[str]=None,schemes:Optional[str]=None,
                "disconnected_inst":_disc_inst,
                "disconnected_commercial":_disc_comm,
                "disconnected_cwp":_disc_cwp,
-               "active_customers":round(sum(r.active_customers for r in lv)),
-               "active_postpaid":round(sum(r.active_postpaid   for r in lv)),
-               "active_prepaid":round(sum(r.active_prepaid     for r in lv)),
                "active_post_cwp":round(sum(r.active_post_cwp   for r in lv)),
                "active_prep_cwp":round(sum(r.active_prep_cwp   for r in lv)),
+               "active_postpaid":round(sum((r.active_post_individual or 0)+(r.active_post_inst or 0)+(r.active_post_commercial or 0)+(r.active_post_cwp or 0) for r in lv)),
+               "active_prepaid": round(sum((r.active_prep_individual or 0)+(r.active_prep_inst  or 0)+(r.active_prep_commercial or 0)+(r.active_prep_cwp  or 0) for r in lv)),
+               "active_customers":round(sum((r.active_post_individual or 0)+(r.active_post_inst or 0)+(r.active_post_commercial or 0)+(r.active_post_cwp or 0)+(r.active_prep_individual or 0)+(r.active_prep_inst or 0)+(r.active_prep_commercial or 0)+(r.active_prep_cwp or 0) for r in lv)),
                "pop_supply_area":round(sum(r.pop_supply_area   for r in lv)),
                "pop_supplied":round(sum(r.pop_supplied          for r in lv)),
                "pct_pop_supplied":round((sum(r.pop_supplied for r in lv) / sum(r.pop_supply_area for r in lv) * 100),1) if sum(r.pop_supply_area for r in lv) else 0,
@@ -1452,27 +1476,36 @@ def panel_metering(zones: Optional[str] = None, schemes: Optional[str] = None,
                    db: Session = Depends(get_db)):
     rows, bz, mo = _base(zones, schemes, months, year, db)
     lv = _latest(rows)
-    post = sum(r.active_postpaid for r in lv)
-    pre  = sum(r.active_prepaid  for r in lv)
-    tot  = post + pre
     metered = sum(r.total_metered for r in lv)
+    # Derive totals from sub-components so they always reconcile with the breakdown
+    post_ind  = round(sum(r.active_post_individual or 0 for r in lv))
+    post_inst = round(sum(r.active_post_inst       or 0 for r in lv))
+    post_com  = round(sum(r.active_post_commercial or 0 for r in lv))
+    post_cwp  = round(sum(r.active_post_cwp        or 0 for r in lv))
+    prep_ind  = round(sum(r.active_prep_individual or 0 for r in lv))
+    prep_inst = round(sum(r.active_prep_inst       or 0 for r in lv))
+    prep_com  = round(sum(r.active_prep_commercial or 0 for r in lv))
+    prep_cwp  = round(sum(r.active_prep_cwp        or 0 for r in lv))
+    post = post_ind + post_inst + post_com + post_cwp
+    pre  = prep_ind + prep_inst + prep_com + prep_cwp
+    tot  = post + pre
     return {
         "kpi": {
-            "active_postpaid":       round(post),
-            "active_prepaid":        round(pre),
+            "active_postpaid":       post,
+            "active_prepaid":        pre,
             "prepaid_share":         round(pre / tot * 100, 1) if tot else 0,
             "prepaid_installed":     round(_nz_sum(rows, "prepaid_meters_installed")),
             "total_metered":         round(metered),
             "metering_ratio":        min(100.0, round(metered / tot * 100, 1)) if tot else 0,
-            "active_customers":      round(tot),
-            "active_post_individual":round(sum(r.active_post_individual for r in lv)),
-            "active_post_inst":      round(sum(r.active_post_inst       for r in lv)),
-            "active_post_commercial":round(sum(r.active_post_commercial for r in lv)),
-            "active_post_cwp":       round(sum(r.active_post_cwp        for r in lv)),
-            "active_prep_individual":round(sum(r.active_prep_individual for r in lv)),
-            "active_prep_inst":      round(sum(r.active_prep_inst       for r in lv)),
-            "active_prep_commercial":round(sum(r.active_prep_commercial for r in lv)),
-            "active_prep_cwp":       round(sum(r.active_prep_cwp        for r in lv)),
+            "active_customers":      tot,
+            "active_post_individual":post_ind,
+            "active_post_inst":      post_inst,
+            "active_post_commercial":post_com,
+            "active_post_cwp":       post_cwp,
+            "active_prep_individual":prep_ind,
+            "active_prep_inst":      prep_inst,
+            "active_prep_commercial":prep_com,
+            "active_prep_cwp":       prep_cwp,
         },
         "by_zone": [{"zone": z["zone"], "color": z["color"],
                      "active_postpaid": z["active_postpaid"],
