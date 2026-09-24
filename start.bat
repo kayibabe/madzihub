@@ -112,9 +112,9 @@ if errorlevel 1 (
 echo         Waiting for the server to be ready...
 rem 127.0.0.1, not localhost: localhost tries IPv6 first, and the server only
 rem listens on IPv4, so every check would stall ~2s and time out.
-powershell -NoProfile -Command "for ($i = 0; $i -lt 30; $i++) { Start-Sleep -Seconds 1; try { Invoke-WebRequest -Uri 'http://127.0.0.1:%PORT%/health' -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop | Out-Null; exit 0 } catch {} }; exit 1" >nul 2>&1
+powershell -NoProfile -Command "$end = (Get-Date).AddSeconds(60); while ((Get-Date) -lt $end) { Start-Sleep -Seconds 1; try { Invoke-WebRequest -Uri 'http://127.0.0.1:%PORT%/health' -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop | Out-Null; exit 0 } catch {} }; exit 1" >nul 2>&1
 if errorlevel 1 (
-    echo  [WARN] The server did not respond within 30 seconds.
+    echo  [WARN] The server did not respond within 60 seconds.
     echo         Check logs\madzihub-error.log for startup errors.
     pause
     exit /b 1
