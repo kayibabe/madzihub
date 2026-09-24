@@ -77,6 +77,10 @@ python -m unittest discover -s tests -p "test_*.py"
 
 CI (`.github/workflows/ci.yml`) runs a syntax check, the tests, and the release-bundle build and validation. The bundle excludes databases, secrets, uploads and spreadsheets.
 
+## Offline installs and third-party front-end files
+
+The browser loads nothing from the internet. Chart.js, DOMPurify, SheetJS and the Inter and IBM Plex Mono fonts are vendored in `app/static/vendor`, with their licences and a `manifest.json` of SHA-256 checksums. Tests and the release-bundle validator fail if a file is missing or changed. To upgrade one, change its version in `scripts/update_vendor_assets.py`, run the script (it downloads the npm package, verifies the registry's integrity hash and rewrites the manifest), then run the tests.
+
 ## Data handling
 
 Never commit utility data. `.gitignore` blocks spreadsheets, databases and secrets, and the release bundle excludes them again. Use the demo tenant and the synthetic dataset for demos, screenshots and tests.

@@ -66,7 +66,9 @@ All development happens in this repository; `kayibabe/opsapp` is frozen. The mar
 - [ ] Risk register linked to objectives; audit findings
 
 ## Stage 3: Package and harden
-- [ ] Vendor Chart.js, DOMPurify and SheetJS (no runtime CDN; offline installs)
+- [x] Vendor Chart.js, DOMPurify, SheetJS and the Inter / IBM Plex Mono fonts (no runtime CDN; offline installs); checksum manifest enforced by tests and the release-bundle validator
+- [ ] Content-Security-Policy header (needs the remaining inline scripts in `index.html` moved to files first)
+- [ ] Decide on SheetJS beyond 0.18.5 (later versions are not on npm; current use is write-only exports)
 - [ ] Module toggles enforced in UI and API; hide pages without data
 - [ ] Setup wizard: identity → hierarchy → calendar → currency/units → mapping → targets → users
 - [ ] Docker image and compose file; `production` default in service scripts
