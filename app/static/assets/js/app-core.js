@@ -1,11 +1,11 @@
-const API='',TOKEN_KEY='srwb_token',USER_KEY='srwb_user';
+const API='',TOKEN_KEY='utility_platform_token',USER_KEY='utility_platform_user';
 function saveSession(t,u,p){const s=p?localStorage:sessionStorage;s.setItem(TOKEN_KEY,t);s.setItem(USER_KEY,JSON.stringify(u))}
 function getToken(){return localStorage.getItem(TOKEN_KEY)||sessionStorage.getItem(TOKEN_KEY)}
 function getUser(){const r=localStorage.getItem(USER_KEY)||sessionStorage.getItem(USER_KEY);try{return r?JSON.parse(r):null}catch{return null}}
 function clearSession(){[localStorage,sessionStorage].forEach(s=>{s.removeItem(TOKEN_KEY);s.removeItem(USER_KEY)})}
 function decodeJwt(t){try{return JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')))}catch{return null}}
 function isExpired(t){const p=decodeJwt(t);return!p||!p.exp||Date.now()>=p.exp*1000}
-const LAST_PAGE_KEY='srwb_last_page';
+const LAST_PAGE_KEY='utility_platform_last_page';
 const ROLE_HOME_PAGE={viewer:'board',user:'board',admin:'board'};
 (function(){const t=getToken();if(t&&!isExpired(t))showApp(getUser(),{restoreLastPage:true})})();
 (async function(){
@@ -4142,6 +4142,19 @@ function initNavGroups(){
 }
 
 async function initDashboard(opts={}){
+  try{
+    const profile = await fetchJsonSafe(`${API}/api/config/public`, {token:getToken(), fallback:null, label:'organisation profile'});
+    if(profile){
+      const title=profile.org_name||profile.short_name||'Utility Performance Hub';
+      document.title=title;
+      const brand=document.getElementById('product-org-name');if(brand)brand.textContent=title;
+      const nav=document.getElementById('nav-org-name');if(nav)nav.textContent=title;
+      const short=document.getElementById('nav-org-short-name');if(short)short.textContent=profile.short_name||'';
+      const footer=document.getElementById('footer-org-name');if(footer)footer.textContent=profile.short_name||profile.org_name||'Utility Performance Hub';
+      const attribution=document.getElementById('attribution-org-name');if(attribution)attribution.textContent=profile.org_name||profile.short_name||'Utility Performance Hub';
+      window.utilityProfile=profile;
+    }
+  }catch{}
   const user=getUser();
   if(user){
     const displayName=user.full_name||user.username;
@@ -4162,7 +4175,7 @@ async function initDashboard(opts={}){
     admShowNavLink(user.role);
     syncRoleLandingNotes();
   }
-  const now=new Date();const calYear=now.getMonth()>=3?now.getFullYear()+1:now.getFullYear();
+  const now=new Date();const calYear=now.getFullYear();
   try{
     const token=getToken();
     // Use enriched fiscal-years endpoint which includes status, has_data, has_budget
@@ -4846,6 +4859,7 @@ function admTab(tabName){
   if(tabName === 'activity')     admLoadActivity();
   if(tabName === 'profile')      admLoadProfile();
   if(tabName === 'org-profile')  admLoadOrgProfile();
+  if(tabName === 'org-profile')  admLoadImportMappings();
   if(tabName === 'system')       admLoadSystem();
   // fy-budget loaded on demand via admLoadFyBudget() called from onclick
 }
@@ -5267,7 +5281,7 @@ async function admLoadSystem(){
     try{
       const org = await fetchJsonSafe(`${API}/api/admin/org-profile`,{token,fallback:null,label:'/api/admin/org-profile'});
       if(org){
-        if(orgName)      orgName.textContent      = org.short_name || org.org_name || 'SRWB';
+        if(orgName)      orgName.textContent      = org.short_name || org.org_name || 'Not configured';
         if(orgCountry)   orgCountry.textContent   = org.country || '—';
         if(orgCurrency)  orgCurrency.textContent  = org.reporting_currency || '—';
         if(orgRegulator) orgRegulator.textContent = org.regulator || '—';
@@ -5279,6 +5293,29 @@ async function admLoadSystem(){
 // ── Organisation Profile ───────────────────────────────────────────────────
 
 let _orgProfileCache = null;
+
+async function admLoadImportMappings(){
+  const token=getToken();if(!token)return;
+  const data=await fetchJsonSafe(`${API}/api/upload/mapping`,{token,fallback:null,label:'import mappings'});
+  if(!data)return;
+  const select=document.getElementById('map-canonical-field');
+  if(select){select.innerHTML='';for(const dim of data.dimension_fields||[]){const opt=document.createElement('option');opt.value=dim.field;opt.textContent=`${dim.label} (dimension)`;select.appendChild(opt);}for(const field of data.fields||[]){const opt=document.createElement('option');opt.value=field;opt.textContent=field;select.appendChild(opt);}}
+  const list=document.getElementById('import-mappings-list');
+  if(list){list.replaceChildren();for(const item of data.mappings||[]){const row=document.createElement('div');row.style.cssText='display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--ds-border)';const label=document.createElement('span');label.textContent=`${item.source_header} → ${item.canonical_field}`;const del=document.createElement('button');del.type='button';del.className='adm-btn-secondary';del.textContent='Remove';del.onclick=()=>admDeleteImportMapping(item.source_header);row.append(label,del);list.appendChild(row);}if(!(data.mappings||[]).length)list.textContent='No custom column mappings saved.';}
+}
+
+async function admSaveImportMapping(){
+  const token=getToken(),header=document.getElementById('map-source-header')?.value.trim(),field=document.getElementById('map-canonical-field')?.value;
+  if(!token||!header||!field)return;
+  const resp=await fetch(`${API}/api/upload/mapping`,{method:'PUT',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({source_header:header,canonical_field:field})});
+  if(!resp.ok){showToast('Unable to save field mapping','error');return;}
+  document.getElementById('map-source-header').value='';await admLoadImportMappings();showToast('Field mapping saved','success');
+}
+
+async function admDeleteImportMapping(header){
+  const token=getToken();if(!token)return;
+  await fetch(`${API}/api/upload/mapping/${encodeURIComponent(header)}`,{method:'DELETE',headers:{'Authorization':'Bearer '+token}});await admLoadImportMappings();
+}
 
 async function admLoadOrgProfile(){
   const token = getToken(); if(!token) return;
@@ -5295,6 +5332,11 @@ async function admLoadOrgProfile(){
     fv('org-regulator',   d.regulator);
     fv('org-country',     d.country);
     fv('org-currency',    d.reporting_currency);
+    fv('org-fiscal-start', d.fiscal_year_start_month || 1);
+    const primary=document.getElementById('org-primary-dim');if(primary)primary.value=(d.hierarchy_labels||'Region,Service Area').split(',')[0].trim();
+    const secondary=document.getElementById('org-secondary-dim');if(secondary)secondary.value=(d.hierarchy_labels||'Region,Service Area').split(',')[1]?.trim()||'Service Area';
+    const fields = (await fetchJsonSafe(`${API}/api/upload/mapping`,{token,fallback:{fields:[]},label:'canonical fields'})).fields||[];
+    const required=document.getElementById('org-required-metric');if(required){required.replaceChildren();for(const field of fields){const opt=document.createElement('option');opt.value=field;opt.textContent=field;opt.selected=field===(d.required_import_metric||'vol_produced');required.appendChild(opt);}}
     fv('org-area',        d.service_area_km2!=null ? d.service_area_km2 : '');
     fv('org-population',  d.population_served!=null ? d.population_served : '');
     fv('org-email',       d.contact_email);
@@ -5318,6 +5360,9 @@ async function admSaveOrgProfile(){
     regulator:          gv('org-regulator')  || undefined,
     country:            gv('org-country')    || undefined,
     reporting_currency: gv('org-currency')   || undefined,
+    fiscal_year_start_month: gv('org-fiscal-start') ? parseInt(gv('org-fiscal-start'),10) : undefined,
+    hierarchy_labels: [document.getElementById('org-primary-dim')?.value,document.getElementById('org-secondary-dim')?.value].filter(Boolean).join(', '),
+    required_import_metric: document.getElementById('org-required-metric')?.value,
     service_area_km2:   gv('org-area')       ? parseFloat(gv('org-area'))      : undefined,
     population_served:  gv('org-population') ? parseInt(gv('org-population'))  : undefined,
     contact_email:      gv('org-email')      || undefined,

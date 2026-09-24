@@ -1,8 +1,8 @@
-# SRWB Operations Dashboard
+# Utility Performance Hub
 
-**Southern Region Water Board — Internal Operations & Performance Dashboard**
+**Configurable performance and reporting framework for utility organisations**
 
-A full-stack web application for monitoring and analysing monthly operational and financial KPIs across SRWB's five zones and their constituent schemes. Built on FastAPI + SQLite with a single-page HTML/JS frontend.
+A full-stack application providing configurable organisation identity, reporting calendar, hierarchy labels and spreadsheet header mappings. Built on FastAPI + SQLite with a single-page HTML/JS frontend. The current analytics catalogue and canonical record model remain water-utility-specific; mapped inputs must target supported canonical fields until the configurable metric catalogue and dashboard renderer are implemented. Do not treat the legacy dashboard/report pack as organization-neutral yet.
 
 ---
 
@@ -26,7 +26,7 @@ A full-stack web application for monitoring and analysing monthly operational an
 
 ## Overview
 
-The dashboard aggregates monthly operational data submitted from five zones — **Liwonde, Mangochi, Mulanje, Ngabu, and Zomba** — each containing multiple schemes. Data is organised by SRWB's **April–March financial year** with quarterly breakdowns.
+The dashboard stores monthly water-utility operational and financial measures by configured organisational units. Administrators can set their organisation identity, reporting currency, fiscal-year start month and hierarchy-level labels, and save spreadsheet header-to-canonical-field mappings.
 
 Key capability areas:
 
@@ -447,5 +447,4 @@ Common logic lives in `app/aggregations.py` to avoid duplication:
 
 ### Contact
 
-Internal system — Southern Region Water Board, Malawi.
-Maintainer: cmhango@gmail.com
+Installation-specific organisational identity and maintainer details are configured by the deploying organisation.

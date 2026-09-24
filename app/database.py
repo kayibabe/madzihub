@@ -411,17 +411,30 @@ class SpcLimit(Base):
     )
 
 
+class ImportMapping(Base):
+    """Saved source-header to canonical-field mappings for an installation."""
+    __tablename__ = "import_mappings"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    source_header = Column(String(200), nullable=False, unique=True, index=True)
+    canonical_field = Column(String(80), nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 # ── Organisation profile (singleton row, id always = 1) ──────
 class OrgProfile(Base):
     __tablename__ = "org_profile"
 
     id                 = Column(Integer, primary_key=True, default=1)
-    org_name           = Column(String(120),  default="Southern Region Water Board")
-    short_name         = Column(String(20),   default="SRWB")
+    org_name           = Column(String(120),  default="")
+    short_name         = Column(String(20),   default="")
     registration_no    = Column(String(60),   nullable=True)
     regulator          = Column(String(120),  nullable=True)
-    country            = Column(String(60),   default="Malawi")
-    reporting_currency = Column(String(10),   default="MWK")
+    country            = Column(String(60),   default="")
+    reporting_currency = Column(String(10),   default="")
+    fiscal_year_start_month = Column(Integer, nullable=False, default=1)
+    hierarchy_labels    = Column(String(500), nullable=False, default="Region,Service Area")
+    required_import_metric = Column(String(80), nullable=False, default="vol_produced")
     service_area_km2   = Column(Float,        nullable=True)
     population_served  = Column(Integer,      nullable=True)
     contact_email      = Column(String(120),  nullable=True)
@@ -490,6 +503,7 @@ def get_db():
 def create_tables():
     Base.metadata.create_all(bind=engine)
     _ensure_record_columns()
+    _ensure_table_columns(ImportMapping)
     _ensure_table_columns(UploadLog)
     _ensure_table_columns(ActivityLog)
     _ensure_table_columns(OrgProfile)

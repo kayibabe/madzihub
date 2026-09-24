@@ -48,7 +48,7 @@ def _load_or_generate_secret() -> str:
 
     if settings.is_production:
         raise RuntimeError(
-            "SRWB auth secret is missing. Set SRWB_SECRET_KEY or provide a secure secret file before starting production."
+            "Authentication secret is missing. Set APP_SECRET_KEY or provide a secure secret file before starting production."
         )
 
     key = secrets.token_urlsafe(48)
@@ -135,7 +135,7 @@ def ensure_default_admin(db: Session) -> None:
         print(
             "\n"
             "╔══════════════════════════════════════════════════════════╗\n"
-            "║          SRWB Dashboard — First-Run Setup                ║\n"
+            "║          Utility Platform — First-Run Setup              ║\n"
             "╠══════════════════════════════════════════════════════════╣\n"
             "║  A default admin account has been created.               ║\n"
             "║                                                          ║\n"

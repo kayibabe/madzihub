@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SRWB Corporate Performance Hub</title>
+<title>__ORGANIZATION_NAME__</title>
 <link rel="icon"       type="image/x-icon"   href="/static/favicon.ico">
 <link rel="icon"       type="image/png" sizes="32x32" href="/static/favicon-32.png">
 <link rel="icon"       type="image/png" sizes="16x16" href="/static/favicon-16.png">
@@ -38,11 +38,11 @@
   <div class="login-card">
 
     <div class="login-form-logo-wrap">
-      <img src="/static/logo.png" alt="Southern Region Water Board" class="login-form-logo">
+      <img src="/static/logo.png" alt="Organisation logo" class="login-form-logo">
     </div>
 
     <div class="login-brand" style="text-align:center;margin:.25rem 0 .9rem">
-      <div class="login-brand-name" style="font-size:1.05rem;font-weight:700;letter-spacing:-.01em;color:var(--ds-text-primary,#0f172a)">SRWB Corporate Performance Hub</div>
+      <div class="login-brand-name" id="product-org-name" style="font-size:1.05rem;font-weight:700;letter-spacing:-.01em;color:var(--ds-text-primary,#0f172a)">__ORGANIZATION_NAME__</div>
       <div class="login-brand-strap" style="font-size:.74rem;color:var(--muted,#64748b);margin-top:2px">Enterprise performance &amp; intelligence — IWA/IBNET aligned</div>
     </div>
 
@@ -141,7 +141,7 @@
 
     <!-- Footer -->
     <div class="login-footer">
-    SRWB Corporate Performance Hub v2.0<br>
+    Utility Performance Hub<br>
     Authorized personnel only<br>
     Contact Corporate Planning Division
     </div>
@@ -162,7 +162,7 @@
     <!-- Header -->
     <div class="um-hdr">
       <div class="um-hdr-logo">
-        <img src="/static/logo.png" alt="SRWB">
+        <img src="/static/logo.png" alt="Organisation logo">
       </div>
       <div class="um-hdr-text">
         <div class="um-hdr-title" id="um-title">Upload Monthly Data — RawData.xlsx</div>
@@ -458,17 +458,17 @@
 <div id="filter-overlay" onclick="closeFilter()"></div>
 
 <div id="app-view" style="display:none">
-<div id="srwb-app">
+<div id="utility-app">
 
   <!-- Sidebar nav -->
   <nav id="db-nav">
 
     <!-- Logo -->
     <div class="nav-logo" onclick="goToRoleHome()" title="Open your default home">
-      <img src="/static/logo.png" alt="SRWB">
+      <img src="/static/logo.png" alt="Organisation logo">
       <div>
-        <div class="nlt">SRWB Corporate Performance Hub</div>
-        <div class="nls">Southern Region Water Board</div>
+        <div class="nlt" id="nav-org-name">__ORGANIZATION_NAME__</div>
+        <div class="nls" id="nav-org-short-name">__ORGANIZATION_SHORT_NAME__</div>
       </div>
     </div>
 
@@ -732,10 +732,16 @@
           <div class="user-role" id="user-rl">—</div>
         </div>
       </div>
-      <button class="btn-logout" onclick="logout()">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M6 3H3a1 1 0 00-1 1v8a1 1 0 001 1h3M10 5l3 3-3 3M13 8H6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Sign out
-      </button>
+      <div class="nav-bottom-actions">
+        <button class="btn-logout" onclick="logout()">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M6 3H3a1 1 0 00-1 1v8a1 1 0 001 1h3M10 5l3 3-3 3M13 8H6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Sign out
+        </button>
+        <button class="nav-theme-btn" id="theme-toggle-btn" onclick="toggleTheme()" title="Switch to dark mode" aria-label="Switch to dark mode">
+          <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.8"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
 
     </div>
 
@@ -935,12 +941,6 @@
       <span class="tb-live-time" id="tb-live-time">—</span>
     </div>
 
-    <!-- Dark mode toggle -->
-    <button class="tb-theme-btn" id="theme-toggle-btn" onclick="toggleTheme()" title="Switch to dark mode" aria-label="Switch to dark mode">
-      <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.8"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-    </button>
-
     <!-- Upload Data (admin only — visible only on the Administration tab) -->
     <button id="tb-upload-btn" onclick="openUploadModal()" title="Upload monthly data" style="display:none">
       <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 1v9M5 4l3-3 3 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -965,7 +965,7 @@
         <div class="pg-hdr-left">
           <div class="pg-title">Strategic Plan 2023–2028 Scorecard</div>
           <div class="pg-meta" id="pg-meta-strategic">FY — · KPI tracking against approved targets</div>
-          <div class="pg-sub">Official SRWB Strategic Plan KPIs vs annual targets · live actuals are computed from captured returns; operational and gap measures flag where a data feed is still needed</div>
+          <div class="pg-sub">Configured strategic plan indicators vs annual targets · live actuals are computed from submitted returns; measures without a data feed are identified</div>
         </div>
         <div class="pg-hdr-right exp-bar">
           <button class="exp-btn exp-xl" onclick="exportExcel('strategic')" title="Export scorecard to Excel"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="1" y="2" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M5 6l2.5 4L10 6" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 2v12M1 8h14" stroke="currentColor" stroke-width="1.2" opacity=".25"/></svg>Excel</button>
@@ -1534,7 +1534,7 @@
       </div>
 
       <div class="ex-section">
-        <div class="ex-hdr"><span class="ex-dot" style="background:#D97706"></span><span class="ex-title">Volume & NRW Analysis</span><span class="ex-sub">— Monthly trend with SRWB and IWA benchmark lines</span></div>
+        <div class="ex-hdr"><span class="ex-dot" style="background:#D97706"></span><span class="ex-title">Volume & NRW Analysis</span><span class="ex-sub">— Monthly trend with configured and reference benchmarks</span></div>
         <div class="chart-row">
           <div class="chart-card chart-full"><div class="chart-title">Volume Produced (m³) &amp; NRW Rate — Monthly</div><div class="chart-subtitle">Monthly production volume and non-revenue water rate with benchmark thresholds.</div><div class="legend" id="pr-leg"></div><div class="ch-wrap" style="height:200px"><canvas id="ch-pr-main"></canvas></div></div>
         </div>
@@ -2371,7 +2371,7 @@
       <!-- §9 Source -->
       <div class="bgt-source">
         <strong style="color:var(--ds-text-primary)">Data &amp; Standards:</strong>
-        Budget — <em>SRWB Draft Revenue &amp; Capital Expenditure Budget FY2025/26</em>, MoF, 22 Feb 2025.
+        Budget — organisation budget data configured for the selected reporting period.
         Actuals — operational DB (33 schemes, April 2025 – February 2026, 11 months).
         <strong>IWA Performance Indicators (4th ed.)</strong> · <strong>IBNET</strong> · <strong>IPSAS 18</strong> · <strong>ISO 7870-2:2013</strong> · <strong>SDG 6</strong>.
         &nbsp;&nbsp;
@@ -2522,7 +2522,7 @@
         <div class="rc-card">
           <div class="rc-card-icon">🗺</div>
           <div class="rc-card-title">Strategic Plan Progress</div>
-          <div class="rc-card-desc">SRWB 2023-2028 Strategic Plan KPI tracker — actual vs target across all four focus areas with on-track / watch / behind status</div>
+          <div class="rc-card-desc">Strategic plan KPI tracker — actual vs configured target with on-track / watch / behind status</div>
           <div class="rc-tags"><span class="rc-tag">Strategy</span><span class="rc-tag">5-Year Plan</span><span class="rc-tag rc-tag-ai">✦ AI Narrative</span><span class="rc-tag">Portrait</span></div>
           <button class="rc-generate-btn" onclick="generateReport('strategic-plan')">Generate Report</button>
         </div>
@@ -2536,7 +2536,7 @@
         <div class="rc-card rc-card-ai">
           <div class="rc-card-icon">🎯</div>
           <div class="rc-card-title">AI Recommendations Brief</div>
-          <div class="rc-card-desc">Prioritised action plan with Critical, Warning and Monitoring tiers — each with specific, measurable SRWB-context recommendations and suggested interventions</div>
+          <div class="rc-card-desc">Prioritised action plan with Critical, Warning and Monitoring tiers, based on the configured utility context</div>
           <div class="rc-tags"><span class="rc-tag rc-tag-ai">✦ AI Analysis</span><span class="rc-tag">Actions</span><span class="rc-tag">Anomaly Detection</span><span class="rc-tag">Portrait</span></div>
           <button class="rc-generate-btn" onclick="generateReport('ai-recommendations')">Generate Brief</button>
         </div>
@@ -3010,11 +3010,11 @@
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
                   <div>
                     <label style="font-size:11px;font-weight:600;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em">Full Legal Name</label>
-                    <input type="text" id="org-name" class="adm-input" style="margin-top:4px;width:100%" placeholder="e.g. Southern Region Water Board">
+                    <input type="text" id="org-name" class="adm-input" style="margin-top:4px;width:100%" placeholder="Enter organisation legal name">
                   </div>
                   <div>
                     <label style="font-size:11px;font-weight:600;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em">Acronym / Short Name</label>
-                    <input type="text" id="org-short-name" class="adm-input" style="margin-top:4px;width:100%" placeholder="e.g. SRWB">
+                    <input type="text" id="org-short-name" class="adm-input" style="margin-top:4px;width:100%" placeholder="Enter acronym or short name">
                   </div>
                   <div>
                     <label style="font-size:11px;font-weight:600;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em">Registration Number</label>
@@ -3026,13 +3026,30 @@
                   </div>
                   <div>
                     <label style="font-size:11px;font-weight:600;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em">Country</label>
-                    <input type="text" id="org-country" class="adm-input" style="margin-top:4px;width:100%" placeholder="e.g. Malawi">
+                    <input type="text" id="org-country" class="adm-input" style="margin-top:4px;width:100%" placeholder="Enter country">
                   </div>
                   <div>
                     <label style="font-size:11px;font-weight:600;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em">Reporting Currency</label>
-                    <input type="text" id="org-currency" class="adm-input" style="margin-top:4px;width:100%" placeholder="e.g. MWK">
+                    <input type="text" id="org-currency" class="adm-input" style="margin-top:4px;width:100%" placeholder="Enter ISO currency code">
                   </div>
                 </div>
+                <div style="font-size:12px;font-weight:700;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em;padding-top:8px;padding-bottom:4px;border-bottom:1px solid var(--ds-border)">Reporting Configuration</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+                  <div>
+                    <label style="font-size:11px;font-weight:600;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em">Fiscal Year Start Month (1–12)</label>
+                    <input type="number" min="1" max="12" id="org-fiscal-start" class="adm-input" style="margin-top:4px;width:100%" placeholder="1">
+                  </div>
+                  <div><label style="font-size:11px;font-weight:600;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em">Primary hierarchy level label</label><input type="text" id="org-primary-dim" class="adm-input" style="margin-top:4px;width:100%" placeholder="Region"></div>
+                  <div><label style="font-size:11px;font-weight:600;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em">Secondary hierarchy level label</label><input type="text" id="org-secondary-dim" class="adm-input" style="margin-top:4px;width:100%" placeholder="Service Area"></div>
+                  <div><label style="font-size:11px;font-weight:600;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em">Required measure</label><select id="org-required-metric" class="adm-input" style="margin-top:4px;width:100%"></select></div>
+                </div>
+                <div style="font-size:12px;font-weight:700;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em;padding-top:8px;padding-bottom:4px;border-bottom:1px solid var(--ds-border)">Spreadsheet Field Mapping</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end">
+                  <div><label style="font-size:11px;font-weight:600;color:var(--ds-text-muted)">Source column heading</label><input type="text" id="map-source-header" class="adm-input" style="margin-top:4px;width:100%" placeholder="e.g. District"></div>
+                  <div><label style="font-size:11px;font-weight:600;color:var(--ds-text-muted)">Canonical field</label><select id="map-canonical-field" class="adm-input" style="margin-top:4px;width:100%"></select></div>
+                  <button class="adm-btn-primary" onclick="admSaveImportMapping()">Save Mapping</button>
+                </div>
+                <div id="import-mappings-list" style="font-size:12px;color:var(--ds-text-muted)">Loading saved mappings…</div>
                 <div style="font-size:12px;font-weight:700;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em;padding-top:8px;padding-bottom:4px;border-bottom:1px solid var(--ds-border)">Service Coverage</div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
                   <div>
@@ -3048,7 +3065,7 @@
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
                   <div>
                     <label style="font-size:11px;font-weight:600;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em">Email</label>
-                    <input type="email" id="org-email" class="adm-input" style="margin-top:4px;width:100%" placeholder="admin@srwb.mw">
+                    <input type="email" id="org-email" class="adm-input" style="margin-top:4px;width:100%" placeholder="name@example.org">
                   </div>
                   <div>
                     <label style="font-size:11px;font-weight:600;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em">Phone</label>
@@ -3192,7 +3209,7 @@
                 </select>
               </div>
               <div>
-                <label style="font-size:.8rem;color:var(--text-muted);display:block;margin-bottom:.3rem">Tariff (MWK/m³)</label>
+                <label style="font-size:.8rem;color:var(--text-muted);display:block;margin-bottom:.3rem">Tariff (configured currency per volume unit)</label>
                 <input id="adm-reg-fy-tariff" type="number" step="0.01" class="adm-input" style="width:110px" placeholder="optional">
               </div>
               <button class="adm-btn-primary" onclick="admRegisterFY()" style="align-self:flex-end">Register FY</button>
@@ -3234,9 +3251,9 @@
               </div>
               <div class="adm-sys-card">
                 <div class="adm-sys-card-title">Data Coverage</div>
-                <div class="adm-sys-row"><span class="adm-sys-key">Organisation</span><span class="adm-sys-val" id="sys-org-name">SRWB</span></div>
-                <div class="adm-sys-row"><span class="adm-sys-key">Country</span><span class="adm-sys-val" id="sys-org-country">Malawi</span></div>
-                <div class="adm-sys-row"><span class="adm-sys-key">Currency</span><span class="adm-sys-val" id="sys-org-currency">MWK</span></div>
+                <div class="adm-sys-row"><span class="adm-sys-key">Organisation</span><span class="adm-sys-val" id="sys-org-name">Not configured</span></div>
+                <div class="adm-sys-row"><span class="adm-sys-key">Country</span><span class="adm-sys-val" id="sys-org-country">Not configured</span></div>
+                <div class="adm-sys-row"><span class="adm-sys-key">Currency</span><span class="adm-sys-val" id="sys-org-currency">Not configured</span></div>
                 <div class="adm-sys-row"><span class="adm-sys-key">Regulator</span><span class="adm-sys-val" id="sys-org-regulator">—</span></div>
               </div>
             </div>
@@ -3252,11 +3269,11 @@
   <div id="db-footer">
     <div class="ft-left">
       <span class="ft-dot"></span>
-      <span class="ft-brand">SRWB</span>
+      <span class="ft-brand" id="footer-org-name">Utility Performance Hub</span>
       <span class="ft-pipe">·</span>
       <span class="ft-seg">FY&nbsp;<span class="ft-seg-val" id="ft-fy">—</span></span>
       <span class="ft-pipe">|</span>
-      <span class="ft-seg" id="ft-scope">All Zones · All Months</span>
+      <span class="ft-seg" id="ft-scope">All organisational units · All months</span>
       <span class="ft-pipe">|</span>
       <span class="ft-seg">Collection:&nbsp;<span class="ft-seg-val" id="ft-coll">—</span></span>
     </div>
@@ -3272,7 +3289,7 @@
   </div>
 
   </div><!-- /db-right-col -->
-</div><!-- /srwb-app -->
+</div><!-- /utility-app -->
 </div><!-- /app-view -->
 
 <script src="/static/assets/js/app-core.js?v=20260614-1"></script>
@@ -3280,10 +3297,7 @@
 
 <!-- ══ ATTRIBUTION FOOTER ════════════════════════════════════════════════ -->
 <div id="attr-footer">
-  <span>Southern Region Water Board</span>
-  <span style="margin:0 10px;color:var(--ds-border)">|</span>
-  <span>&copy;</span>&nbsp;<a href="mailto:cmhango@gmail.com">Cromwell Mhango</a>
-  <span>&nbsp;·&nbsp;Corporate Planning Manager</span>
+  <span id="attribution-org-name">Utility Performance Hub</span>
 </div>
 
 <script src="/static/assets/js/app-workers.js"></script>

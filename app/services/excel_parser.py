@@ -406,9 +406,6 @@ COLUMN_MAP: dict[str, str] = {
 # Columns that must be present and non-null on every row
 REQUIRED_DIMS: tuple[str, ...] = ("zone", "scheme", "month", "year")
 
-# Metric columns where a null value is a hard error (row excluded)
-REQUIRED_METRICS: tuple[str, ...] = ("vol_produced",)
-
 # Metrics used in anomaly detection.
 # CRITICAL: these must match the actual column names in the `records` DB
 # table (Record ORM in database.py), NOT the parser's internal aliases.
@@ -537,7 +534,10 @@ class ExcelParser:
     All DB access is SELECT-only.
     """
 
-    def parse(self, file_obj, db_conn: sqlite3.Connection) -> ParseResult:
+    def parse(self, file_obj, db_conn: sqlite3.Connection, column_mapping: dict[str, str] | None = None,
+              required_dimensions: tuple[str, ...] = REQUIRED_DIMS,
+              dimension_mapping: dict[str, str] | None = None,
+              required_metric: str | None = "vol_produced") -> ParseResult:
         """
         Full pipeline:
           open workbook → find sheet → read & map headers
@@ -549,7 +549,9 @@ class ExcelParser:
         """
         wb = self._open_workbook(file_obj)
         ws = self._find_data_sheet(wb)
-        col_map, unrecognised, missing_required = self._read_headers(ws)
+        combined_mapping = dict(column_mapping or {})
+        combined_mapping.update(dimension_mapping or {})
+        col_map, unrecognised, missing_required = self._read_headers(ws, combined_mapping, required_dimensions)
 
         result = ParseResult(
             unrecognised_columns=unrecognised,
@@ -560,15 +562,16 @@ class ExcelParser:
             raise ValueError(
                 f"Required columns not found in sheet: "
                 f"{', '.join(missing_required)}. "
-                f"Check the file matches the SRWB template and re-upload."
+                f"Check the configured import mapping and re-upload."
             )
 
+        data_start = getattr(self, "_data_start_row", 3)
         for row_num, raw_row in enumerate(
-            ws.iter_rows(min_row=3, values_only=True), start=3
+            ws.iter_rows(min_row=data_start, values_only=True), start=data_start
         ):
             if all(cell is None for cell in raw_row):
                 continue
-            parsed = self._parse_row(raw_row, row_num, col_map)
+            parsed = self._parse_row(raw_row, row_num, col_map, required_dimensions, required_metric)
             result.rows.append(parsed)
 
         self._infer_period(result)
@@ -632,7 +635,8 @@ class ExcelParser:
         return s.strip("_")
 
     def _read_headers(
-        self, ws
+        self, ws, column_mapping: dict[str, str] | None = None,
+        required_dimensions: tuple[str, ...] = REQUIRED_DIMS
     ) -> tuple[dict[int, str], list[str], list[str]]:
         """
         Returns:
@@ -640,11 +644,13 @@ class ExcelParser:
           unrecognised      – raw header strings not in COLUMN_MAP
           missing_required  – required DB dim columns absent from the sheet
         """
-        # DataEntry sheet has TWO header rows:
-        #   Row 1: section group labels (WATER PRODUCTION & NRW, STAFFING …)
-        #   Row 2: actual column names (Zone, Scheme, Volume Produced (m³) …)
-        # We must read row 2 for the column name map.
-        header_row = next(ws.iter_rows(min_row=2, max_row=2, values_only=True))
+        # Accept conventional one-row headers and legacy grouped two-row headers.
+        first_row = next(ws.iter_rows(min_row=1, max_row=1, values_only=True))
+        second_row = next(ws.iter_rows(min_row=2, max_row=2, values_only=True))
+        first_map, _, _ = self._map_header_row(first_row, column_mapping)
+        second_map, _, _ = self._map_header_row(second_row, column_mapping)
+        header_row = second_row if len(second_map) > len(first_map) else first_row
+        data_start = 3 if header_row is second_row else 2
 
         col_map: dict[int, str] = {}
         unrecognised: list[str] = []
@@ -653,17 +659,32 @@ class ExcelParser:
             if cell is None:
                 continue
             normalised = self._normalize_header(cell)
-            if normalised in COLUMN_MAP:
-                db_col = COLUMN_MAP[normalised]
+            configured = (column_mapping or {}).get(str(cell).strip())
+            db_col = configured or COLUMN_MAP.get(normalised)
+            if db_col:
                 # Last mapping wins if duplicate headers exist
                 col_map[idx] = db_col
             else:
                 unrecognised.append(str(cell).strip())
 
         mapped_db_cols = set(col_map.values())
-        missing_required = [d for d in REQUIRED_DIMS if d not in mapped_db_cols]
+        missing_required = [d for d in required_dimensions if d not in mapped_db_cols]
+        self._data_start_row = data_start
 
         return col_map, unrecognised, missing_required
+
+    def _map_header_row(self, header_row, column_mapping):
+        mapped = {}
+        unknown = []
+        for idx, cell in enumerate(header_row):
+            if cell is None:
+                continue
+            db_col = (column_mapping or {}).get(str(cell).strip()) or COLUMN_MAP.get(self._normalize_header(cell))
+            if db_col:
+                mapped[idx] = db_col
+            else:
+                unknown.append(str(cell).strip())
+        return mapped, unknown, None
 
     # ── Row parsing ───────────────────────────────────────────────────────
 
@@ -672,6 +693,8 @@ class ExcelParser:
         raw_row: tuple,
         row_num: int,
         col_map: dict[int, str],
+        required_dimensions: tuple[str, ...] = REQUIRED_DIMS,
+        required_metric: str | None = "vol_produced",
     ) -> ParsedRow:
         # Extract every mapped column from the raw tuple
         raw: dict[str, Any] = {
@@ -687,7 +710,7 @@ class ExcelParser:
 
         # Separate metrics from dimensions
         metrics: dict[str, Any] = {
-            k: v for k, v in raw.items() if k not in REQUIRED_DIMS
+            k: v for k, v in raw.items() if k not in required_dimensions
         }
 
         parsed = ParsedRow(
@@ -700,10 +723,10 @@ class ExcelParser:
         )
 
         # ── Validate dimensions ──────────────────────────────────────────
-        if not zone:
-            parsed.add_issue("error", "zone", "Zone is missing or blank.")
-        if not scheme:
-            parsed.add_issue("error", "scheme", "Scheme is missing or blank.")
+        if "zone" in required_dimensions and not zone:
+            parsed.add_issue("error", "zone", "Primary organisational unit is missing or blank.")
+        if "scheme" in required_dimensions and not scheme:
+            parsed.add_issue("error", "scheme", "Secondary organisational unit is missing or blank.")
         if month is None:
             parsed.add_issue(
                 "error", "month",
@@ -716,12 +739,12 @@ class ExcelParser:
             )
 
         # ── Validate required metrics ────────────────────────────────────
-        for req in REQUIRED_METRICS:
+        for req in ((required_metric,) if required_metric else ()):
             val = metrics.get(req)
             if val is None:
                 parsed.add_issue(
                     "error", req,
-                    f"'{req}' is required but missing for "
+                f"Required measure '{req}' is missing for "
                     f"{zone or '?'} / {scheme or '?'}."
                 )
 

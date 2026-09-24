@@ -18,7 +18,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import Float, Integer, Numeric
 from sqlalchemy.orm import Session
 from app.database import Record, get_db
-from app.utils import MONTHS_ORDER as FY_MONTHS, apply_fy_filter, csv_list
+from app.utils import MONTHS_ORDER as FY_MONTHS, apply_fy_filter, csv_list, get_fiscal_start_month
 
 router = APIRouter(prefix="/api/panels", tags=["Panels"])
 
@@ -37,7 +37,7 @@ def _filter(q, zones=None, schemes=None, months=None, year=None):
     if schemes: q = q.filter(Record.scheme.in_(schemes))
     if months:  q = q.filter(Record.month.in_(months))
     if year:
-        q = apply_fy_filter(q, year)
+        q = apply_fy_filter(q, year, get_fiscal_start_month())
     return q
 
 

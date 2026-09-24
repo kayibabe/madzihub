@@ -18,9 +18,10 @@ from app.auth import get_current_user
 from app.core.config import DATA_DIR, settings
 from app.core.limiter import limiter
 from app.core.logging import REQUEST_ID_CTX
-from app.database import UploadLog, engine, get_db
+from app.database import ImportMapping, OrgProfile, Record, UploadLog, engine, get_db
 from app.services.audit_log import log_event
 from app.services.excel_parser import ExcelParser
+from app.utils import fiscal_month_numbers
 from app.services.rawdata_builder import (
     BuildError,
     available_years,
@@ -122,23 +123,16 @@ def _delete_preview(token: str) -> None:
         pass
 
 
-def _derive_quarter(month_no: int) -> str:
-    if month_no in (4, 5, 6):
-        return "Q1"
-    if month_no in (7, 8, 9):
-        return "Q2"
-    if month_no in (10, 11, 12):
-        return "Q3"
-    if month_no in (1, 2, 3):
-        return "Q4"
-    raise ValueError(f"Invalid month number: {month_no}")
+def _derive_quarter(month_no: int, start_month: int = 1) -> str:
+    if month_no not in range(1, 13):
+        raise ValueError(f"Invalid month number: {month_no}")
+    return f"Q{fiscal_month_numbers(start_month).index(month_no) // 3 + 1}"
 
 
-def _derive_fiscal_year(year: int, month_no: int) -> str:
-    # SRWB fiscal year runs April → March
-    if month_no >= 4:
-        return f"FY{year}/{str(year + 1)[-2:]}"
-    return f"FY{year - 1}/{str(year)[-2:]}"
+def _derive_fiscal_year(year: int, month_no: int, start_month: int = 1) -> str:
+    end_year = year + 1 if start_month > 1 and month_no >= start_month else year
+    label = f"FY{end_year - 1}/{str(end_year)[-2:]}" if start_month > 1 else f"FY{end_year}"
+    return label
 
 
 def _month_name(month_no: int) -> str:
@@ -146,6 +140,51 @@ def _month_name(month_no: int) -> str:
         return MONTH_NAMES[month_no]
     except KeyError as exc:
         raise ValueError(f"Invalid month number: {month_no}") from exc
+
+
+class ImportMappingIn(BaseModel):
+    source_header: str = Field(min_length=1, max_length=200)
+    canonical_field: str = Field(min_length=1, max_length=80)
+
+
+@router.get("/mapping")
+def get_import_mapping(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    allowed = {column.name for column in Record.__table__.columns if column.name != "id" and column.name not in {"month", "month_no", "year", "fiscal_year", "quarter"}}
+    profile = db.query(OrgProfile).filter(OrgProfile.id == 1).first()
+    return {
+        "fields": sorted(field for field in allowed if field not in {"zone", "scheme"}),
+        "dimension_fields": [
+            {"field": "zone", "label": profile.hierarchy_labels.split(",")[0].strip() if profile else "Primary unit"},
+            {"field": "scheme", "label": profile.hierarchy_labels.split(",")[1].strip() if profile and len(profile.hierarchy_labels.split(",")) > 1 else "Secondary unit"},
+        ],
+        "mappings": [{"source_header": m.source_header, "canonical_field": m.canonical_field}
+                     for m in db.query(ImportMapping).order_by(ImportMapping.source_header).all()],
+    }
+
+
+@router.put("/mapping")
+def save_import_mapping(payload: ImportMappingIn, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    header = payload.source_header.strip()
+    target = payload.canonical_field.strip()
+    allowed = {column.name for column in Record.__table__.columns if column.name not in {"id", "zone", "scheme", "year", "month", "month_no", "fiscal_year", "quarter"}}
+    if target not in allowed:
+        raise HTTPException(status_code=422, detail="Unknown canonical field")
+    item = db.query(ImportMapping).filter(ImportMapping.source_header == header).first()
+    if item is None:
+        item = ImportMapping(source_header=header, canonical_field=target)
+        db.add(item)
+    else:
+        item.canonical_field = target
+    db.commit()
+    return {"source_header": header, "canonical_field": target}
+
+
+@router.delete("/mapping/{source_header}", status_code=204)
+def delete_import_mapping(source_header: str, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    item = db.query(ImportMapping).filter(ImportMapping.source_header == source_header).first()
+    if item:
+        db.delete(item)
+        db.commit()
 
 
 def _normalize_conflict_mode(mode: str | None) -> str:
@@ -157,6 +196,11 @@ def _row_resolution_key(row: dict[str, Any]) -> str:
     return f'{row.get("zone","")}|{row.get("scheme","")}|{row.get("year","")}|{row.get("month","")}'
 
 
+def _configured_fiscal_start(db: Session) -> int:
+    profile = db.query(OrgProfile).filter(OrgProfile.id == 1).first()
+    return profile.fiscal_year_start_month if profile else 1
+
+
 @router.post("/preview")
 @limiter.limit("20/hour")
 async def preview(request: Request, file: UploadFile = File(...), current_user=Depends(get_current_user)):
@@ -164,11 +208,20 @@ async def preview(request: Request, file: UploadFile = File(...), current_user=D
     _validate_upload(file, contents)
     file_buf = io.BytesIO(contents)
 
-    raw_conn = engine.raw_connection()
+    db = next(get_db())
     try:
-        result = ExcelParser().parse(file_buf, raw_conn)
+        mappings = {item.source_header: item.canonical_field for item in db.query(ImportMapping).all()}
+        profile = db.query(OrgProfile).filter_by(id=1).first()
+        dimensions = (
+            "zone", "scheme",
+            "month", "year",
+        )
+        labels = (profile.hierarchy_labels or "Region,Service Area").split(",") if profile else ["Region", "Service Area"]
+        dimension_mapping = {labels[0].strip(): "zone", labels[1].strip(): "scheme"} if len(labels) > 1 else {}
+        metric = profile.required_import_metric if profile else "vol_produced"
+        result = ExcelParser().parse(file_buf, db.connection().connection, mappings, dimensions, dimension_mapping, metric)
     finally:
-        raw_conn.close()
+        db.close()
 
     preview_data = result.to_dict()
     preview_data["filename"] = file.filename
@@ -456,8 +509,9 @@ def _execute_commit(conn, preview_data: dict, global_mode: str, per_row_res: dic
                 raise ValueError("Scheme is blank")
 
             month_name = _month_name(month_no)
-            fiscal_year = _derive_fiscal_year(year, month_no)
-            quarter = _derive_quarter(month_no)
+            fiscal_start = _configured_fiscal_start(db)
+            fiscal_year = _derive_fiscal_year(year, month_no, fiscal_start)
+            quarter = _derive_quarter(month_no, fiscal_start)
 
             resolution = _normalize_conflict_mode(
                 per_row_res.get(_row_resolution_key(row), global_mode)

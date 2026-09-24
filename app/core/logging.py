@@ -36,7 +36,7 @@ class RequestContextFilter(logging.Filter):
 
 
 def configure_logging() -> logging.Logger:
-    level_name = os.getenv("SRWB_LOG_LEVEL", "INFO").upper()
+    level_name = os.getenv("APP_LOG_LEVEL", "INFO").upper()
     level = getattr(logging, level_name, logging.INFO)
 
     root = logging.getLogger()

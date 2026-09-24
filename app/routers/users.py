@@ -38,12 +38,13 @@ from app.auth import (
     verify_password,
 )
 from app.core.config import settings
-from app.database import ActivityLog, OrgProfile, UploadLog, User, get_db
+from app.database import ActivityLog, ImportMapping, OrgProfile, Record, UploadLog, User, get_db
 from app.services.audit_log import log_event
 
 # ── Two separate routers so auth and admin have distinct prefixes ──
 auth_router  = APIRouter(prefix="/api/auth",  tags=["Auth"])
 admin_router = APIRouter(prefix="/api/admin", tags=["Admin"])
+config_router = APIRouter(prefix="/api/config", tags=["Configuration"])
 
 # ── Schemas ───────────────────────────────────────────────────
 class LoginIn(BaseModel):
@@ -441,6 +442,9 @@ class OrgProfileIn(BaseModel):
     regulator:          Optional[str] = None
     country:            Optional[str] = None
     reporting_currency: Optional[str] = None
+    fiscal_year_start_month: Optional[int] = None
+    hierarchy_labels: Optional[str] = None
+    required_import_metric: Optional[str] = None
     service_area_km2:   Optional[float] = None
     population_served:  Optional[int]   = None
     contact_email:      Optional[str] = None
@@ -456,6 +460,9 @@ def _org_to_dict(o: OrgProfile) -> dict:
         "regulator":          o.regulator,
         "country":            o.country,
         "reporting_currency": o.reporting_currency,
+        "fiscal_year_start_month": o.fiscal_year_start_month,
+        "hierarchy_labels": o.hierarchy_labels,
+        "required_import_metric": o.required_import_metric,
         "service_area_km2":   o.service_area_km2,
         "population_served":  o.population_served,
         "contact_email":      o.contact_email,
@@ -463,6 +470,21 @@ def _org_to_dict(o: OrgProfile) -> dict:
         "website":            o.website,
         "updated_at":         o.updated_at.isoformat() if o.updated_at else None,
     }
+
+
+@config_router.get("/public")
+def get_public_org_profile(db: Session = Depends(get_db)):
+    profile = db.query(OrgProfile).filter(OrgProfile.id == 1).first()
+    if not profile:
+        return {"org_name": "", "short_name": "", "reporting_currency": "",
+                "fiscal_year_start_month": 1, "hierarchy_labels": "Region,Service Area"}
+    return _org_to_dict(profile)
+
+
+@config_router.get("/fiscal-year")
+def get_fiscal_year_config(db: Session = Depends(get_db)):
+    profile = db.query(OrgProfile).filter(OrgProfile.id == 1).first()
+    return {"start_month": profile.fiscal_year_start_month if profile else 1}
 
 
 @admin_router.get("/org-profile")
@@ -492,7 +514,17 @@ def update_org_profile(
         profile = OrgProfile(id=1)
         db.add(profile)
 
-    for field, value in payload.model_dump(exclude_none=True).items():
+    values = payload.model_dump(exclude_none=True)
+    fiscal_start = values.get("fiscal_year_start_month")
+    if fiscal_start is not None and not 1 <= fiscal_start <= 12:
+        raise HTTPException(status_code=422, detail="Fiscal year start month must be between 1 and 12")
+    allowed_fields = {column.name for column in Record.__table__.columns if column.name not in {"id", "zone", "scheme", "year", "month", "month_no", "fiscal_year", "quarter"}}
+    if values.get("required_import_metric") and values["required_import_metric"] not in allowed_fields:
+        raise HTTPException(status_code=422, detail="Unknown required measure")
+    if values.get("required_import_metric"):
+        if values["required_import_metric"] in {"month", "month_no", "year", "zone", "scheme", "id"}:
+            raise HTTPException(status_code=422, detail="Required measure must be a data field, not a reporting dimension")
+    for field, value in values.items():
         setattr(profile, field, value)
     profile.updated_at = datetime.utcnow()
     db.commit()

@@ -17,7 +17,7 @@ import io
 from datetime import datetime
 from typing import List, Optional
 
-from app.utils import apply_fy_filter, csv_list
+from app.utils import apply_fy_filter, csv_list, get_fiscal_start_month
 
 from openpyxl import Workbook
 
@@ -44,7 +44,7 @@ def _apply_filters(q, zones, schemes, months, quarters, year):
     if quarters:
         q = q.filter(Record.quarter.in_(quarters))
     if year:
-        q = apply_fy_filter(q, year)
+        q = apply_fy_filter(q, year, get_fiscal_start_month())
     return q
 
 
@@ -54,9 +54,9 @@ def _record_to_dict(r: Record) -> dict:
 def _build_export_filename(ext: str, year: Optional[int], zones: Optional[str], schemes: Optional[str]) -> str:
     date_part = datetime.utcnow().strftime("%Y-%m-%d")
     fy_part = f"FY{year}" if year else "AllYears"
-    zone_part = "AllZones" if not zones else f"{len(zones.split(','))}Zones"
+    zone_part = "AllUnits" if not zones else f"{len(zones.split(','))}Units"
     scheme_part = "AllSchemes" if not schemes else f"{len(schemes.split(','))}Schemes"
-    return f"SRWB_Records_{fy_part}_{zone_part}_{scheme_part}_{date_part}.{ext}"
+    return f"Utility_Records_{fy_part}_{zone_part}_{scheme_part}_{date_part}.{ext}"
 
 
 def _filtered_rows(db: Session, zones, schemes, months, quarters, year):
@@ -185,7 +185,7 @@ def export_csv(
     return StreamingResponse(
         iter([buf.getvalue()]),
         media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=SRWB_Export.csv"},
+        headers={"Content-Disposition": "attachment; filename=Utility_Export.csv"},
     )
 
 
@@ -214,7 +214,7 @@ def export_xlsx(
 
     meta = wb.create_sheet("Export Summary")
     meta_rows = [
-        ["SRWB Records Export"],
+        ["Utility Records Export"],
         ["Generated", datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")],
         ["Year", year or "All"],
         ["Zones", zones or "All"],

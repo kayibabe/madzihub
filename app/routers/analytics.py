@@ -21,7 +21,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from app.database import Record, get_db
-from app.utils import MONTHS_ORDER, apply_fy_filter, csv_list
+from app.utils import MONTHS_ORDER, apply_fy_filter, csv_list, get_fiscal_start_month, fiscal_month_names
 
 router = APIRouter(prefix="/api/analytics", tags=["Analytics"])
 
@@ -42,7 +42,7 @@ def _filter(q, zones=None, schemes=None, months=None, quarters=None, year=None):
     if months:   q = q.filter(Record.month.in_(months))
     if quarters: q = q.filter(Record.quarter.in_(quarters))
     if year:
-        q = apply_fy_filter(q, year)
+        q = apply_fy_filter(q, year, get_fiscal_start_month())
     return q
 
 
