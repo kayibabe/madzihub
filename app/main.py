@@ -19,7 +19,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 import os
 import time
@@ -422,6 +422,13 @@ async def serve_dashboard(request: Request):
             "Pragma": "no-cache",
         }
     )
+
+
+# Browsers (and /docs) request /favicon.ico at the root regardless of <link> tags.
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return FileResponse(os.path.join(STATIC_DIR, "brand", "favicon.ico"),
+                        headers={"Cache-Control": "public, max-age=86400"})
 
 
 # ── Health check (public) ─────────────────────────────────────
