@@ -19,6 +19,7 @@ Any authenticated user:
   GET /api/position?org_unit=                                      every active measure, current vs target
   GET /api/position/{metric}/reconciliation?org_unit=              sources that disagree
   GET /api/position/sources/freshness                              is the data current?
+  GET /api/position/org-units                                      units for the scorecard picker
 
 Machine (push token, no user session):
   POST /api/ingest/{code}   header X-Madzi-Ingest-Token, body {"rows": [...]}
@@ -381,6 +382,15 @@ def bootstrap_legacy(db: Session = Depends(get_db), user=Depends(require_admin))
 
 
 # ── strategic position (any signed-in user) ─────────────────────────────────
+
+@position_router.get("/org-units")
+def position_org_units(db: Session = Depends(get_db)):
+    """Active units for the scorecard's unit picker (read-only, any signed-in user)."""
+    units = db.query(OrgUnit).filter(OrgUnit.is_active.is_(True)).order_by(OrgUnit.code).all()
+    by_id = {u.id: u.code for u in units}
+    return [{"code": u.code, "name": u.name, "unit_type": u.unit_type, "parent_code": by_id.get(u.parent_id)}
+            for u in units]
+
 
 @position_router.get("/sources/freshness")
 def sources_freshness(db: Session = Depends(get_db)):

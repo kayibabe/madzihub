@@ -194,7 +194,9 @@ def _trend(series: list[dict], direction: str, window: int = 3) -> dict | None:
     prior = sum(s["value"] for s in series[-2 * window:-window]) / window
     change = None if prior == 0 else (recent - prior) / abs(prior) * 100
     improving = None
-    if direction in ("higher", "lower") and recent != prior:
+    # Changes under 0.1% are noise (often float rounding), not a direction.
+    moved = abs(recent - prior) > 1e-3 * max(abs(prior), abs(recent), 1e-9)
+    if direction in ("higher", "lower") and moved:
         improving = (recent > prior) == (direction == "higher")
     return {"window": window, "recent_avg": recent, "prior_avg": prior,
             "change_pct": None if change is None else round(change, 2), "improving": improving}
