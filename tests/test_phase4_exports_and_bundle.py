@@ -21,7 +21,10 @@ class DummyDB:
 
 class TestAnalyticsKpiEmpty(unittest.TestCase):
     def test_kpi_empty_rows_safe(self):
-        result = kpi_summary(db=DummyDB())
+        result = kpi_summary(
+            zones=None, schemes=None, months=None, quarters=None, year=None,
+            db=DummyDB(),
+        )
         self.assertEqual(result, {"total_records": 0})
 
 

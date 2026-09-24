@@ -34,3 +34,11 @@ logs/
 *.pdf
 *.ffs_db
 dataupdater/FY2627/A6D65900
+# --- MadziHub: never commit utility data ---
+*.xlsx
+*.xls
+*.csv
+!tests/fixtures/**
+!tenants/*/samples/**
+dataupdater/
+tenants/*/secrets*
