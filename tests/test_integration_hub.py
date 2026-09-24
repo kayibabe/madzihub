@@ -334,6 +334,10 @@ class HubApiTests(_HubFixture):
         self.assertEqual(self.client.post("/api/integration/targets", json=[], headers=self.viewer).status_code, 403)
         self.assertEqual(self.client.get("/api/position/sources/freshness").status_code, 401)
 
+    def test_viewers_can_list_units_for_the_scorecard(self):
+        units = self.client.get("/api/position/org-units", headers=self.viewer).json()
+        self.assertEqual({u["code"]: u["parent_code"] for u in units}, {"org": None, "north": "org", "south": "org"})
+
     def test_org_unit_cycle_rejected(self):
         self.post("/api/integration/org-units", [{"code": "north.a", "name": "A", "parent_code": "north"}])
         r = self.client.post("/api/integration/org-units", headers=self.admin,
@@ -373,6 +377,13 @@ class FormulaEngineTests(unittest.TestCase):
                     "a if b else c", "a and b", "max(a, key=b)", "", "a +"):
             with self.subTest(bad=bad), self.assertRaises(self.f.FormulaError):
                 self.f.parse(bad)
+
+    def test_trend_ignores_negligible_changes(self):
+        from app.integration.position import _trend
+        flat = [{"value": 36.9}] * 3 + [{"value": 36.9 + 1e-12}] * 3
+        self.assertIsNone(_trend(flat, "lower")["improving"])
+        worse = [{"value": 30.0}] * 3 + [{"value": 33.0}] * 3
+        self.assertFalse(_trend(worse, "lower")["improving"])
 
     def test_validation_catches_unknown_and_circular_references(self):
         with self.assertRaisesRegex(self.f.FormulaError, "unknown measure"):

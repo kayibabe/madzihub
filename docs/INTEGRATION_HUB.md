@@ -152,7 +152,12 @@ Create a `file` source per report layout, then drop files in `data/dropzone/<fol
 
 ---
 
-## 5. Running it
+## 5. Screens
+
+- **Administration → Data Sources** (admins). Every source with its health (healthy, has rejects, failed, overdue, never run), last success, schedule, priority and values loaded. Actions: run now, upload a CSV/Excel report through the source's mapping, edit settings and mapping, issue a push token (shown once), disable/enable. *Runs & mappings* lists recent runs with each rejected row and its reason; **Map** on an unknown unit or measure pre-fills a key mapping. With no sources yet, one click sets everything up from the existing monthly returns.
+- **Board → Strategic Position** (all users). Pick a unit and a period (month, quarter, fiscal year). Every measure shows its current value, status against target (on track ✓, off track ✕, year-to-date, no target), gap, trend and how it was derived, with source freshness at the top. Selecting a measure shows its history and targets on one chart, the formula and inputs behind computed values, and the source of every figure.
+
+## 6. Running it
 
 ```bash
 # seed the organisation tree, core measures and a source from existing records (safe to repeat)
@@ -176,14 +181,13 @@ Pulls run outside the web server on purpose. Several web workers can never start
 
 ---
 
-## 6. Honest limits and what comes next
+## 7. Honest limits and what comes next
 
 | Limit today | Next step |
 |---|---|
 | Measures with `avg`/`last` aggregation do not roll up across units | Weighted averages (e.g. pressure weighted by connections) as formulas over sum measures |
 | Existing dashboards still read the wide `records` table | Move panels to `metric_values` one at a time, with the parity snapshots guarding each move |
 | No approval step: loaded values publish immediately | Submit → review → publish states, period locks, correction history (ROADMAP Stage 2) |
-| No admin UI for sources and mappings; API only | Sources screen: create, test, run, view rejects, edit key mappings |
 | No unit conversion registry | Units table (m³/ML, kWh/MWh) with conversion at mapping time; `scale` covers simple cases now |
 | Scheduling relies on OS cron/Task Scheduler | Acceptable for on-premises installs; revisit only for a hosted offer |
 | New tables are created by `create_all` | Adopt Alembic before the first non-additive change to these tables |

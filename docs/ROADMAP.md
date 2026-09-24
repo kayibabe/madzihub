@@ -38,7 +38,8 @@ All development happens in this repository; `kayibabe/opsapp` is frozen. The mar
 - [x] Position API: where we were / are / are going, gap to target, trend; organisation-level roll-up of additive measures
 - [x] CLI for scheduled pulls (`python -m app.integration.cli sync --due`)
 - [x] Formula measures (ratios computed from components at every level); fiscal quarter/year roll-up with year-to-date flag; plan targets seeded
-- [ ] Admin UI: sources, mappings, rejects, freshness; position/scorecard pages on `metric_values`
+- [x] Admin UI: sources, runs, rejects, key mappings, push tokens, freshness (Administration → Data Sources)
+- [x] Strategic Position page on `metric_values`: unit/period picker, status vs target, trend, lineage chart (Board → Strategic Position)
 - [ ] Validate recipes against client sandboxes: SAP OData, Maximo, billing view, historian/PI, HR export
 - [ ] Unit registry and conversion at mapping time
 - [ ] Move existing panels from `records` to `metric_values` (parity-guarded)

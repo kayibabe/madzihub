@@ -2069,7 +2069,7 @@ const SIDEBAR_SECTIONS=[
 
 /* page → sec element ID — drives auto-expand when navigate() hits the else branch */
 const SIDEBAR_SECTION_MAP={
-  board:'brdsec-main', overview:'brdsec-main', strategic:'brdsec-main',
+  board:'brdsec-main', overview:'brdsec-main', strategic:'brdsec-main', position:'brdsec-main',
   benchmarking:'brdsec-insight', 'report-centre':'brdsec-insight',
   compliance:'brdsec-governance',
   finance:'finsec-finance', profitability:'finsec-finance',
@@ -2306,7 +2306,7 @@ async function loadPage(page){
   try{
     await ensureGovernanceBundle();
     await ensureExportGovernanceBundle();
-const map={strategic:loadStrategicScorecard,board:loadBoard,finance:loadFinance,hra:loadHra,infrastructure:loadInfra,overview:loadOverview,operations:loadOperationsHub,commercial:loadCommercialHub,admin:loadAdmin,production:loadProduction,'wt-ei':loadWtEi,customers:loadCustomersUnified,connections:loadConnections,stuck:loadStuck,connectivity:loadConnectivity,breakdowns:loadBreakdowns,pipelines:loadPipelines,billed:loadBilled,collections:loadCollections,charges:loadCharges,expenses:loadExpenses,debtors:loadDebtors,'segment-revenue':loadSegmentRevenue,workforce:loadWorkforce,'class-connections':loadClassConnections,'pipe-materials':loadPipeMaterials,'water-quality':loadWaterQuality,nrw:loadNrw,'supply-continuity':loadSupplyContinuity,disconnections:loadDisconnections,profitability:loadProfitability,'staff-productivity':loadStaffProductivity,compliance:loadCompliance,budget:loadBudget,benchmarking:loadBenchmarking,'report-centre':loadReportCentre};
+const map={strategic:loadStrategicScorecard,board:loadBoard,finance:loadFinance,hra:loadHra,infrastructure:loadInfra,overview:loadOverview,operations:loadOperationsHub,commercial:loadCommercialHub,admin:loadAdmin,production:loadProduction,'wt-ei':loadWtEi,customers:loadCustomersUnified,connections:loadConnections,stuck:loadStuck,connectivity:loadConnectivity,breakdowns:loadBreakdowns,pipelines:loadPipelines,billed:loadBilled,collections:loadCollections,charges:loadCharges,expenses:loadExpenses,debtors:loadDebtors,'segment-revenue':loadSegmentRevenue,workforce:loadWorkforce,'class-connections':loadClassConnections,'pipe-materials':loadPipeMaterials,'water-quality':loadWaterQuality,nrw:loadNrw,'supply-continuity':loadSupplyContinuity,disconnections:loadDisconnections,profitability:loadProfitability,'staff-productivity':loadStaffProductivity,compliance:loadCompliance,budget:loadBudget,benchmarking:loadBenchmarking,'report-centre':loadReportCentre,position:loadPosition};
     if(map[page])await map[page]();
     await injectChartCredibilityNotes(document.getElementById('page-'+page)||document);
     await injectPageGovernanceStatus(document.getElementById('page-'+page)||document);
@@ -4854,7 +4854,7 @@ function admShowNavLink(role){
 function admTab(tabName){
   document.querySelectorAll('.adm-tab').forEach(t =>
     t.classList.toggle('active', t.dataset.tab === tabName));
-  ['users','profile','org-profile','roles','uploads','activity','fy-budget','system'].forEach(t => {
+  ['users','profile','org-profile','roles','uploads','sources','activity','fy-budget','system'].forEach(t => {
     const el = document.getElementById('adm-tab-'+t);
     if(el) el.style.display = t === tabName ? '' : 'none';
   });
@@ -4864,6 +4864,7 @@ function admTab(tabName){
   if(tabName === 'profile')      admLoadProfile();
   if(tabName === 'org-profile')  admLoadOrgProfile();
   if(tabName === 'system')       admLoadSystem();
+  if(tabName === 'sources' && typeof ihLoadSources === 'function') ihLoadSources();
   // fy-budget loaded on demand via admLoadFyBudget() called from onclick
 }
 
