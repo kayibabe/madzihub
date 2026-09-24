@@ -2,6 +2,8 @@
 
 Checklist view of [BLUEPRINT.md §9](BLUEPRINT.md#9-delivery-stages-and-exit-gates). Tick items in the PR that completes them.
 
+All development happens in this repository; `kayibabe/opsapp` is frozen. The market gap analysis and phased plan (foundations → governance → strategy/BSC → budget/capital → registers → risk → integrations) is in [COMPETITIVE_GAP_ANALYSIS.md](COMPETITIVE_GAP_ANALYSIS.md).
+
 ## Stage 0: Protect and baseline
 - [x] Clean import of opsapp code without utility data or git history
 - [x] `.gitattributes`; `.gitignore` blocks spreadsheets, DBs and secrets
@@ -33,11 +35,21 @@ Checklist view of [BLUEPRINT.md §9](BLUEPRINT.md#9-delivery-stages-and-exit-gat
 - [ ] Hierarchy table: N levels, parent/child, codes, aliases, effective dates
 - [ ] Versioned targets: KPI × fiscal year × org scope, with benchmark provenance (fixes per-year SP NRW targets)
 - [ ] Metric catalogue: code, unit, aggregation (sum/avg/latest), formula, direction, valid range
-- [ ] Import mapping profiles: upload sample → map columns → validate → save a versioned profile
+- [ ] Import mapping profiles: upload sample → map columns → validate → save a versioned profile (targets metric codes, not DB columns; single-row and grouped headers; unit conversion)
 - [ ] SRWB zone-workbook builder (`rawdata_builder.py`) becomes one import adapter
 - [ ] Per-tenant validation rules replace calculation-time data quirks (Mangochi days-to-connect, supply-hours units, stub rows)
 - [ ] Approval workflow: preparer → reviewer → publish; period locks; correction history and lineage
 - [ ] Distinct zero / missing / not-applicable / pending states
+
+- [ ] Org-scoped access (users see only their region/department)
+
+## Stage 2b: Strategy & balanced scorecard (see gap analysis §3.2)
+- [ ] Plan → perspective → objective → KPI/initiative tree in DB (migrate from tenant YAML)
+- [ ] Owners, weights, scoring and roll-up; cascading to departments
+- [ ] Quarterly updates with commentary and approval; action tracker
+- [ ] Strategy map; performance contracts
+- [ ] Budget versions and approval; capital project register
+- [ ] Risk register linked to objectives; audit findings
 
 ## Stage 3: Package and harden
 - [ ] Vendor Chart.js, DOMPurify and SheetJS (no runtime CDN; offline installs)
