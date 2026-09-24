@@ -44,6 +44,7 @@ Checklist view of [BLUEPRINT.md §9](BLUEPRINT.md#9-delivery-stages-and-exit-gat
 - [ ] Module toggles enforced in UI and API; hide pages without data
 - [ ] Setup wizard: identity → hierarchy → calendar → currency/units → mapping → targets → users
 - [ ] Docker image and compose file; `production` default in service scripts
+- [x] Replace python-jose with PyJWT (removes ecdsa, which has an unpatched timing advisory)
 - [ ] Route-by-route authorization inventory and tests (roles; later org scope)
 - [ ] Backup/restore runbook + automated restore drill in CI
 - [ ] PostgreSQL validated in staging; documented migration from SQLite
