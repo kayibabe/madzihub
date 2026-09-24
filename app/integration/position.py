@@ -16,6 +16,7 @@ Roll-up rules.
 """
 from __future__ import annotations
 
+import calendar
 from collections import defaultdict
 from datetime import date, datetime
 
@@ -105,7 +106,11 @@ def _aggregate_in_time(monthly: list[dict], aggregation: str, period_type: str) 
         if aggregation == "sum":
             value = sum(nums)
         elif aggregation == "avg":
-            value = sum(nums) / len(nums)
+            # Time-weighted: each month counts by its days, so February does not weigh as much
+            # as March. Observation counts are not stored; a measure that needs observation
+            # weighting should be a formula over two sum measures (total / count).
+            days = [calendar.monthrange(*date.fromisoformat(i["period"]).timetuple()[:2])[1] for i in items]
+            value = sum(v * d for v, d in zip(nums, days)) / sum(days)
         elif aggregation == "max":
             value = max(nums)
         elif aggregation == "min":
@@ -113,10 +118,13 @@ def _aggregate_in_time(monthly: list[dict], aggregation: str, period_type: str) 
         else:  # last: the latest month in the period
             value = max(items, key=lambda i: i["period"])["value"]
         loaded = [i["loaded_at"] for i in items if i.get("loaded_at")]
-        out.append({"period": p.isoformat(), "value": value,
-                    "source": ",".join(sorted({s for i in items for s in str(i["source"]).split(",")})),
-                    "months_reporting": len(items), "months_expected": _MONTHS_IN[period_type],
-                    "loaded_at": max(loaded) if loaded else None})
+        item = {"period": p.isoformat(), "value": value,
+                "source": ",".join(sorted({s for i in items for s in str(i["source"]).split(",")})),
+                "months_reporting": len(items), "months_expected": _MONTHS_IN[period_type],
+                "loaded_at": max(loaded) if loaded else None}
+        if aggregation == "avg":
+            item["time_weighting"] = "days_in_month"
+        out.append(item)
     return out
 
 
@@ -224,8 +232,10 @@ def position(db: Session, metric: Metric, org_code: str, period_type: str = "mon
                 on_track = tgt["lower"] <= current["value"] <= tgt["upper"]
             complete = current.get("months_reporting", 0) >= current.get("months_expected", 0)
             note = None
-            if not complete and not metric.formula and metric.aggregation == "sum":
-                # A year-to-date total against a full-year target is not a verdict.
+            if not complete and metric.aggregation == "sum":
+                # A year-to-date total against a full-year target is not a verdict. For a formula,
+                # aggregation declares its period meaning: "sum" accumulates over the period
+                # (e.g. produced - billed), anything else is a ratio comparable at any point.
                 on_track = None
                 note = (f"{current['months_reporting']} of {current['months_expected']} months reported; "
                         "total is year-to-date")

@@ -105,7 +105,9 @@ class MetricIn(BaseModel):
     category: Optional[str] = None
     aggregation: str = "sum"
     direction: str = "higher"
-    formula: Optional[str] = None  # e.g. "nrw / vol_produced * 100"; computed, never loaded
+    # e.g. "nrw / vol_produced * 100"; computed, never loaded. Set aggregation to "avg" for
+    # ratios (comparable year to date); the "sum" default treats the result as accumulating.
+    formula: Optional[str] = None
     description: Optional[str] = None
     is_active: bool = True
 
