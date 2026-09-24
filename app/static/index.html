@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="/static/assets/css/reports.css?v=20260613-8">
 <link rel="stylesheet" href="/static/assets/css/print.css">
 <link rel="stylesheet" href="/static/assets/css/department-tabs.css?v=20260613-1">
-<link rel="stylesheet" href="/static/assets/css/integration-hub.css?v=20260924-2">
+<link rel="stylesheet" href="/static/assets/css/integration-hub.css?v=20260924-3">
 </head>
 <body>
 
@@ -3208,8 +3208,10 @@
             <div class="ih-detail" id="ih-detail" style="display:none">
               <div class="adm-section-hdr"><div>
                 <div class="adm-section-title">Runs &amp; mappings: <span id="ih-detail-title"></span></div>
-                <div class="adm-section-sub">Rejected rows explain why. Use <strong>Map</strong> to point an unknown source key at a MadziHub code, then run the source again.</div>
-              </div></div>
+                <div class="adm-section-sub">Rejected rows explain why. Use <strong>Map</strong> to point an unknown source key at a MadziHub code, then test or run the source again.</div>
+              </div>
+              <button class="adm-btn-secondary" data-ih-act="test-file" title="Check a report file against this source's mapping without loading it">Test a file</button></div>
+              <div id="ih-dry"></div>
               <div class="ih-detail-grid">
                 <div id="ih-runs"></div>
                 <div>
@@ -3465,7 +3467,7 @@
 
 <script src="/static/assets/js/app-core.js?v=20260924-2"></script>
 <script src="/static/assets/js/department-tabs.js?v=20260613-1"></script>
-<script src="/static/assets/js/integration-hub.js?v=20260924-2"></script>
+<script src="/static/assets/js/integration-hub.js?v=20260924-3"></script>
 
 <!-- ══ ATTRIBUTION FOOTER ════════════════════════════════════════════════ -->
 <div id="attr-footer">

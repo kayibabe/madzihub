@@ -41,7 +41,10 @@ All development happens in this repository; `kayibabe/opsapp` is frozen. The mar
 - [x] Admin UI: sources, runs, rejects, key mappings, push tokens, freshness (Administration → Data Sources)
 - [x] Measures & Targets admin screen: catalogue editor with live formula check and preview; targets by measure, unit and fiscal period
 - [x] Strategic Position page on `metric_values`: unit/period picker, status vs target, trend, lineage chart (Board → Strategic Position)
-- [ ] Validate recipes against client sandboxes: SAP OData, Maximo, billing view, historian/PI, HR export
+- [x] Dry-run **Test** for sources (UI, API, CLI): connect, sample, map, report; writes nothing
+- [x] Billing pilot pack (docs/pilots): view contract + SQL (PostgreSQL, SQL Server), client checklist, day-by-day plan, reconciliation acceptance; configuration tested end to end
+- [ ] Run the billing pilot with a utility (needs their read-only account and branch list)
+- [ ] Validate recipes against client sandboxes: SAP OData, Maximo, historian/PI, HR export
 - [ ] Unit registry and conversion at mapping time
 - [ ] Move existing panels from `records` to `metric_values` (parity-guarded)
 

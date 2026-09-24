@@ -115,6 +115,7 @@ async function ihLoadSources(){
         <td class="adm-td-meta" style="text-align:right">${ihEsc(s.priority)}</td>
         <td class="adm-td-meta" style="text-align:right">${(s.values || 0).toLocaleString('en-GB')}</td>
         <td><div class="adm-act-row">
+          ${push ? '' : `<button class="adm-act-btn edit" data-ih-act="test" data-code="${ihEsc(s.code)}" title="Dry run: read a sample and show what would load. Writes nothing.">Test</button>`}
           ${push ? '' : `<button class="adm-act-btn edit" data-ih-act="run" data-code="${ihEsc(s.code)}" ${s.enabled ? '' : 'disabled'}>Run</button>`}
           <button class="adm-act-btn edit" data-ih-act="upload" data-code="${ihEsc(s.code)}" ${s.enabled ? '' : 'disabled'}>Upload</button>
           <button class="adm-act-btn reset" data-ih-act="detail" data-code="${ihEsc(s.code)}">Runs &amp; mappings</button>
@@ -206,11 +207,70 @@ async function ihBootstrap(){
   ihLoadSources();
 }
 
+/* Dry run: read a sample, map it, show what would load. Nothing is written. */
+function ihRejectRows(rejects){
+  return rejects.map(x => {
+    const m = /unknown (org unit|metric) '([^']*)'/.exec(x.reason || '');
+    const kind = m ? (m[1] === 'org unit' ? 'org_unit' : 'metric') : '';
+    return `<tr><td class="ih-cell-meta">${ihEsc(x.ref || ('row ' + x.row))}</td><td>${ihEsc(x.reason)}</td>
+      <td class="ih-mono">${ihEsc(Object.entries(x.data || {}).map(([k, v]) => `${k}=${v}`).join(', '))}</td>
+      <td>${m ? `<button class="adm-act-btn edit" data-ih-act="prefill" data-kind="${kind}" data-key="${ihEsc(m[2])}">Map</button>` : ''}</td></tr>`;
+  }).join('');
+}
+function ihRenderDry(code, r, what){
+  const el = document.getElementById('ih-dry');
+  if(!r.ok){
+    ihSet(el, `<div class="ih-notice danger"><strong>Test failed</strong> (${ihEsc(what)}): ${ihEsc(r.error)}<br>Nothing was written.</div>`);
+    return;
+  }
+  const tone = r.rows_rejected ? 'warn' : (r.values_mapped ? 'ok' : 'warn');
+  ihSet(el, `<div class="ih-notice ${tone}"><strong>Test of ${ihEsc(code)}</strong> (${ihEsc(what)}), nothing written:
+      read ${ihEsc(r.rows_read)} rows${r.rows_read >= r.sample_limit ? ` (sample limit ${ihEsc(r.sample_limit)})` : ''} ·
+      would load ${ihEsc(r.values_mapped)} values · ${ihEsc(r.rows_rejected)} rejected.
+      ${r.periods ? `Periods ${ihEsc(ihPeriodLabel(r.periods.first, 'month'))} to ${ihEsc(ihPeriodLabel(r.periods.last, 'month'))}.` : ''}
+      <div class="ih-dry-meta"><span>Columns found:</span> ${r.columns.map(c => `<code>${ihEsc(c)}</code>`).join(' ') || '—'}</div>
+      <div class="ih-dry-meta"><span>Measures:</span> ${r.metrics.map(c => `<code>${ihEsc(c)}</code>`).join(' ') || '—'}
+        · <span>Units:</span> ${r.org_units.map(c => `<code>${ihEsc(c)}</code>`).join(' ') || '—'}</div></div>
+    ${r.sample_values.length ? `<details class="ih-run" open><summary><strong>Sample of what would load</strong><span class="adm-td-meta">first ${ihEsc(r.sample_values.length)}</span></summary>
+      <table class="adm-table"><thead><tr><th>Measure</th><th>Unit</th><th>Period</th><th style="text-align:right">Value</th><th>From</th></tr></thead><tbody>
+      ${r.sample_values.map(v => `<tr><td class="ih-mono">${ihEsc(v.metric)}</td><td class="ih-mono">${ihEsc(v.org_unit)}</td>
+        <td>${ihEsc(ihPeriodLabel(v.period, 'month'))}</td><td style="text-align:right" class="ih-mono">${ihEsc(ihNum(v.value))}</td>
+        <td class="ih-cell-meta">${ihEsc(v.source_ref || '')}</td></tr>`).join('')}</tbody></table></details>` : ''}
+    ${r.rejects.length ? `<details class="ih-run" open><summary><strong>Rows that would be rejected</strong><span class="adm-td-meta">${ihEsc(r.rows_rejected)}</span></summary>
+      <table class="adm-table ih-rejects"><thead><tr><th style="width:18%">Where</th><th>Why rejected</th><th style="width:34%">Row</th><th style="width:70px"></th></tr></thead>
+      <tbody>${ihRejectRows(r.rejects)}</tbody></table></details>` : ''}`);
+}
+async function ihTest(code){
+  IH.selected = code;
+  await ihLoadDetail(code);
+  const el = document.getElementById('ih-dry');
+  ihSet(el, `<div class="ih-notice info">Testing <strong>${ihEsc(code)}</strong>: connecting and reading a sample…</div>`);
+  document.getElementById('ih-detail').scrollIntoView({behavior:'smooth', block:'start'});
+  try{ ihRenderDry(code, await ihApi(`/api/integration/sources/${encodeURIComponent(code)}/test`, {method:'POST'}), 'connection'); }
+  catch(e){ ihSet(el, `<div class="ih-notice danger">${ihEsc(e.message)}</div>`); }
+}
+function ihTestFile(){
+  const code = IH.selected;
+  if(!code) return;
+  const input = document.getElementById('ih-upload-input');
+  input.value = '';
+  input.onchange = async () => {
+    const file = input.files[0];
+    if(!file) return;
+    const form = new FormData(); form.append('file', file);
+    ihSet(document.getElementById('ih-dry'), `<div class="ih-notice info">Testing <strong>${ihEsc(file.name)}</strong> against ${ihEsc(code)}…</div>`);
+    try{ ihRenderDry(code, await ihApi(`/api/integration/sources/${encodeURIComponent(code)}/test-upload`, {method:'POST', form}), file.name); }
+    catch(e){ ihSet(document.getElementById('ih-dry'), `<div class="ih-notice danger">${ihEsc(e.message)}</div>`); }
+  };
+  input.click();
+}
+
 /* Detail panel: recent runs, rejected rows, key mappings */
 async function ihLoadDetail(code){
   IH.selected = code;
   const panel = document.getElementById('ih-detail');
   panel.style.display = '';
+  if(document.getElementById('ih-detail-title').textContent !== code) ihSet(document.getElementById('ih-dry'), '');
   document.getElementById('ih-detail-title').textContent = code;
   const runsEl = document.getElementById('ih-runs');
   const mapsEl = document.getElementById('ih-maps');
@@ -229,13 +289,7 @@ async function ihLoadDetail(code){
           <span>read ${ihEsc(r.rows_read)} · loaded ${ihEsc(r.values_loaded)} · rejected ${ihEsc(r.rows_rejected)}</span></summary>
         ${r.error ? `<div class="adm-err">${ihEsc(r.error)}</div>` : ''}
         ${rejects.length ? `<table class="adm-table ih-rejects"><thead><tr><th style="width:18%">Where</th><th>Why rejected</th><th style="width:34%">Row</th><th style="width:70px"></th></tr></thead><tbody>
-          ${rejects.map(x => {
-            const m = /unknown (org unit|metric) '([^']*)'/.exec(x.reason || '');
-            const kind = m ? (m[1] === 'org unit' ? 'org_unit' : 'metric') : '';
-            return `<tr><td class="ih-cell-meta">${ihEsc(x.ref || ('row ' + x.row))}</td><td>${ihEsc(x.reason)}</td>
-              <td class="ih-mono">${ihEsc(Object.entries(x.data || {}).map(([k, v]) => `${k}=${v}`).join(', '))}</td>
-              <td>${m ? `<button class="adm-act-btn edit" data-ih-act="prefill" data-kind="${kind}" data-key="${ihEsc(m[2])}">Map</button>` : ''}</td></tr>`;
-          }).join('')}</tbody></table>
+          ${ihRejectRows(rejects)}</tbody></table>
           ${r.rows_rejected > rejects.length ? `<div class="adm-td-meta" style="padding:6px 14px">Showing ${rejects.length} of ${ihEsc(r.rows_rejected)} rejected rows.</div>` : ''}` : ''}
       </details>`;
     }).join('') : '<div class="adm-empty">No runs yet</div>');
@@ -333,7 +387,9 @@ document.addEventListener('click', ev => {
   const btn = ev.target.closest('[data-ih-act]');
   if(!btn) return;
   const {ihAct:act, code} = btn.dataset;
-  if(act === 'run') ihRun(code);
+  if(act === 'test') ihTest(code);
+  else if(act === 'test-file') ihTestFile();
+  else if(act === 'run') ihRun(code);
   else if(act === 'upload') ihUpload(code);
   else if(act === 'detail') { ihLoadDetail(code); document.getElementById('ih-detail').scrollIntoView({behavior:'smooth'}); }
   else if(act === 'edit') ihOpenEditor(code);

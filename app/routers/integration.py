@@ -5,6 +5,8 @@ Admin (require admin):
   GET/POST        /api/integration/sources                 list / create a source
   PUT/DELETE      /api/integration/sources/{code}          update / disable a source
   POST            /api/integration/sources/{code}/run      pull now
+  POST            /api/integration/sources/{code}/test     dry run: sample, map, report; writes nothing
+  POST            /api/integration/sources/{code}/test-upload   dry run a report file
   POST            /api/integration/sources/{code}/upload   run a CSV/Excel report through the source's mapping
   POST            /api/integration/sources/{code}/token    issue a push token (shown once)
   PUT             /api/integration/sources/{code}/key-mappings   upsert crosswalk rows
@@ -244,6 +246,35 @@ async def upload_to_source(code: str, file: UploadFile = File(...), db: Session 
     except Exception:
         raise HTTPException(400, "Could not read the file. Use .csv or .xlsx.")
     return _run(db, s, user.username, rows=rows)
+
+
+@admin_router.post("/sources/{code}/test")
+def test_source(code: str, limit: int = Query(500, ge=1, le=10_000), db: Session = Depends(get_db),
+                user=Depends(require_admin)):
+    """Dry run a pull source: read a sample and show what would load. Nothing is written."""
+    s = _source(db, code)
+    if s.connector == "push":
+        raise HTTPException(400, "Push sources receive data; test them by sending a small batch.")
+    result = pipeline.test_source(db, s, limit=limit)
+    write_audit_log(db, user.username, "integration_source_test", f"{code}: ok={result['ok']}")
+    return result
+
+
+@admin_router.post("/sources/{code}/test-upload")
+async def test_upload(code: str, file: UploadFile = File(...), db: Session = Depends(get_db)):
+    """Dry run a report file through a source's mapping. Nothing is written."""
+    s = _source(db, code)
+    content = await file.read()
+    if len(content) > settings.upload_limit_mb * 1024 * 1024:
+        raise HTTPException(413, "File too large.")
+    try:
+        rows = connectors.read_tabular(file.filename or "upload.csv", content,
+                                       (s.config or {}).get("sheet"), int((s.config or {}).get("header_row", 1)))
+    except connectors.ConnectorError as exc:
+        raise HTTPException(400, str(exc))
+    except Exception:
+        raise HTTPException(400, "Could not read the file. Use .csv or .xlsx.")
+    return pipeline.test_source(db, s, rows=rows, limit=10_000)
 
 
 @admin_router.post("/sources/{code}/token")

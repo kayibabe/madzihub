@@ -103,6 +103,37 @@ def run_sync(db: Session, source: DataSource, triggered_by: str = "system", rows
     return run
 
 
+def test_source(db: Session, source: DataSource, rows: list[dict] | None = None, limit: int = 500) -> dict:
+    """Dry run: connect, read a sample, map it, and report what *would* load. Writes nothing.
+
+    Use it to prove a new connection and mapping before the first real run: the
+    watermark does not move, no SyncRun is recorded and no values are stored.
+    """
+    try:
+        extracted = connectors.extract(db, source, rows, limit=limit)
+        resolver, aggregations = _resolver(db, source)
+        mapped = map_rows(extracted.rows, source.mapping or {}, resolver, aggregations)
+    except Exception as exc:
+        return {"ok": False, "error": f"{type(exc).__name__}: {exc}"[:2000]}
+    values = mapped.values
+    columns = sorted({k for r in extracted.rows[:50] for k in r if k != "_source_ref"})
+    return {
+        "ok": True,
+        "rows_read": len(extracted.rows),
+        "sample_limit": limit,
+        "columns": columns,
+        "values_mapped": len(values),
+        "rows_rejected": mapped.rows_rejected,
+        "rejects": mapped.rejects[:50],
+        "metrics": sorted({v.metric_code for v in values}),
+        "org_units": sorted({v.org_unit_code for v in values}),
+        "periods": {"first": min(v.period_start for v in values).isoformat(),
+                    "last": max(v.period_start for v in values).isoformat()} if values else None,
+        "sample_values": [{"metric": v.metric_code, "org_unit": v.org_unit_code, "period": v.period_start.isoformat(),
+                           "value": v.value, "source_ref": v.source_ref} for v in values[:20]],
+    }
+
+
 def due_sources(db: Session, now: datetime | None = None) -> list[DataSource]:
     now = now or datetime.utcnow()
     due = []

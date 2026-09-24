@@ -92,3 +92,6 @@
 .ihm-picker .adm-field,.ihm-target-form .adm-field{margin:0}
 .ihm-target-form{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1.2fr 2fr auto;gap:10px;align-items:end;margin-top:14px}
 @media (max-width: 1100px){ .ihm-target-form{grid-template-columns:1fr 1fr} .ihm-picker{grid-template-columns:1fr} }
+.ih-dry-meta{margin-top:6px;font-size:12px;line-height:1.8}
+.ih-dry-meta span{font-weight:700;color:var(--ds-text-secondary)}
+.ih-dry-meta code{font-family:var(--ds-mono);font-size:11px;background:rgba(15,23,42,.05);padding:1px 5px;border-radius:5px}

@@ -154,7 +154,7 @@ Create a `file` source per report layout, then drop files in `data/dropzone/<fol
 
 ## 5. Screens
 
-- **Administration → Data Sources** (admins). Every source with its health (healthy, has rejects, failed, overdue, never run), last success, schedule, priority and values loaded. Actions: run now, upload a CSV/Excel report through the source's mapping, edit settings and mapping, issue a push token (shown once), disable/enable. *Runs & mappings* lists recent runs with each rejected row and its reason; **Map** on an unknown unit or measure pre-fills a key mapping. With no sources yet, one click sets everything up from the existing monthly returns.
+- **Administration → Data Sources** (admins). Every source with its health (healthy, has rejects, failed, overdue, never run), last success, schedule, priority and values loaded. Actions: **test** (dry run: connect, read a sample, map it and show what would load, with rejects; nothing is written), run now, upload a CSV/Excel report through the source's mapping, edit settings and mapping, issue a push token (shown once), disable/enable. *Runs & mappings* lists recent runs with each rejected row and its reason; **Map** on an unknown unit or measure pre-fills a key mapping. With no sources yet, one click sets everything up from the existing monthly returns.
 - **Administration → Measures & Targets** (admins). The catalogue in plain language: how each measure combines (added up, averaged, latest), which direction is better, and its formula. The editor checks a formula as it is typed, rejecting unknown measures, circular references and anything but arithmetic, and previews its current organisation value with the inputs used; measure codes insert with one click. Targets are set per measure, unit and period, choosing fiscal years, quarters or months by name, with an optional tolerance band and a basis (strategic plan, budget, regulator, internal).
 - **Board → Strategic Position** (all users). Pick a unit and a period (month, quarter, fiscal year). Every measure shows its current value, status against target (on track ✓, off track ✕, year-to-date, no target), gap, trend and how it was derived, with source freshness at the top. Selecting a measure shows its history and targets on one chart, the formula and inputs behind computed values, and the source of every figure.
 
@@ -172,10 +172,12 @@ python -m app.integration.cli status            # freshness JSON
 Pulls run outside the web server on purpose. Several web workers can never start the same pull twice, a slow extract never blocks dashboards, and the scheduler's exit code gives alerting for free.
 
 ### Onboarding a new system (playbook)
+A worked example for the first live connection, with view SQL, a client checklist and acceptance tests, is in [pilots/BILLING_PILOT.md](pilots/BILLING_PILOT.md).
+
 1. Agree the measures, grain and owner with the business: what question does this system answer?
 2. Get a read-only service account and, ideally, a reporting view pre-aggregated by unit and month.
 3. Register the measures (`POST /api/integration/metrics`) and any missing org units.
-4. Create the source with a mapping, then run it once against a small date range.
+4. Create the source with a mapping and **Test** it (or `cli sync --source <code> --dry-run`): nothing is written until the sample looks right.
 5. Work through the rejects in `GET /api/integration/runs?source=<code>&include_rejects=true`, adding key mappings until they are empty.
 6. Reconcile a few months against the system's own report, and against other sources through `/reconciliation`.
 7. Set `priority` and `schedule_minutes`, and name the `owner` who fixes it when freshness goes red.
