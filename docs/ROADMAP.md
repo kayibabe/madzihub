@@ -2,13 +2,13 @@
 
 Checklist view of [BLUEPRINT.md §9](BLUEPRINT.md#9-delivery-stages-and-exit-gates). Tick items in the PR that completes them.
 
-All development happens in this repository; `kayibabe/opsapp` is frozen. The market gap analysis and phased plan (foundations → governance → strategy/BSC → budget/capital → registers → risk → integrations) is in [COMPETITIVE_GAP_ANALYSIS.md](COMPETITIVE_GAP_ANALYSIS.md).
+All development happens in this repository; `kayibabe/opsapp` is frozen. For the researched product direction, source-linked benchmarks, scoring rules, reporting/document controls, and revised delivery order, see [RESEARCH_BENCHMARK.md](RESEARCH_BENCHMARK.md). The earlier market gap analysis remains useful background: [COMPETITIVE_GAP_ANALYSIS.md](COMPETITIVE_GAP_ANALYSIS.md).
 
 ## Stage 0: Protect and baseline
 - [x] Clean import of opsapp code without utility data or git history
 - [x] `.gitattributes`; `.gitignore` blocks spreadsheets, DBs and secrets
 - [x] Synthetic dataset + API parity snapshots (58 endpoints)
-- [x] Fictional demo tenant (Lakeside Water Utility)
+- [x] Synthetic demo tenant (MadziHub identity; all utility records and figures fictional)
 - [ ] **Owner:** written code/data ownership and licence position with SRWB
 - [ ] **Owner:** opsapp public repo: make private, or remove `dataupdater/` and rewrite history
 - [x] Remove SRWB from the product: `tenants/srwb`, SRWB import tools and legacy `SRWB_*` settings removed (2026-09-24); last SRWB version preserved at tag `srwb-reference`
@@ -61,13 +61,19 @@ All development happens in this repository; `kayibabe/opsapp` is frozen. The mar
 
 - [ ] Org-scoped access (users see only their region/department)
 
-## Stage 2b: Strategy & balanced scorecard (see gap analysis §3.2)
+## Stage 2b: Strategy & balanced scorecard (sequence and design in [RESEARCH_BENCHMARK.md](RESEARCH_BENCHMARK.md))
 - [ ] Plan → perspective → objective → KPI/initiative tree in DB (migrate from tenant YAML)
 - [ ] Owners, weights, scoring and roll-up; cascading to departments
 - [ ] Quarterly updates with commentary and approval; action tracker
 - [ ] Strategy map; performance contracts
 - [ ] Budget versions and approval; capital project register
 - [ ] Risk register linked to objectives; audit findings
+- [ ] Separate internal plan score schemes from versioned regulator scoring packs; require explicit band direction and missing-data policy
+- [ ] Freeze score inputs, scheme version, engine version, and approval evidence for every approved score
+
+## Research-led module order
+
+Use [RESEARCH_BENCHMARK.md](RESEARCH_BENCHMARK.md) as the working plan for the real system: migration foundation → shared scope/audit/workflow/actions → strategy and M&E → weighted scorecard → frozen reporting hub → evidence and controlled documents → governance/risk → locally verified regulator packs and restricted HR extensions. This sequence supersedes the older broad grouping below where they conflict.
 
 ## Stage 3: Package and harden
 - [x] Vendor Chart.js, DOMPurify, SheetJS and the Inter / IBM Plex Mono fonts (no runtime CDN; offline installs); checksum manifest enforced by tests and the release-bundle validator
