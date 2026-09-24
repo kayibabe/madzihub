@@ -38,6 +38,7 @@ from app.core.config import settings
 from app.database import get_db
 from app.integration import connectors, formulas, pipeline
 from app.integration import position as pos
+from app.integration.mapping import period_label, period_start, shift_period
 from app.integration.models import (
     AGGREGATIONS, CONNECTORS, DIRECTIONS, PERIOD_TYPES, SYSTEM_TYPES,
     DataSource, KeyMapping, Metric, MetricTarget, OrgUnit, SyncRun,
@@ -353,6 +354,71 @@ def upsert_metrics(body: list[MetricIn], db: Session = Depends(get_db), user=Dep
     db.commit()
     write_audit_log(db, user.username, "integration_metrics", f"{len(body)} rows")
     return {"upserted": len(body)}
+
+
+class FormulaCheckIn(BaseModel):
+    code: str
+    formula: str
+    aggregation: str = "sum"
+
+
+@admin_router.post("/metrics/validate-formula")
+def validate_formula(body: FormulaCheckIn, db: Session = Depends(get_db)):
+    """Check a formula against the catalogue as if saved, and preview its latest organisation value."""
+    current = {m.code: m.formula for m in db.query(Metric)}
+    expr = body.formula.strip()
+    current[body.code] = expr or None
+    try:
+        refs = formulas.validate(body.code, expr, set(current),
+                                 {c: f for c, f in current.items() if f and c != body.code})
+    except formulas.FormulaError as exc:
+        return {"ok": False, "error": str(exc)}
+    # Transient measure (never added to the session) so the preview uses the real engine.
+    probe = Metric(code=body.code, name=body.code, formula=expr, aggregation=body.aggregation, direction="higher")
+    series, _ = pos.published_series(db, probe, "org", "month")
+    latest = series[-1] if series else None
+    return {"ok": True, "references": sorted(refs),
+            "preview": {"period": latest["period"], "value": latest["value"], "inputs": latest.get("inputs")}
+            if latest else None}
+
+
+@admin_router.get("/targets")
+def list_targets(metric_code: Optional[str] = None, org_unit_code: Optional[str] = None,
+                 period_type: Optional[str] = None, db: Session = Depends(get_db)):
+    q = db.query(MetricTarget)
+    if metric_code:
+        q = q.filter(MetricTarget.metric_code == metric_code)
+    if org_unit_code:
+        q = q.filter(MetricTarget.org_unit_code == org_unit_code)
+    if period_type:
+        q = q.filter(MetricTarget.period_type == period_type)
+    return [{"id": t.id, "metric_code": t.metric_code, "org_unit_code": t.org_unit_code,
+             "period_type": t.period_type, "period_start": t.period_start.isoformat(),
+             "label": period_label(t.period_start, t.period_type), "value": t.value, "lower": t.lower,
+             "upper": t.upper, "basis": t.basis, "note": t.note}
+            for t in q.order_by(MetricTarget.metric_code, MetricTarget.org_unit_code, MetricTarget.period_start)]
+
+
+@admin_router.delete("/targets/{target_id}")
+def delete_target(target_id: int, db: Session = Depends(get_db), user=Depends(require_admin)):
+    t = db.get(MetricTarget, target_id)
+    if t is None:
+        raise HTTPException(404, "Unknown target.")
+    detail = f"{t.metric_code} {t.org_unit_code} {t.period_type} {t.period_start} {t.basis}"
+    db.delete(t)
+    db.commit()
+    write_audit_log(db, user.username, "integration_target_delete", detail)
+    return {"deleted": target_id}
+
+
+@admin_router.get("/period-options")
+def period_options(period_type: str = "year", back: int = Query(3, ge=0, le=60), forward: int = Query(6, ge=0, le=60)):
+    """Labelled period starts around today, on the tenant's fiscal calendar, for target entry."""
+    if period_type not in ("month", "quarter", "year"):
+        raise HTTPException(400, "period_type must be month, quarter or year.")
+    current = period_start(date.today(), period_type)
+    return [{"start": d.isoformat(), "label": period_label(d, period_type), "current": n == 0}
+            for n in range(-back, forward + 1) for d in [shift_period(current, period_type, n)]]
 
 
 @admin_router.post("/targets")

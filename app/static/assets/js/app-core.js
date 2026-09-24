@@ -4880,7 +4880,7 @@ function admShowNavLink(role){
 function admTab(tabName){
   document.querySelectorAll('.adm-tab').forEach(t =>
     t.classList.toggle('active', t.dataset.tab === tabName));
-  ['users','profile','org-profile','roles','uploads','sources','activity','fy-budget','system'].forEach(t => {
+  ['users','profile','org-profile','roles','uploads','sources','measures','activity','fy-budget','system'].forEach(t => {
     const el = document.getElementById('adm-tab-'+t);
     if(el) el.style.display = t === tabName ? '' : 'none';
   });
@@ -4891,6 +4891,7 @@ function admTab(tabName){
   if(tabName === 'org-profile')  admLoadOrgProfile();
   if(tabName === 'system')       admLoadSystem();
   if(tabName === 'sources' && typeof ihLoadSources === 'function') ihLoadSources();
+  if(tabName === 'measures' && typeof ihmLoad === 'function') ihmLoad();
   // fy-budget loaded on demand via admLoadFyBudget() called from onclick
 }
 

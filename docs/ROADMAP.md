@@ -39,6 +39,7 @@ All development happens in this repository; `kayibabe/opsapp` is frozen. The mar
 - [x] CLI for scheduled pulls (`python -m app.integration.cli sync --due`)
 - [x] Formula measures (ratios computed from components at every level); fiscal quarter/year roll-up with year-to-date flag; plan targets seeded
 - [x] Admin UI: sources, runs, rejects, key mappings, push tokens, freshness (Administration → Data Sources)
+- [x] Measures & Targets admin screen: catalogue editor with live formula check and preview; targets by measure, unit and fiscal period
 - [x] Strategic Position page on `metric_values`: unit/period picker, status vs target, trend, lineage chart (Board → Strategic Position)
 - [ ] Validate recipes against client sandboxes: SAP OData, Maximo, billing view, historian/PI, HR export
 - [ ] Unit registry and conversion at mapping time

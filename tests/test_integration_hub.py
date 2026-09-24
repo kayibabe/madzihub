@@ -506,6 +506,58 @@ class FormulaPositionTests(_HubFixture):
         self.assertEqual(cur["time_weighting"], "days_in_month")
 
 
+class MeasureAdminTests(_HubFixture):
+    def test_formula_check_reports_errors_and_previews_value(self):
+        self.post("/api/integration/metrics", [
+            {"code": "vol_produced", "name": "Produced", "unit": "m³"}, {"code": "nrw", "name": "NRW", "unit": "m³"}])
+        self.post("/api/integration/sources", {
+            "code": "ops", "name": "Ops", "connector": "file",
+            "mapping": {"layout": "wide", "metrics": {"vol_produced": "P", "nrw": "N"}, "period": {"field": "M"},
+                        "org_unit": {"field": "R"}}})
+        self.client.post("/api/integration/sources/ops/upload", headers=self.admin,
+                         files={"file": ("o.csv", b"R,M,P,N\nnorth,2026-01-01,100,10\nsouth,2026-01-01,300,90\n", "text/csv")})
+        bad = self.post("/api/integration/metrics/validate-formula", {"code": "x", "formula": "nrw / nope"})
+        self.assertFalse(bad["ok"])
+        self.assertIn("unknown measure", bad["error"])
+        loop = self.post("/api/integration/metrics/validate-formula", {"code": "nrw", "formula": "nrw * 2"})
+        self.assertFalse(loop["ok"])
+        self.assertIn("circular", loop["error"])
+        ok = self.post("/api/integration/metrics/validate-formula",
+                       {"code": "nrw_ratio", "formula": "nrw / vol_produced * 100", "aggregation": "avg"})
+        self.assertTrue(ok["ok"])
+        self.assertEqual(ok["references"], ["nrw", "vol_produced"])
+        self.assertAlmostEqual(ok["preview"]["value"], 25.0)  # organisation, volume-weighted
+        # The check saves nothing.
+        codes = [m["code"] for m in self.client.get("/api/integration/metrics", headers=self.admin).json()]
+        self.assertNotIn("nrw_ratio", codes)
+
+    def test_targets_list_and_delete(self):
+        self.post("/api/integration/targets", [
+            {"metric_code": "cash_collected", "org_unit_code": "north", "period_type": "year",
+             "period_start": "2025-07-01", "value": 100, "note": "plan"},
+            {"metric_code": "cash_collected", "org_unit_code": "org", "period_type": "year",
+             "period_start": "2025-07-01", "value": 300}])
+        rows = self.client.get("/api/integration/targets?metric_code=cash_collected&org_unit_code=north",
+                               headers=self.admin).json()
+        self.assertEqual([(r["label"], r["value"]) for r in rows], [("FY2025/26", 100.0)])  # demo: July start
+        self.assertEqual(self.client.delete(f"/api/integration/targets/{rows[0]['id']}", headers=self.viewer).status_code, 403)
+        self.assertEqual(self.client.delete(f"/api/integration/targets/{rows[0]['id']}", headers=self.admin).status_code, 200)
+        left = self.client.get("/api/integration/targets?metric_code=cash_collected", headers=self.admin).json()
+        self.assertEqual([r["org_unit_code"] for r in left], ["org"])
+
+    def test_period_options_follow_fiscal_calendar(self):
+        years = self.client.get("/api/integration/period-options?period_type=year&back=1&forward=1",
+                                headers=self.admin).json()
+        self.assertEqual(len(years), 3)
+        self.assertTrue(all(y["start"].endswith("-07-01") for y in years))  # demo fiscal year starts in July
+        self.assertEqual([y["current"] for y in years], [False, True, False])
+        q = self.client.get("/api/integration/period-options?period_type=quarter&back=0&forward=0",
+                            headers=self.admin).json()[0]
+        self.assertRegex(q["label"], r"^Q[1-4] FY\d{4}/\d{2}$")
+        self.assertEqual(self.client.get("/api/integration/period-options?period_type=week",
+                                         headers=self.admin).status_code, 400)
+
+
 class LegacyBridgeTests(unittest.TestCase):
     def test_existing_returns_become_history(self):
         from tests.fixtures.synthetic_dataset import build_records
