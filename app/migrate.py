@@ -35,12 +35,23 @@ from alembic.script import ScriptDirectory
 from sqlalchemy import Index, create_engine, inspect, text, types as sqltypes
 
 from app.database import Base, _default_sql, engine
-from app.integration import models as _integration_models  # noqa: F401  (registers tables on Base)
+from app import model_registry as _models  # noqa: F401  (registers every table on Base)
 
 MIGRATIONS_DIR = Path(__file__).resolve().parent / "migrations"
 BASELINE_REVISION = "0001"
 BASELINE_FILE = MIGRATIONS_DIR / f"baseline_{BASELINE_REVISION}.json"
 VERSION_TABLE = "alembic_version"
+
+
+# Database objects created by revisions that have no ORM model (SQLite FTS5 search
+# tables and their shadow tables). Autogenerate and `alembic check` ignore them.
+UNMANAGED_TABLE_PREFIXES = ("document_fts",)
+
+
+def include_object(obj, name, type_, reflected, compare_to) -> bool:
+    if type_ == "table" and name and name.startswith(UNMANAGED_TABLE_PREFIXES):
+        return False
+    return True
 
 
 class MigrationError(RuntimeError):

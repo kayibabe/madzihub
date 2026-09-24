@@ -45,6 +45,7 @@ from app.integration.models import (
     AGGREGATIONS, CONNECTORS, DIRECTIONS, PERIOD_TYPES, SYSTEM_TYPES,
     DataSource, KeyMapping, Metric, MetricTarget, OrgUnit, SyncRun,
 )
+from app.platform.scope import Scope, get_scope
 from app.services.audit_log import log_event as write_audit_log
 
 admin_router = APIRouter(prefix="/api/integration", tags=["Integration"])
@@ -481,21 +482,24 @@ def bootstrap_legacy(db: Session = Depends(get_db), user=Depends(require_admin))
 # ── strategic position (any signed-in user) ─────────────────────────────────
 
 @position_router.get("/org-units")
-def position_org_units(db: Session = Depends(get_db)):
-    """Active units for the scorecard's unit picker (read-only, any signed-in user)."""
+def position_org_units(db: Session = Depends(get_db), scope: Scope = Depends(get_scope)):
+    """Active units the user may see, for the scorecard's unit picker."""
     units = db.query(OrgUnit).filter(OrgUnit.is_active.is_(True)).order_by(OrgUnit.code).all()
     by_id = {u.id: u.code for u in units}
     return [{"code": u.code, "name": u.name, "unit_type": u.unit_type, "parent_code": by_id.get(u.parent_id)}
-            for u in units]
+            for u in units if scope.can_see(u.code)]
 
 
 @position_router.get("/sources/freshness")
-def sources_freshness(db: Session = Depends(get_db)):
+def sources_freshness(db: Session = Depends(get_db), scope: Scope = Depends(get_scope)):
+    """Source health only (names, last run, counts); no unit-level values."""
     return pos.freshness(db)
 
 
 @position_router.get("")
-def overview(org_unit: str = "org", period_type: str = "month", db: Session = Depends(get_db)):
+def overview(org_unit: str = "org", period_type: str = "month", db: Session = Depends(get_db),
+             scope: Scope = Depends(get_scope)):
+    scope.require_see(org_unit, "Organisational unit")
     if period_type not in PERIOD_TYPES:
         raise HTTPException(400, "Invalid period_type.")
     out = []
@@ -509,7 +513,9 @@ def overview(org_unit: str = "org", period_type: str = "month", db: Session = De
 
 @position_router.get("/{metric_code}")
 def metric_position(metric_code: str, org_unit: str = "org", period_type: str = "month",
-                    start: Optional[date] = None, end: Optional[date] = None, db: Session = Depends(get_db)):
+                    start: Optional[date] = None, end: Optional[date] = None, db: Session = Depends(get_db),
+                    scope: Scope = Depends(get_scope)):
+    scope.require_see(org_unit, "Organisational unit")
     m = db.query(Metric).filter_by(code=metric_code).first()
     if m is None:
         raise HTTPException(404, f"Unknown metric '{metric_code}'.")
@@ -520,7 +526,8 @@ def metric_position(metric_code: str, org_unit: str = "org", period_type: str = 
 
 @position_router.get("/{metric_code}/reconciliation")
 def metric_reconciliation(metric_code: str, org_unit: str = "org", period_type: str = "month",
-                          db: Session = Depends(get_db)):
+                          db: Session = Depends(get_db), scope: Scope = Depends(get_scope)):
+    scope.require_see(org_unit, "Organisational unit")
     return pos.reconciliation(db, metric_code, org_unit, period_type)
 
 

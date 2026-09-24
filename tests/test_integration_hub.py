@@ -14,6 +14,7 @@ from unittest import mock
 
 from fastapi.testclient import TestClient
 
+from tests._access import grant
 from tests._app_loader import TemporaryDirectory, fresh_app
 
 
@@ -110,6 +111,7 @@ class _HubFixture(unittest.TestCase):
         db.add(self.database.User(username="look", password_hash=self.auth.hash_password("x"), role="viewer"))
         db.commit()
         db.close()
+        grant(self.database, "look", "org", "viewer")   # access is deny-by-default (revision 0002)
         self.admin = {"Authorization": f"Bearer {self.auth.create_access_token('boss', 'admin')}"}
         self.viewer = {"Authorization": f"Bearer {self.auth.create_access_token('look', 'viewer')}"}
         self._seed_catalogue()

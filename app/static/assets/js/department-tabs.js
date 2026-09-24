@@ -22,7 +22,8 @@
     finance:       '<path d="M3 20h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="5" y="11" width="3" height="6" rx="1" stroke="currentColor" stroke-width="1.7"/><rect x="10.5" y="7" width="3" height="10" rx="1" stroke="currentColor" stroke-width="1.7"/><rect x="16" y="4" width="3" height="13" rx="1" stroke="currentColor" stroke-width="1.7"/>',
     hr:            '<circle cx="9" cy="8" r="3.2" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M16 4.5a3 3 0 010 6M17.5 14c2.4.3 4 2.3 4 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>',
     infrastructure:'<path d="M4 21V8l8-5 8 5v13" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 21v-6h6v6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 21h16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>',
-    reports:        '<path d="M6 3h8l5 5v13H6z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14 3v5h5M9 13h6M9 17h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>'
+    reports:        '<path d="M6 3h8l5 5v13H6z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14 3v5h5M9 13h6M9 17h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
+    performance:    '<circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="3.5" stroke="currentColor" stroke-width="1.7"/><path d="M12 4v2M12 18v2M4 12h2M18 12h2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>'
   };
 
   // Module preview icons.
@@ -54,10 +55,11 @@
     finance:        { label:'Finance', icon:ICONS.finance, stub:false, landing:'finance' },
     hr:             { label:'Human Resource & Administration', icon:ICONS.hr, stub:false, landing:'hra' },
     infrastructure: { label:'Infrastructure', icon:ICONS.infrastructure, stub:false, landing:'infrastructure' },
-    reports:        { label:'Reports', icon:ICONS.reports, stub:false, landing:'report-centre' }
+    reports:        { label:'Reports', icon:ICONS.reports, stub:false, landing:'report-centre' },
+    performance:    { label:'Performance & Governance', icon:ICONS.performance, stub:false, landing:'my-work' }
   };
 
-  var ORDER = ['board','operations','finance','hr','infrastructure','reports'];
+  var ORDER = ['board','operations','finance','hr','infrastructure','reports','performance'];
 
   function tabBarHTML(){
     return ORDER.map(function(key){

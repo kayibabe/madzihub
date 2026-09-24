@@ -11,7 +11,8 @@ from alembic import context
 from sqlalchemy import text
 
 from app.database import Base, engine
-from app.integration import models as _integration_models  # noqa: F401  (registers tables on Base)
+from app import model_registry as _models  # noqa: F401  (registers every table on Base)
+from app.migrate import include_object
 
 target_metadata = Base.metadata
 
@@ -27,6 +28,7 @@ def _run(connection) -> None:
         target_metadata=target_metadata,
         render_as_batch=connection.dialect.name == "sqlite",  # SQLite ALTERs need table rebuilds
         compare_type=True,
+        include_object=include_object,
     )
     with context.begin_transaction():
         context.run_migrations()

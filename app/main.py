@@ -9,8 +9,11 @@ Authentication
 All /api/* routes (except /api/auth/login) require a JWT in the header:
     Authorization: Bearer <token>
 
-Role-based access is enforced via FastAPI dependencies at the router level:
-  - All read endpoints        → get_current_user  (any valid role)
+Role-based access is enforced via FastAPI dependencies at the router level.
+Access to data is deny-by-default (see docs/PERFORMANCE_GOVERNANCE.md):
+  - Organisation-wide dashboards/reports/exports → require_org_wide (a grant on the root unit, or admin)
+  - /api/platform/* and module APIs → scope resolved per request; results limited to granted units
+  - /api/position/*           → limited to the units in the user's scope
   - /api/upload/*             → require_admin     (admin only)
   - /api/records/export/csv   → require_export    (admin or user; not viewer)
   - /api/admin/*              → require_admin     (admin only)
@@ -21,7 +24,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 import os
 import time
@@ -35,6 +38,10 @@ from app.migrate import SchemaNotReady
 from app.routers import analytics, benchmarking, budget, catalogue, compliance, fiscal_years, integration, panels, records, report_generator, reports, strategic, upload, insights
 from app.routers import config as config_router
 from app.routers.users import admin_router, auth_router
+from app import model_registry as _models  # noqa: F401  (every table registered before start-up)
+from app.platform.errors import PlatformError
+from app.platform.router import router as platform_router
+from app.platform.scope import require_org_wide
 from app.core.limiter import limiter as _limiter
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -53,6 +60,8 @@ async def lifespan(app: FastAPI):
     db = SessionLocal()
     try:
         ensure_default_admin(db)
+        from app.platform.bootstrap import at_startup as _platform_startup
+        _platform_startup(db)
         # Auto-import: if records table is empty and an Excel file exists, seed it
         from app.database import Record
         count = db.query(Record).count()
@@ -237,6 +246,11 @@ app = FastAPI(
 
 app.state.limiter = _limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+
+@app.exception_handler(PlatformError)
+async def _platform_error(_request: Request, exc: PlatformError):
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 app.add_middleware(SlowAPIMiddleware)
 
 # ── CORS ──────────────────────────────────────────────────────
@@ -262,20 +276,26 @@ app.include_router(config_router.router)
 # ── Admin user-management (admin role required) ───────────────
 app.include_router(admin_router, dependencies=[Depends(require_admin)])
 
-# ── Data read endpoints (any authenticated user) ──────────────
+# ── Organisation-wide data (any authenticated user with an organisation-wide grant) ──
+# These dashboards, reports and exports aggregate every region. A user whose access
+# is limited to particular units gets 403 here and works in the scoped modules instead.
 # require_export on /export/csv is enforced inside records.py
-app.include_router(records.router,       dependencies=[Depends(get_current_user)])
-app.include_router(analytics.router,    dependencies=[Depends(get_current_user)])
-app.include_router(budget.router,       dependencies=[Depends(get_current_user)])
-app.include_router(catalogue.router,    dependencies=[Depends(get_current_user)])
-app.include_router(fiscal_years.router, dependencies=[Depends(get_current_user)])
-app.include_router(panels.router,       dependencies=[Depends(get_current_user)])
-app.include_router(compliance.router,   dependencies=[Depends(get_current_user)])
-app.include_router(benchmarking.router, dependencies=[Depends(get_current_user)])
-app.include_router(reports.router,          dependencies=[Depends(get_current_user)])
-app.include_router(report_generator.router, dependencies=[Depends(get_current_user)])
-app.include_router(insights.router,     dependencies=[Depends(get_current_user)])
-app.include_router(strategic.router,    dependencies=[Depends(get_current_user)])
+_org_wide = [Depends(require_org_wide)]
+app.include_router(records.router,       dependencies=_org_wide)
+app.include_router(analytics.router,    dependencies=_org_wide)
+app.include_router(budget.router,       dependencies=_org_wide)
+app.include_router(catalogue.router,    dependencies=_org_wide)
+app.include_router(fiscal_years.router, dependencies=_org_wide)
+app.include_router(panels.router,       dependencies=_org_wide)
+app.include_router(compliance.router,   dependencies=_org_wide)
+app.include_router(benchmarking.router, dependencies=_org_wide)
+app.include_router(reports.router,          dependencies=_org_wide)
+app.include_router(report_generator.router, dependencies=_org_wide)
+app.include_router(insights.router,     dependencies=_org_wide)
+app.include_router(strategic.router,    dependencies=_org_wide)
+
+# ── Shared governance foundation and modules (scope resolved per request) ──
+app.include_router(platform_router)
 
 # ── Upload (admin only) ───────────────────────────────────────
 app.include_router(upload.router, dependencies=[Depends(require_admin)])

@@ -36,8 +36,15 @@ def _model_drift(database) -> list:
 
 
 def _make_legacy(database, *statements: str) -> None:
-    """A database as pre-Alembic MadziHub left it: create_all, then optional older-shape edits."""
-    database.Base.metadata.create_all(database.engine)
+    """A database as pre-Alembic MadziHub left it: the baseline tables, then optional older-shape edits.
+
+    Only tables in the baseline fingerprint are created: a pre-Alembic install cannot
+    contain tables that later revisions introduced.
+    """
+    import app.migrate as migrate
+    baseline = set(migrate.load_baseline()["tables"])
+    database.Base.metadata.create_all(database.engine, tables=[t for name, t in database.Base.metadata.tables.items()
+                                                               if name in baseline])
     with database.engine.begin() as conn:
         for sql in statements:
             conn.execute(text(sql))

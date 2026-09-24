@@ -7,6 +7,7 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
+from tests._access import grant
 from tests._app_loader import TemporaryDirectory, fresh_app
 
 
@@ -78,6 +79,7 @@ class TokenValidationTests(unittest.TestCase):
                 db.add(database.User(username="tok", password_hash=auth.hash_password("x"), role="viewer"))
                 db.commit()
                 db.close()
+                grant(database, "tok", "org", "viewer")   # access is deny-by-default (revision 0002)
                 url = "/api/catalogue/zones"
 
                 def status_for(token):

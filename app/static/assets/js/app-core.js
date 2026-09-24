@@ -7,7 +7,9 @@ function decodeJwt(t){try{return JSON.parse(atob(t.split('.')[1].replace(/-/g,'+
 function isExpired(t){const p=decodeJwt(t);return!p||!p.exp||Date.now()>=p.exp*1000}
 const LAST_PAGE_KEY='madzi_last_page';
 const ROLE_HOME_PAGE={viewer:'board',user:'board',admin:'board'};
-(function(){const t=getToken();if(t&&!isExpired(t)){if(decodeJwt(t)?.pwc){clearSession();return;}showApp(getUser(),{restoreLastPage:true})}})();
+// Deferred until this script has finished evaluating: showApp reaches code that reads
+// `let` globals declared further down (e.g. currentPage), which would throw if run now.
+(function(){const t=getToken();if(t&&!isExpired(t)){if(decodeJwt(t)?.pwc){clearSession();return;}Promise.resolve().then(()=>showApp(getUser(),{restoreLastPage:true}))}})();
 (async function(){
   if(location.hash!=='#devpreview')return;
   if(!['localhost','127.0.0.1'].includes(location.hostname))return;
@@ -2336,7 +2338,7 @@ async function loadPage(page){
   try{
     await ensureGovernanceBundle();
     await ensureExportGovernanceBundle();
-const map={strategic:loadStrategicScorecard,board:loadBoard,finance:loadFinance,hra:loadHra,infrastructure:loadInfra,overview:loadOverview,operations:loadOperationsHub,commercial:loadCommercialHub,admin:loadAdmin,production:loadProduction,'wt-ei':loadWtEi,customers:loadCustomersUnified,connections:loadConnections,stuck:loadStuck,connectivity:loadConnectivity,breakdowns:loadBreakdowns,pipelines:loadPipelines,billed:loadBilled,collections:loadCollections,charges:loadCharges,expenses:loadExpenses,debtors:loadDebtors,'segment-revenue':loadSegmentRevenue,workforce:loadWorkforce,'class-connections':loadClassConnections,'pipe-materials':loadPipeMaterials,'water-quality':loadWaterQuality,nrw:loadNrw,'supply-continuity':loadSupplyContinuity,disconnections:loadDisconnections,profitability:loadProfitability,'staff-productivity':loadStaffProductivity,compliance:loadCompliance,budget:loadBudget,benchmarking:loadBenchmarking,'report-centre':loadReportCentre,position:loadPosition};
+const map={strategic:loadStrategicScorecard,board:loadBoard,finance:loadFinance,hra:loadHra,infrastructure:loadInfra,overview:loadOverview,operations:loadOperationsHub,commercial:loadCommercialHub,admin:loadAdmin,production:loadProduction,'wt-ei':loadWtEi,customers:loadCustomersUnified,connections:loadConnections,stuck:loadStuck,connectivity:loadConnectivity,breakdowns:loadBreakdowns,pipelines:loadPipelines,billed:loadBilled,collections:loadCollections,charges:loadCharges,expenses:loadExpenses,debtors:loadDebtors,'segment-revenue':loadSegmentRevenue,workforce:loadWorkforce,'class-connections':loadClassConnections,'pipe-materials':loadPipeMaterials,'water-quality':loadWaterQuality,nrw:loadNrw,'supply-continuity':loadSupplyContinuity,disconnections:loadDisconnections,profitability:loadProfitability,'staff-productivity':loadStaffProductivity,compliance:loadCompliance,budget:loadBudget,benchmarking:loadBenchmarking,'report-centre':loadReportCentre,position:loadPosition,...(window.MADZI_PAGE_LOADERS||{})};
     if(map[page])await map[page]();
     await injectChartCredibilityNotes(document.getElementById('page-'+page)||document);
     await injectPageGovernanceStatus(document.getElementById('page-'+page)||document);
@@ -4265,7 +4267,8 @@ async function initDashboard(opts={}){
   initSidebarSections();
   startTopbarClock();
   updateFooter();
-  const landingPage=getInitialPageForUser(user,opts);
+  // Modules (mod-platform.js) may redirect users whose access is limited to some units.
+  const landingPage=(window.MADZI_LANDING_OVERRIDE&&await window.MADZI_LANDING_OVERRIDE(user).catch(()=>null))||getInitialPageForUser(user,opts);
   currentPage=landingPage;
   syncReportDensityToolbar(landingPage);
   navigate(landingPage);

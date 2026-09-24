@@ -26,6 +26,7 @@
 <link rel="stylesheet" href="/static/assets/css/print.css?v=20260924-2">
 <link rel="stylesheet" href="/static/assets/css/department-tabs.css?v=20260613-1">
 <link rel="stylesheet" href="/static/assets/css/integration-hub.css?v=20260924-3">
+<link rel="stylesheet" href="/static/assets/css/mod-platform.css?v=20260925-1">
 </head>
 <body>
 
@@ -337,6 +338,8 @@
           <option value="user" selected>User — view + export</option>
           <option value="admin">Admin — full access</option>
         </select>
+        <div class="mz-help">Access is deny-by-default: a new User or Viewer sees nothing until you grant
+          units in <strong>Performance &amp; Governance › Access &amp; Scope</strong>.</div>
       </div>
       <div id="adm-modal-err" style="color:var(--ds-red);font-size:12px;margin-top:8px;display:none"></div>
     </div>
@@ -751,6 +754,30 @@
 
     </div>
 
+    <!-- ── PERFORMANCE & GOVERNANCE menu — scoped modules (mod-*.js) ───────── -->
+    <div class="dept-menu" data-dept-menu="performance">
+
+      <div class="nav-item nav-item-grouphead nav-item-top collapsible" id="pgvgrp-work" onclick="toggleSidebarSection('pgvgrp-work','pgvsec-work',event)">
+        <span class="nav-item-main"><svg class="nav-item-icon nav-item-icon-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M8 12l3 3 5-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="nav-item-label">Workspace</span></span>
+        <button type="button" class="nav-grp-toggle" aria-expanded="true" aria-label="Toggle Workspace section" onclick="toggleSidebarSection('pgvgrp-work','pgvsec-work',event)"><svg class="nav-grp-chevron" viewBox="0 0 10 10" fill="none"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+      <div class="nav-section" id="pgvsec-work">
+        <div class="nav-item nav-item-child" data-page="my-work" data-section="Performance &amp; Governance" data-title="My Work" onclick="navigate('my-work')"><span class="nav-item-label">My Work</span><span class="mz-badge danger" id="mz-nav-unread" hidden style="margin-left:auto"></span></div>
+        <div class="nav-item nav-item-child" data-page="actions" data-section="Performance &amp; Governance" data-title="Actions" onclick="navigate('actions')"><span class="nav-item-label">Actions</span></div>
+      </div>
+
+      <div class="nav-item nav-item-grouphead nav-item-top collapsible" id="pgvgrp-setup" onclick="toggleSidebarSection('pgvgrp-setup','pgvsec-setup',event)">
+        <span class="nav-item-main"><svg class="nav-item-icon nav-item-icon-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l8 4v5c0 4.4-3.4 8.5-8 9.5-4.6-1-8-5.1-8-9.5V7l8-4z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><span class="nav-item-label">Setup &amp; Assurance</span></span>
+        <button type="button" class="nav-grp-toggle" aria-expanded="true" aria-label="Toggle Setup section" onclick="toggleSidebarSection('pgvgrp-setup','pgvsec-setup',event)"><svg class="nav-grp-chevron" viewBox="0 0 10 10" fill="none"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+      <div class="nav-section" id="pgvsec-setup">
+        <div class="nav-item nav-item-child" data-page="periods" data-section="Setup &amp; Assurance" data-title="Reporting Periods" onclick="navigate('periods')"><span class="nav-item-label">Reporting Periods</span></div>
+        <div class="nav-item nav-item-child" data-page="access" data-section="Setup &amp; Assurance" data-title="Access &amp; Scope" data-mz-requires="admin" hidden onclick="navigate('access')"><span class="nav-item-label">Access &amp; Scope</span></div>
+        <div class="nav-item nav-item-child" data-page="audit-trail" data-section="Setup &amp; Assurance" data-title="Audit Trail" data-mz-requires="admin|function:auditor" hidden onclick="navigate('audit-trail')"><span class="nav-item-label">Audit Trail</span></div>
+      </div>
+
+    </div>
+
     </div><!-- /.nav-scroll -->
 
     <!-- ══ ADMINISTRATION (admin only) — universal across all department menus ═══ -->
@@ -1042,6 +1069,13 @@
         <div id="pos-detail-body"></div>
       </div>
     </div>
+
+    <!-- Performance & Governance pages: rendered by mod-*.js into .mz-root -->
+    <div id="page-my-work" class="db-page"><main class="mz-root" id="mz-my-work" aria-label="My work"></main></div>
+    <div id="page-actions" class="db-page"><main class="mz-root" id="mz-actions" aria-label="Actions"></main></div>
+    <div id="page-periods" class="db-page"><main class="mz-root" id="mz-periods" aria-label="Reporting periods"></main></div>
+    <div id="page-access" class="db-page"><main class="mz-root" id="mz-access" aria-label="Access and scope"></main></div>
+    <div id="page-audit-trail" class="db-page"><main class="mz-root" id="mz-audit-trail" aria-label="Audit trail"></main></div>
 
     <div id="page-board" class="db-page">
       <div class="pg-hdr">
@@ -3412,9 +3446,10 @@
 </div><!-- /madzi-app -->
 </div><!-- /app-view -->
 
-<script src="/static/assets/js/app-core.js?v=20260924-9"></script>
-<script src="/static/assets/js/department-tabs.js?v=20260924-1"></script>
+<script src="/static/assets/js/app-core.js?v=20260925-1"></script>
+<script src="/static/assets/js/department-tabs.js?v=20260925-1"></script>
 <script src="/static/assets/js/integration-hub.js?v=20260924-3"></script>
+<script src="/static/assets/js/mod-platform.js?v=20260925-1"></script>
 
 <!-- ══ ATTRIBUTION FOOTER ════════════════════════════════════════════════ -->
 <div id="attr-footer">
