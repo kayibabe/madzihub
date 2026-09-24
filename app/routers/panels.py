@@ -1436,7 +1436,7 @@ def panel_nrw(zones: Optional[str] = None, schemes: Optional[str] = None,
         "kpi": {
             "vol_produced": round(prod), "water_sold": round(sold),
             "nrw_volume": round(nrw), "pct_nrw": pct,
-            "target_nrw": 25.0, "gap_to_target": round(pct - 25.0, 1),
+            "target_nrw": NRW_TARGET_PCT, "gap_to_target": round(pct - NRW_TARGET_PCT, 1),
             "economic_nrw": economic_nrw, "avg_tariff_per_m3": round(avg_tariff, 2),
         },
         "by_zone": [{"zone": z["zone"], "color": z["color"],
