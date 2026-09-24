@@ -55,7 +55,7 @@ Legend: ✅ have · 🟡 partial · ❌ missing. **Build** = implement in MadziH
 | Import mapping | Save a mapping per source file layout | 🟡 hardcoded `COLUMN_MAP` | Versioned mapping profiles to **metric codes** (not DB columns); single-row and grouped headers; unit conversion | Build |
 | Data approval & lineage | Submit → review → publish, locks, audit | ❌ upload writes directly | Workflow states, period locks, correction history | Build |
 | Zero / missing / N/A / pending | Distinct states | ❌ | `status` on every value | Build |
-| Connectors / API ingest | REST, scheduled pulls, CSV drops | ❌ | Authenticated ingest API + scheduled file drop; later SAP/CIS/SCADA adapters | Integrate |
+| Connectors / API ingest | REST, scheduled pulls, CSV drops | 🟡 SQL, REST/OData, file, push and legacy connectors built ([INTEGRATION_HUB.md](INTEGRATION_HUB.md)); vendor recipes untested | Validate against client sandboxes; admin UI | Integrate |
 | Row-level access by org scope | Users see only their region/department | ❌ roles only | Scope on users; enforce in every query | Build |
 | Multi-language | Common in regional products | ❌ | String keys (EN first; PT/FR/SW later) | Build |
 

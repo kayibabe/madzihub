@@ -4,6 +4,8 @@
 
 MadziHub turns a water utility's monthly operational, commercial and financial returns into board-ready KPIs, reports and alerts: production and NRW, treatment and energy, customers and connections, billing and collections, costs, debtors, budgets and the strategic-plan scorecard. It is IWA/IBNET-aligned.
 
+MadziHub pulls a utility's scattered systems, files and reports (ERP, asset management, billing, SCADA historians, HR, spreadsheets) into one governed repository. Management gets one trusted picture of **where we were, where we are and where we are going**: history with lineage, the current position with data freshness, and targets with the gap to them. See [docs/INTEGRATION_HUB.md](docs/INTEGRATION_HUB.md).
+
 One installation serves one utility. Everything that differs between utilities lives in a tenant configuration file, not in the code: name, logo, currency, fiscal year, zones, targets, thresholds and the strategic plan.
 
 > MadziHub began as the SRWB Corporate Performance Hub (Southern Region Water Board, Malawi). SRWB is the reference tenant (`tenants/srwb`). Ownership and licensing of the original code and of SRWB's content are being settled with SRWB, so no licence is granted yet.
@@ -11,6 +13,7 @@ One installation serves one utility. Everything that differs between utilities l
 - **Product plan:** [docs/BLUEPRINT.md](docs/BLUEPRINT.md)
 - **Roadmap / checklist:** [docs/ROADMAP.md](docs/ROADMAP.md)
 - **Market gap analysis:** [docs/COMPETITIVE_GAP_ANALYSIS.md](docs/COMPETITIVE_GAP_ANALYSIS.md)
+- **Integration hub (SAP, Maximo, billing, SCADA, HR, spreadsheets):** [docs/INTEGRATION_HUB.md](docs/INTEGRATION_HUB.md)
 
 ---
 
