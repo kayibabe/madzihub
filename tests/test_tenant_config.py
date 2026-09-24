@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib
 import os
+import re
 import sys
 import unittest
 from pathlib import Path
@@ -156,8 +157,20 @@ class DemoTenantTests(unittest.TestCase):
                 logo = c.get("/api/config/logo")
                 self.assertEqual(logo.status_code, 200)
                 self.assertIn("svg", logo.headers["content-type"])
+                self.assertIn('aria-label="MadziHub"', logo.text)
 
                 html = c.get("/").text
+                # Every product brand asset the page links to must resolve,
+                # including the icons the web manifest points at.
+                brand = set(re.findall(r'"(/static/brand/[^"]+)"', html))
+                self.assertIn("/static/brand/favicon.svg", brand)
+                self.assertIn("/static/brand/madzihub-wordmark-dark.svg", brand)
+                manifest = c.get("/static/brand/site.webmanifest")
+                self.assertEqual(manifest.status_code, 200)
+                brand |= {i["src"] for i in manifest.json()["icons"]}
+                for url in sorted(brand):
+                    self.assertEqual(c.get(url).status_code, 200, url)
+                self.assertEqual(c.get("/favicon.ico").status_code, 200)
                 self.assertIn("<title>Lakeside Performance Hub</title>", html)
                 self.assertNotIn("SRWB", html)
                 self.assertNotIn("Southern Region", html)
