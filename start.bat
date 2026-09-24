@@ -109,15 +109,17 @@ if errorlevel 1 (
 
 echo         Waiting for the server to be ready...
 set READY=0
-for /l %%i in (1,1,30) do (
+for /l %%i in (1,1,60) do (
     if !READY!==0 (
         timeout /t 1 /nobreak >nul
-        powershell -NoProfile -Command "try { Invoke-WebRequest -Uri 'http://localhost:%PORT%/health' -UseBasicParsing -TimeoutSec 1 -ErrorAction Stop | Out-Null; exit 0 } catch { exit 1 }" >nul 2>&1
+        rem 127.0.0.1, not localhost: Windows tries IPv6 ::1 first, the server
+        rem listens on IPv4 only, and the fallback outlasts a short timeout.
+        powershell -NoProfile -Command "try { Invoke-WebRequest -Uri 'http://127.0.0.1:%PORT%/health' -UseBasicParsing -TimeoutSec 3 -ErrorAction Stop | Out-Null; exit 0 } catch { exit 1 }" >nul 2>&1
         if !errorlevel!==0 set READY=1
     )
 )
 if !READY!==0 (
-    echo  [WARN] The server did not respond within 30 seconds.
+    echo  [WARN] The server did not respond within 60 seconds.
     echo         Check logs\madzihub-error.log for startup errors.
     pause
     exit /b 1
