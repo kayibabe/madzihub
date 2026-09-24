@@ -6,11 +6,10 @@ import re
 import sys
 import unittest
 from pathlib import Path
-from tempfile import TemporaryDirectory
 
 from fastapi.testclient import TestClient
 
-from tests._app_loader import fresh_app
+from tests._app_loader import TemporaryDirectory, fresh_app
 from tests.fixtures.synthetic_dataset import build_records
 
 DEMO_ZONES = {"North": ["Lakeview", "Hillside"], "Central": ["Market"], "South": ["Riverside"]}

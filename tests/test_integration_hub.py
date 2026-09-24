@@ -10,12 +10,11 @@ import sqlite3
 import unittest
 from datetime import date
 from pathlib import Path
-from tempfile import TemporaryDirectory
 from unittest import mock
 
 from fastapi.testclient import TestClient
 
-from tests._app_loader import fresh_app
+from tests._app_loader import TemporaryDirectory, fresh_app
 
 
 def _boot(tmpdir: str):

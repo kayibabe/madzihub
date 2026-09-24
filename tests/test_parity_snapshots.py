@@ -13,11 +13,10 @@ import os
 import re
 import unittest
 from pathlib import Path
-from tempfile import TemporaryDirectory
 
 from fastapi.testclient import TestClient
 
-from tests._app_loader import fresh_app
+from tests._app_loader import TemporaryDirectory, fresh_app
 from tests.fixtures.synthetic_dataset import build_records
 
 SNAP_DIR = Path(__file__).parent / "snapshots"

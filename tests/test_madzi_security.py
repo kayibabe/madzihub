@@ -4,11 +4,10 @@ import os
 import unittest
 from importlib import reload
 from pathlib import Path
-from tempfile import TemporaryDirectory
 
 from fastapi.testclient import TestClient
 
-from tests._app_loader import fresh_app
+from tests._app_loader import TemporaryDirectory, fresh_app
 
 
 def _boot(tmpdir: str, **env):
