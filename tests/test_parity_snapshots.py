@@ -13,6 +13,7 @@ import os
 import re
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from fastapi.testclient import TestClient
 
@@ -62,6 +63,20 @@ def _normalise(obj):
     return obj
 
 
+def _sum_as_recorded(iterable, start=0):
+    """``sum()`` as Python <= 3.11 did it: plain left-to-right addition.
+
+    3.12 made float ``sum()`` compensated, which moves some totals across a
+    rounding boundary (10488.45 -> 10488.4 instead of 10488.5) and changes
+    float text in messages. The snapshots hold the uncompensated results, so
+    pin that behaviour to keep the comparison independent of the interpreter.
+    """
+    total = start
+    for value in iterable:
+        total = total + value
+    return total
+
+
 def _slug(path: str) -> str:
     return re.sub(r"[^A-Za-z0-9]+", "_", path.strip("/")).strip("_") + ".json"
 
@@ -82,7 +97,7 @@ class ParitySnapshotTest(unittest.TestCase):
     maxDiff = None
 
     def test_endpoints_match_snapshots(self):
-        with TemporaryDirectory() as tmpdir:
+        with TemporaryDirectory() as tmpdir, mock.patch("builtins.sum", _sum_as_recorded):
             main, database, auth = bootstrap(tmpdir)
             with TestClient(main.app) as client:
                 db = database.SessionLocal()
