@@ -144,7 +144,7 @@ body.mobile-nav-open{
 .tb-btn:focus-visible,
 #tb-upload-btn:focus-visible,
 #tb-alert-btn:focus-visible{
-  outline:2px solid #1A8FD1;
+  outline:2px solid #0E7C7B;
   outline-offset:2px;
 }
 
@@ -1023,6 +1023,8 @@ body.mobile-nav-open{
   body.printing-report .db-page{display:none !important;padding:0 !important;}
   body.printing-report .db-page.print-target{display:block !important;}
   body.printing-report .print-report-header{display:block !important;margin:0 0 14px;padding-bottom:10px;border-bottom:1px solid #D1D5DB;}
+  body.printing-report .prh-logo{display:block !important;float:right;height:52px;width:auto;margin:0 0 6px 16px;}
+  body.printing-report .print-report-header::after{content:"";display:block;clear:both;}
   body.printing-report .prh-org{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#6B7280;}
   body.printing-report .prh-title{font-size:20px;font-weight:700;line-height:1.15;color:#111827;margin-top:4px;}
   body.printing-report .prh-meta{font-size:11px;color:#4B5563;margin-top:4px;line-height:1.45;}
@@ -1068,6 +1070,6 @@ body.printing-report .report-page-standard .rpt-wrap{margin-top:8px !important}
   body.printing-report .prh-chip-good{border-color:#86EFAC;color:#166534}
   body.printing-report .prh-chip-amber{border-color:#FCD34D;color:#B45309}
   body.printing-report .prh-chip-danger{border-color:#FECACA;color:#B91C1C}
-  body.printing-report .prh-chip-blue{border-color:#BFDBFE;color:#1D4ED8}
+  body.printing-report .prh-chip-blue{border-color:#A7E3E2;color:#0A5F5E}
   body.printing-report .prh-chip-neutral{border-color:#D1D5DB;color:#374151}
 }

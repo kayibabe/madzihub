@@ -48,7 +48,7 @@
    },
    {
     "category": "nrw",
-    "detail": "YTD NRW of 34.4% is 9.4pp above the LWU 25% target. Review pipe breakdown hotspots and meter reading coverage.",
+    "detail": "YTD NRW of 34.4% is 9.4pp above the MadziHub 25% target. Review pipe breakdown hotspots and meter reading coverage.",
     "metric": "pct_nrw",
     "severity": "warning",
     "title": "NRW Above Target — 34.4% (target: 25.0%)",
@@ -57,7 +57,7 @@
    },
    {
     "category": "nrw",
-    "detail": "Central zone NRW of 35.0% exceeds the LWU 25% target.",
+    "detail": "Central zone NRW of 35.0% exceeds the MadziHub 25% target.",
     "metric": "pct_nrw",
     "severity": "warning",
     "title": "Central Zone — NRW Above Target at 35.0%",
@@ -66,7 +66,7 @@
    },
    {
     "category": "nrw",
-    "detail": "South zone NRW of 32.0% exceeds the LWU 25% target.",
+    "detail": "South zone NRW of 32.0% exceeds the MadziHub 25% target.",
     "metric": "pct_nrw",
     "severity": "warning",
     "title": "South Zone — NRW Above Target at 32.0%",

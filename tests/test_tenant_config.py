@@ -80,7 +80,8 @@ class FiscalCalendarTests(unittest.TestCase):
 
 
 PLACEHOLDERS = ("__ORG_NAME_COUNTRY__", "__ORG_COUNTRY__", "__ZONE_COUNT__", "__ZONE_PLURAL__", "__ORG_SHORT__", "__CURRENCY__", "__CUR_SYM__", "__NRW_TARGET__",
-                "__FY_MONTHS__", "__ZONE_COLORS__", "__PRODUCT_TITLE__", "__ORG_NAME__", "__PLAN_TITLE__")
+                "__FY_MONTHS__", "__ZONE_COLORS__", "__PRODUCT_TITLE__", "__TAGLINE__", "__BRAND_MODE__", "__ORG_LINE__", "__PRINT_LOGO__",
+                "__ORG_NAME__", "__PLAN_TITLE__")
 
 
 def _assert_valid_js(test: unittest.TestCase, js: str):
@@ -134,6 +135,22 @@ class RenderedAssetTests(unittest.TestCase):
         self.assertIn("'\\u0024 '", js)
         _assert_valid_js(self, js)
 
+    def test_tenant_logo_switches_to_tenant_branding(self):
+        import shutil
+        import yaml
+        with TemporaryDirectory() as d:
+            folder = Path(d) / "acme"
+            folder.mkdir()
+            cfg = yaml.safe_load(Path(RIVERBEND).read_text(encoding="utf-8"))
+            cfg["branding"]["logo"] = "logo.svg"
+            (folder / "tenant.yaml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
+            shutil.copy(Path(__file__).parents[1] / "app/static/brand/madzihub-mark.svg", folder / "logo.svg")
+            main, *_ = _boot(d, str(folder / "tenant.yaml"))
+            with TestClient(main.app) as c:
+                html = c.get("/").text
+                self.assertIn('data-brand="tenant"', html)
+                self.assertIn('src="/api/config/logo"', c.get("/static/assets/js/app-core.js").text)
+
     def test_js_text_keeps_dollar_but_blocks_injection(self):
         with TemporaryDirectory() as d:
             main, *_ = _boot(d, "demo")
@@ -160,7 +177,7 @@ class DemoTenantTests(unittest.TestCase):
                 h = {"Authorization": f"Bearer {auth.create_access_token('u', 'admin')}"}
 
                 pub = c.get("/api/config/public").json()
-                self.assertEqual(pub["short_name"], "LWU")
+                self.assertEqual(pub["short_name"], "MadziHub")
                 self.assertNotIn("identity", pub)
                 self.assertEqual(c.get("/api/config").status_code, 401)
 
@@ -187,7 +204,13 @@ class DemoTenantTests(unittest.TestCase):
                 for url in sorted(brand):
                     self.assertEqual(c.get(url).status_code, 200, url)
                 self.assertEqual(c.get("/favicon.ico").status_code, 200)
-                self.assertIn("<title>Lakeside Performance Hub</title>", html)
+                self.assertIn("<title>MadziHub</title>", html)
+                self.assertIn("Every drop, accounted for.", html)
+                self.assertNotIn("Performance Hub", html)
+                # No tenant logo: the full MadziHub lockup is the brand, and printed reports use it too.
+                self.assertIn('data-brand="product"', html)
+                self.assertIn("/static/brand/madzihub-logo-light.svg", html)
+                self.assertIn("/static/brand/madzihub-logo-light.svg", c.get("/static/assets/js/app-core.js").text)
                 self.assertNotIn("SRWB", html)
                 self.assertNotIn("Southern Region", html)
                 self.assertIn("3 Regions", html)

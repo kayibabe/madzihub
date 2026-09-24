@@ -32,7 +32,7 @@
     "id": "operations",
     "metrics": [
      {
-      "benchmark": "<25% (LWU target)",
+      "benchmark": "<25% (MadziHub target)",
       "flag": "WATCH",
       "name": "NRW Rate",
       "value": "34.4%"

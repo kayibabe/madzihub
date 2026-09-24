@@ -1,4 +1,4 @@
-# MadziHub demo budget: fictional figures for the Lakeside Water Utility (Demo).
+# MadziHub demo budget: fictional figures for the MadziHub demo tenant.
 # Loaded by scripts/seed_fiscal_years.py. Years are fiscal-year END years
 # (July start, so 2027 = July 2026 - June 2027). Monetary lines are in the
 # tenant currency (USD) unless a unit is given.

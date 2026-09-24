@@ -728,6 +728,7 @@ function mountExportBar(page){
     const ph=document.createElement('div');
     ph.className='print-report-header';
     ph.innerHTML= DOMPurify.sanitize(`
+      <img class="prh-logo" src="__PRINT_LOGO__" alt="">
       <div class="prh-org">__ORG_NAME__ · Operations &amp; Performance Dashboard</div>
       <div class="prh-title">${cfg.title}</div>
       <div class="prh-meta" id="prh-meta-${page}"></div>
@@ -863,7 +864,7 @@ function printReport(page){
   if(!document.querySelector(`#page-${page} .print-report-header`) && pageEl){
       const ph=document.createElement('div');
       ph.className='print-report-header';
-      ph.innerHTML= DOMPurify.sanitize(`<div class="prh-org">__ORG_NAME__ · Operations &amp; Performance Dashboard</div><div class="prh-title">${cfg.title}</div><div class="prh-meta" id="prh-meta-${page}"></div><div class="prh-meta prh-meta-secondary" id="prh-meta-secondary-${page}"></div><div class="prh-gov" id="prh-gov-${page}"></div>`);
+      ph.innerHTML= DOMPurify.sanitize(`<img class="prh-logo" src="__PRINT_LOGO__" alt=""><div class="prh-org">__ORG_NAME__ · Operations &amp; Performance Dashboard</div><div class="prh-title">${cfg.title}</div><div class="prh-meta" id="prh-meta-${page}"></div><div class="prh-meta prh-meta-secondary" id="prh-meta-secondary-${page}"></div><div class="prh-gov" id="prh-gov-${page}"></div>`);
       pageEl.prepend(ph);
   }
   if(!document.querySelector(`#page-${page} .print-report-footer`) && pageEl){

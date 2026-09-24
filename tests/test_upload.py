@@ -191,7 +191,9 @@ class TestMoneyHeaders(unittest.TestCase):
 
     def test_foreign_currency_columns_are_reported(self):
         from app.core.tenant import tenant
-        from app.services.excel_parser import foreign_currency_column
+        # Import ParseResult here too: other tests reload app.* for different tenants, so a
+        # module-level import could see another tenant's currency than `tenant` does.
+        from app.services.excel_parser import ParseResult, foreign_currency_column
         other = "EUR" if tenant.currency.code != "EUR" else "GBP"
         self.assertTrue(foreign_currency_column(f"TOTAL Sales {other}"))
         self.assertFalse(foreign_currency_column(f"TOTAL Sales {tenant.currency.code}"))

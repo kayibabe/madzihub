@@ -606,7 +606,7 @@
     "direction": "on_budget",
     "iwa_pi": "Op23/Wn1",
     "metric": "NRW %",
-    "note": "Vol-weighted. LWU target 0.0%, IWA <20%.",
+    "note": "Vol-weighted. MadziHub target 0.0%, IWA <20%.",
     "scope": "target",
     "unit": "%",
     "variance": 34.4,

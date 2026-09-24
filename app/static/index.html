@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- Version: index_v2_2_mobile_hotfix -->
-<html lang="en">
+<html lang="en" data-brand="__BRAND_MODE__">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -20,10 +20,10 @@
 <script src="/static/vendor/xlsx/xlsx.full.min.js?v=0.18.5"></script>
 <script src="/static/vendor/dompurify/purify.min.js?v=3.1.6"></script>
 <link rel="stylesheet" href="/static/vendor/fonts/fonts.css?v=5.3.0">
-<link rel="stylesheet" href="/static/assets/css/base.css?v=20260924-2">
+<link rel="stylesheet" href="/static/assets/css/base.css?v=20260924-4">
 
-<link rel="stylesheet" href="/static/assets/css/reports.css?v=20260924-1">
-<link rel="stylesheet" href="/static/assets/css/print.css?v=20260924-1">
+<link rel="stylesheet" href="/static/assets/css/reports.css?v=20260924-2">
+<link rel="stylesheet" href="/static/assets/css/print.css?v=20260924-2">
 <link rel="stylesheet" href="/static/assets/css/department-tabs.css?v=20260613-1">
 <link rel="stylesheet" href="/static/assets/css/integration-hub.css?v=20260924-3">
 </head>
@@ -43,13 +43,20 @@
   <!-- Centred login card -->
   <div class="login-card">
 
-    <div class="login-form-logo-wrap">
+    <!-- Product branding: the full MadziHub lockup (logo, name, strapline, tagline) -->
+    <h1 class="login-lockup brand-product-only">
+      <img class="brand-on-light" src="/static/brand/madzihub-logo-light.svg" alt="MadziHub: Water Utility Performance &amp; Intelligence Platform. Every drop, accounted for.">
+      <img class="brand-on-dark" src="/static/brand/madzihub-logo-dark.svg" alt="MadziHub: Water Utility Performance &amp; Intelligence Platform. Every drop, accounted for.">
+    </h1>
+
+    <!-- Tenant branding: the utility's own logo, title and tagline -->
+    <div class="login-form-logo-wrap brand-tenant-only">
       <img src="/api/config/logo" alt="__ORG_NAME__" class="login-form-logo">
     </div>
 
-    <div class="login-brand" style="text-align:center;margin:.25rem 0 .9rem">
+    <div class="login-brand brand-tenant-only" style="text-align:center;margin:.25rem 0 .9rem">
       <div class="login-brand-name" style="font-size:1.05rem;font-weight:700;letter-spacing:-.01em;color:var(--ds-text-primary,#0f172a)">__PRODUCT_TITLE__</div>
-      <div class="login-brand-strap" style="font-size:.74rem;color:var(--muted,#64748b);margin-top:2px">Enterprise performance &amp; intelligence — IWA/IBNET aligned</div>
+      <div class="login-brand-strap" style="font-size:.74rem;color:var(--muted,#64748b);margin-top:2px">__TAGLINE__</div>
     </div>
 
     <div class="login-sub" style="text-align:center;margin-bottom:1rem">Sign in to continue</div>
@@ -147,7 +154,7 @@
 
     <!-- Footer -->
     <div class="login-footer">
-    <div class="login-powered">
+    <div class="login-powered brand-tenant-only">
       <span>Powered by</span>
       <img class="brand-on-light" src="/static/brand/madzihub-wordmark-light.svg" alt="MadziHub" height="22">
       <img class="brand-on-dark" src="/static/brand/madzihub-wordmark-dark.svg" alt="MadziHub" height="22">
@@ -202,12 +209,12 @@
           <!-- default state -->
           <div class="um-drop-icon" id="um-drop-icon-wrap">
             <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
-              <rect x="4" y="3" width="16" height="20" rx="2" fill="#BFDBFE"/>
-              <rect x="8" y="3" width="16" height="20" rx="2" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1.2"/>
-              <rect x="10" y="9" width="10" height="1.5" rx=".75" fill="#3B82F6"/>
-              <rect x="10" y="12.5" width="7" height="1.5" rx=".75" fill="#93C5FD"/>
-              <rect x="10" y="16" width="9" height="1.5" rx=".75" fill="#93C5FD"/>
-              <circle cx="24" cy="24" r="7" fill="#1A8FD1"/>
+              <rect x="4" y="3" width="16" height="20" rx="2" fill="#A7E3E2"/>
+              <rect x="8" y="3" width="16" height="20" rx="2" fill="#ECFBFA" stroke="#7FD3D2" stroke-width="1.2"/>
+              <rect x="10" y="9" width="10" height="1.5" rx=".75" fill="#16A9A8"/>
+              <rect x="10" y="12.5" width="7" height="1.5" rx=".75" fill="#7FD3D2"/>
+              <rect x="10" y="16" width="9" height="1.5" rx=".75" fill="#7FD3D2"/>
+              <circle cx="24" cy="24" r="7" fill="#0E7C7B"/>
               <path d="M24 20.5v7M21 24l3-3 3 3" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
@@ -248,7 +255,7 @@
       <!-- Stage 2: Preview summary (shown after parsing) -->
       <div id="um-preview">
         <div class="um-preview-hdr">
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 4v4m0 2v1" stroke="#1A8FD1" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 4v4m0 2v1" stroke="#0E7C7B" stroke-width="1.5" stroke-linecap="round"/></svg>
           <span class="um-preview-hdr-title">Validation Preview</span>
           <span id="um-preview-period" style="font-size:11px;color:var(--ds-text-muted);font-weight:600"></span>
         </div>
@@ -500,8 +507,13 @@
 
     <!-- Logo -->
     <div class="nav-logo" onclick="goToRoleHome()" title="Open your default home">
-      <img src="/api/config/logo" alt="__ORG_SHORT__">
-      <div>
+      <div class="nav-lockup brand-product-only">
+        <img class="brand-on-light" src="/static/brand/madzihub-wordmark-light.svg" alt="MadziHub">
+        <img class="brand-on-dark" src="/static/brand/madzihub-wordmark-dark.svg" alt="MadziHub">
+        <div class="nls">__ORG_LINE__</div>
+      </div>
+      <img class="brand-tenant-only" src="/api/config/logo" alt="__ORG_SHORT__">
+      <div class="brand-tenant-only">
         <div class="nlt">__PRODUCT_TITLE__</div>
         <div class="nls">__ORG_NAME__</div>
       </div>
@@ -1536,7 +1548,7 @@
       <div class="pg-hdr"><div class="pg-hdr-left"><div class="pg-title">Production &amp; Non-Revenue Water</div><div class="pg-meta" id="pg-meta-production">FY — · All Zones · All Months</div><div class="pg-sub">Volume produced · revenue water · non-revenue water</div></div></div>
 
       <div class="ex-section">
-        <div class="ex-hdr"><span class="ex-dot" style="background:#1A8FD1"></span><span class="ex-title">Key Production Metrics</span><span class="ex-sub">— Volume, NRW rate and efficiency — IWA Op23/Op24</span></div>
+        <div class="ex-hdr"><span class="ex-dot" style="background:#0E7C7B"></span><span class="ex-title">Key Production Metrics</span><span class="ex-sub">— Volume, NRW rate and efficiency — IWA Op23/Op24</span></div>
         <div id="pr-kpis" class="kpi-row kpi-g4"></div>
       </div>
 
@@ -1590,7 +1602,7 @@
       </div>
 
       <div class="ex-section">
-        <div class="ex-hdr"><span class="ex-dot" style="background:#1A8FD1"></span><span class="ex-title">Monthly Cost Trends</span><span class="ex-sub">— Chemical and electricity spend over time</span></div>
+        <div class="ex-hdr"><span class="ex-dot" style="background:#0E7C7B"></span><span class="ex-title">Monthly Cost Trends</span><span class="ex-sub">— Chemical and electricity spend over time</span></div>
         <div class="chart-row">
           <div class="chart-card"><div class="chart-title">Chemical Cost — Monthly (__CURRENCY__)</div><div class="chart-subtitle">Monthly treatment chemical spend across the selected scope.</div><div class="ch-wrap" style="height:185px"><canvas id="ch-wt-chem"></canvas></div></div>
           <div class="chart-card"><div class="chart-title">Power Usage — Monthly (kWh)</div><div class="chart-subtitle">Electricity consumed for treatment and pumping operations.</div><div class="ch-wrap" style="height:185px"><canvas id="ch-wt-power"></canvas></div></div>
@@ -1623,7 +1635,7 @@
       <div class="pg-hdr"><div class="pg-hdr-left"><div class="pg-title">Customer Accounts</div><div class="pg-meta" id="pg-meta-customers">FY — · All Zones · All Months</div><div class="pg-sub">Active accounts · postpaid and prepaid by zone</div></div></div>
 
       <div class="ex-section">
-        <div class="ex-hdr"><span class="ex-dot" style="background:#1A8FD1"></span><span class="ex-title">Customer Base Metrics</span><span class="ex-sub">— Active accounts by segment and zone — IWA Cu1</span></div>
+        <div class="ex-hdr"><span class="ex-dot" style="background:#0E7C7B"></span><span class="ex-title">Customer Base Metrics</span><span class="ex-sub">— Active accounts by segment and zone — IWA Cu1</span></div>
         <div id="cu-kpis" class="kpi-row kpi-g4"></div>
       </div>
 
@@ -1682,7 +1694,7 @@
       </div>
 
       <div class="ex-section">
-        <div class="ex-hdr"><span class="ex-dot" style="background:#1A8FD1"></span><span class="ex-title">Applications & Delivery</span><span class="ex-sub">— Demand vs completions and zone distribution</span></div>
+        <div class="ex-hdr"><span class="ex-dot" style="background:#0E7C7B"></span><span class="ex-title">Applications & Delivery</span><span class="ex-sub">— Demand vs completions and zone distribution</span></div>
         <div class="chart-row">
           <div class="chart-card"><div class="chart-title">Applications vs Connections Completed</div><div class="chart-subtitle">Monthly comparison of new connection demand against completed installations.</div><div class="ch-wrap" style="height:185px"><canvas id="ch-cn-main"></canvas></div></div>
           <div class="chart-card"><div class="chart-title">New Connections by Zone</div><div class="chart-subtitle">Current-period distribution of completed connections by zone.</div><div class="ch-wrap" style="height:185px"><canvas id="ch-cn-zone"></canvas></div></div>
@@ -1811,7 +1823,7 @@
     <!-- Profitability / Income Statement -->
     <div id="page-profitability" class="db-page report-page-standard">
       <div class="pg-hdr"><div class="pg-hdr-left"><div class="pg-title">Profitability</div><div class="pg-meta" id="pg-meta-profitability">FY — · All Zones · All Months</div><div class="pg-sub">Revenue vs operating cost · operating surplus · cost ratio — the plan's turnaround goal</div></div></div>
-      <div id="prof-notice" style="margin:.5rem 0;padding:.6rem 1rem;border-radius:8px;font-size:.8rem;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.2);color:#1e40af">Operating surplus is computed from zone monthly returns (revenue less captured operating costs). It excludes depreciation, finance costs and head-office overheads, so it is an operating measure — not statutory net profit.</div>
+      <div id="prof-notice" style="margin:.5rem 0;padding:.6rem 1rem;border-radius:8px;font-size:.8rem;background:rgba(22,169,168,.07);border:1px solid rgba(22,169,168,.2);color:#142E49">Operating surplus is computed from zone monthly returns (revenue less captured operating costs). It excludes depreciation, finance costs and head-office overheads, so it is an operating measure — not statutory net profit.</div>
       <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#16A34A"></span><span class="ex-title">Operating Result Summary</span><span class="ex-sub">— Revenue, operating cost and surplus</span></div><div id="profitability-kpis" class="kpi-row kpi-g4"></div></div>
       <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#0EA5E9"></span><span class="ex-title">Revenue vs Cost Trend &amp; Zone</span><span class="ex-sub">— Monthly operating result and zone profitability</span></div>
         <div class="chart-row">
@@ -1873,7 +1885,7 @@
       </div>
 
       <div class="ex-section">
-        <div class="ex-hdr"><span class="ex-dot" style="background:#1A8FD1"></span><span class="ex-title">Lead Times & Conversion</span><span class="ex-sub">— Days to quote, days to connect and application delivery</span></div>
+        <div class="ex-hdr"><span class="ex-dot" style="background:#0E7C7B"></span><span class="ex-title">Lead Times & Conversion</span><span class="ex-sub">— Days to quote, days to connect and application delivery</span></div>
         <div class="chart-row">
           <div class="chart-card"><div class="chart-title">Days to Quotation & Days to Connect</div><div class="chart-subtitle">Average service lead times — useful for customer experience and process-efficiency oversight.</div><div class="ch-wrap" style="height:185px"><canvas id="ch-co-days"></canvas></div></div>
           <div class="chart-card"><div class="chart-title">Applications vs Completed Connections</div><div class="chart-subtitle">Demand vs completions — shows conversion performance and service delivery bottlenecks.</div><div class="ch-wrap" style="height:185px"><canvas id="ch-co-conn"></canvas></div></div>
@@ -1928,7 +1940,7 @@
       </div>
 
       <div class="ex-section">
-        <div class="ex-hdr"><span class="ex-dot" style="background:#1A8FD1"></span><span class="ex-title">Extension Activity</span><span class="ex-sub">— Pipe size composition and monthly installation trend</span></div>
+        <div class="ex-hdr"><span class="ex-dot" style="background:#0E7C7B"></span><span class="ex-title">Extension Activity</span><span class="ex-sub">— Pipe size composition and monthly installation trend</span></div>
         <div class="chart-row">
           <div class="chart-card"><div class="chart-title">Development Lines by Size Class (m)</div><div class="chart-subtitle">Installed pipeline length by diameter class, showing network extension composition.</div><div class="ch-wrap" style="height:185px"><canvas id="ch-pl-split"></canvas></div></div>
           <div class="chart-card"><div class="chart-title">Development Lines Installed — Monthly (m)</div><div class="chart-subtitle">Monthly extension activity in metres, supporting capital delivery monitoring.</div><div class="ch-wrap" style="height:185px"><canvas id="ch-pl-main"></canvas></div></div>
@@ -1947,7 +1959,7 @@
       <div class="pg-hdr"><div class="pg-hdr-left"><div class="pg-title">Billed Amounts</div><div class="pg-meta" id="pg-meta-billed">FY — · All Zones · All Months</div><div class="pg-sub">Postpaid and prepaid billing · by month and zone</div></div></div>
 
       <div class="ex-section">
-        <div class="ex-hdr"><span class="ex-dot" style="background:#1A8FD1"></span><span class="ex-title">Billing Summary</span><span class="ex-sub">— Total billed, segment split and revenue performance</span></div>
+        <div class="ex-hdr"><span class="ex-dot" style="background:#0E7C7B"></span><span class="ex-title">Billing Summary</span><span class="ex-sub">— Total billed, segment split and revenue performance</span></div>
         <div id="bi-kpis" class="kpi-row kpi-g3"></div>
       </div>
 
@@ -1983,7 +1995,7 @@
       </div>
 
       <div class="ex-section">
-        <div class="ex-hdr"><span class="ex-dot" style="background:#1A8FD1"></span><span class="ex-title">Billed vs Collected Trend</span><span class="ex-sub">— Monthly cash conversion performance</span></div>
+        <div class="ex-hdr"><span class="ex-dot" style="background:#0E7C7B"></span><span class="ex-title">Billed vs Collected Trend</span><span class="ex-sub">— Monthly cash conversion performance</span></div>
         <div class="chart-row">
           <div class="chart-card chart-full"><div class="chart-title">Billed vs Collected — Monthly (__CURRENCY__)</div><div class="chart-subtitle">Monthly billed revenue against cash collected, showing cash conversion over time.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-cl-main"></canvas></div></div>
         </div>
@@ -2014,7 +2026,7 @@
       </div>
 
       <div class="ex-section">
-        <div class="ex-hdr"><span class="ex-dot" style="background:#1A8FD1"></span><span class="ex-title">Monthly Charge Trend</span><span class="ex-sub">— Service charge vs meter rental over time</span></div>
+        <div class="ex-hdr"><span class="ex-dot" style="background:#0E7C7B"></span><span class="ex-title">Monthly Charge Trend</span><span class="ex-sub">— Service charge vs meter rental over time</span></div>
         <div class="chart-row">
           <div class="chart-card chart-full"><div class="chart-title">Service Charge vs Meter Rental — Monthly (__CURRENCY__)</div><div class="chart-subtitle">Monthly service charge and meter-rental income across the reporting period.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-ch-main"></canvas></div></div>
         </div>
@@ -2105,7 +2117,7 @@
       </div>
 
       <div class="ex-section">
-        <div class="ex-hdr"><span class="ex-dot" style="background:#1A8FD1"></span><span class="ex-title">Fuel and Movement Trend</span><span class="ex-sub">— Fuel consumed, fuel spend, and transport activity over time</span></div>
+        <div class="ex-hdr"><span class="ex-dot" style="background:#0E7C7B"></span><span class="ex-title">Fuel and Movement Trend</span><span class="ex-sub">— Fuel consumed, fuel spend, and transport activity over time</span></div>
         <div class="chart-row">
           <div class="chart-card"><div class="chart-title">Fuel Use vs Fuel Cost</div><div class="chart-subtitle">Whether fuel spend is rising in line with actual litres consumed.</div><div class="ch-wrap" style="height:185px"><canvas id="ch-wf-main"></canvas></div></div>
           <div class="chart-card"><div class="chart-title">Fleet Activity by Zone</div><div class="chart-subtitle">Distance covered and fuel used by zone.</div><div class="ch-wrap" style="height:185px"><canvas id="ch-wf-zone"></canvas></div></div>
@@ -2129,21 +2141,21 @@
     <div id="page-pipe-materials" class="db-page report-page-standard">
       <div class="pg-hdr"><div class="pg-hdr-left"><div class="pg-title">Pipe Failure by Material and Size</div><div class="pg-meta" id="pg-meta-pipe-materials">FY — · All Zones · All Months</div><div class="pg-sub">Engineering-level pipe failures by material family and size class</div></div></div>
       <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#DC2626"></span><span class="ex-title">Material Failure Summary</span><span class="ex-sub">- Pipe failures by material class and engineering detail</span></div><div id="pm-kpis" class="kpi-row kpi-g3"></div></div>
-      <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#1A8FD1"></span><span class="ex-title">Failure Trend and Size Exposure</span><span class="ex-sub">- Material trend over time and the largest size-level problem points</span></div><div class="chart-row"><div class="chart-card"><div class="chart-title">Pipe Failures by Material - Monthly</div><div class="chart-subtitle">Use this to see which material families are driving most failures over time.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-pm-main"></canvas></div></div><div class="chart-card"><div class="chart-title">Top Sizes by Failure Count</div><div class="chart-subtitle">The highest-count size classes show where detailed engineering review is most needed.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-pm-size"></canvas></div></div></div></div>
+      <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#0E7C7B"></span><span class="ex-title">Failure Trend and Size Exposure</span><span class="ex-sub">- Material trend over time and the largest size-level problem points</span></div><div class="chart-row"><div class="chart-card"><div class="chart-title">Pipe Failures by Material - Monthly</div><div class="chart-subtitle">Use this to see which material families are driving most failures over time.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-pm-main"></canvas></div></div><div class="chart-card"><div class="chart-title">Top Sizes by Failure Count</div><div class="chart-subtitle">The highest-count size classes show where detailed engineering review is most needed.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-pm-size"></canvas></div></div></div></div>
       <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#64748B"></span><span class="ex-title">Monthly Size Detail</span><span class="ex-sub">- Detailed table</span></div><div class="tbl-section"><div id="tbl-pipe-materials"></div></div></div>
     </div>
 
     <div id="page-segment-revenue" class="db-page report-page-standard">
       <div class="pg-hdr"><div class="pg-hdr-left"><div class="pg-title">Customer Segment Revenue</div><div class="pg-meta" id="pg-meta-segment-revenue">FY — · All Zones · All Months</div><div class="pg-sub">Revenue, cash, service charge, and meter rental by customer segment</div></div></div>
       <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#16A34A"></span><span class="ex-title">Segment Revenue Summary</span><span class="ex-sub">- What was billed, what was collected, and where secondary revenue comes from</span></div><div id="sr-kpis" class="kpi-row kpi-g3"></div></div>
-      <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#1A8FD1"></span><span class="ex-title">Segment Billing and Collections</span><span class="ex-sub">- Monthly segment mix, cash conversion, and zone concentration</span></div><div class="chart-row"><div class="chart-card"><div class="chart-title">Billed Revenue by Segment</div><div class="chart-subtitle">This shows which customer segments are driving billed revenue each month.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-sr-main"></canvas></div></div><div class="chart-card"><div class="chart-title">Cash Collected by Segment</div><div class="chart-subtitle">Use this to compare whether cash is keeping pace with billed demand by segment.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-sr-cash"></canvas></div></div></div><div class="chart-row" style="margin-top:14px"><div class="chart-card chart-full"><div class="chart-title">Billed vs Collected by Zone</div><div class="chart-subtitle">Zone-level comparison of billed demand against cash realized.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-sr-zone"></canvas></div></div></div></div>
+      <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#0E7C7B"></span><span class="ex-title">Segment Billing and Collections</span><span class="ex-sub">- Monthly segment mix, cash conversion, and zone concentration</span></div><div class="chart-row"><div class="chart-card"><div class="chart-title">Billed Revenue by Segment</div><div class="chart-subtitle">This shows which customer segments are driving billed revenue each month.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-sr-main"></canvas></div></div><div class="chart-card"><div class="chart-title">Cash Collected by Segment</div><div class="chart-subtitle">Use this to compare whether cash is keeping pace with billed demand by segment.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-sr-cash"></canvas></div></div></div><div class="chart-row" style="margin-top:14px"><div class="chart-card chart-full"><div class="chart-title">Billed vs Collected by Zone</div><div class="chart-subtitle">Zone-level comparison of billed demand against cash realized.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-sr-zone"></canvas></div></div></div></div>
       <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#64748B"></span><span class="ex-title">Monthly Scheme Detail</span><span class="ex-sub">- Detailed table</span></div><div class="tbl-section"><div id="tbl-segment-revenue"></div></div></div>
     </div>
 
     <div id="page-class-connections" class="db-page report-page-standard">
       <div class="pg-hdr"><div class="pg-hdr-left"><div class="pg-title">Connection Pipeline by Customer Class</div><div class="pg-meta" id="pg-meta-class-connections">FY — · All Zones · All Months</div><div class="pg-sub">Backlog, applications, completions, and carried-forward pipeline by customer class</div></div></div>
       <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#0D9488"></span><span class="ex-title">Connection Pipeline Summary</span><span class="ex-sub">- Which customer classes are moving, and which are carrying backlog</span></div><div id="cc-kpis" class="kpi-row kpi-g3"></div></div>
-      <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#1A8FD1"></span><span class="ex-title">Class Completion Trend</span><span class="ex-sub">- Monthly completions by class and zone-level concentration</span></div><div class="chart-row"><div class="chart-card"><div class="chart-title">Completed Connections by Class - Monthly</div><div class="chart-subtitle">This shows which classes are being delivered consistently over time.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-cc-main"></canvas></div></div><div class="chart-card"><div class="chart-title">Completed Connections by Zone</div><div class="chart-subtitle">Use this to see where class-level connection work is concentrated.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-cc-zone"></canvas></div></div></div></div>
+      <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#0E7C7B"></span><span class="ex-title">Class Completion Trend</span><span class="ex-sub">- Monthly completions by class and zone-level concentration</span></div><div class="chart-row"><div class="chart-card"><div class="chart-title">Completed Connections by Class - Monthly</div><div class="chart-subtitle">This shows which classes are being delivered consistently over time.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-cc-main"></canvas></div></div><div class="chart-card"><div class="chart-title">Completed Connections by Zone</div><div class="chart-subtitle">Use this to see where class-level connection work is concentrated.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-cc-zone"></canvas></div></div></div></div>
       <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#64748B"></span><span class="ex-title">Monthly Class Detail</span><span class="ex-sub">- Detailed table</span></div><div class="tbl-section"><div id="tbl-class-connections"></div></div></div>
     </div>
 
@@ -2180,7 +2192,7 @@
       <!-- §2 Revenue Performance ───────────────────────────────────── -->
       <div class="ex-section">
         <div class="ex-hdr">
-          <span class="ex-dot" style="background:#1A8FD1"></span>
+          <span class="ex-dot" style="background:#0E7C7B"></span>
           <span class="ex-title">Revenue Performance</span>
           <span class="ex-sub">IWA Fi1 · Fiscal-year tariff per m³ · All revenue variance = volume effect</span>
         </div>
@@ -2318,7 +2330,7 @@
       <!-- §6b Zone Performance League Table -->
       <div class="ex-section">
         <div class="ex-hdr">
-          <span class="ex-dot" style="background:#1A8FD1"></span>
+          <span class="ex-dot" style="background:#0E7C7B"></span>
           <span class="ex-title">Zone Performance Scorecard</span>
           <span class="ex-sub">5 zones · Composite Performance Score · IWA-aligned dimensions · ranked by overall score</span>
         </div>
@@ -3023,7 +3035,7 @@
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
                   <div>
                     <label style="font-size:11px;font-weight:600;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em">Full Legal Name</label>
-                    <input type="text" id="org-name" class="adm-input" style="margin-top:4px;width:100%" placeholder="e.g. Lakeside Water Utility">
+                    <input type="text" id="org-name" class="adm-input" style="margin-top:4px;width:100%" placeholder="e.g. City Water Utility">
                   </div>
                   <div>
                     <label style="font-size:11px;font-weight:600;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em">Acronym / Short Name</label>
@@ -3400,7 +3412,7 @@
 </div><!-- /madzi-app -->
 </div><!-- /app-view -->
 
-<script src="/static/assets/js/app-core.js?v=20260924-8"></script>
+<script src="/static/assets/js/app-core.js?v=20260924-9"></script>
 <script src="/static/assets/js/department-tabs.js?v=20260924-1"></script>
 <script src="/static/assets/js/integration-hub.js?v=20260924-3"></script>
 

@@ -297,9 +297,16 @@ def _brand_values() -> dict:
         profile = db.query(OrgProfile).filter(OrgProfile.id == 1).first()
     finally:
         db.close()
+    name = (profile and profile.org_name) or ident.name
     return {
         "product_title": ident.product_title,
-        "name": (profile and profile.org_name) or ident.name,
+        "tagline": ident.tagline,
+        # "product": no tenant logo, so the page shows the full MadziHub lockup.
+        # "tenant": the utility's own logo, title and tagline.
+        "brand_mode": "tenant" if tenant.logo_path else "product",
+        # Organisation line under the sidebar wordmark, blank when it would repeat the product name.
+        "org_line": "" if name.strip().lower() == ident.product_title.strip().lower() else name,
+        "name": name,
         "short_name": (profile and profile.short_name) or ident.short_name,
         "currency": tenant.currency.code,
         "currency_symbol": tenant.currency.symbol,
@@ -338,6 +345,8 @@ def serve_app_core_js(request: Request):
         "__ORG_SHORT__": _js_text(brand["short_name"]),
         "__ORG_NAME_COUNTRY__": _js_text(" · ".join(v for v in (brand["name"], brand["country"]) if v)),
         "__ORG_NAME__": _js_text(brand["name"]),
+        "__PRINT_LOGO__": ("/static/brand/madzihub-logo-light.svg" if brand["brand_mode"] == "product"
+                           else "/api/config/logo"),
         "__PLAN_TITLE__": _js_text(brand["plan_title"]),
         "__CURRENCY__": _js_text(brand["currency"]),
         "__CUR_SYM__": _js_text(brand["currency_symbol"]),
@@ -405,6 +414,9 @@ def _brand_html(content: str) -> str:
     brand = _brand_values()
     values = {
         "__PRODUCT_TITLE__": brand["product_title"],
+        "__TAGLINE__": brand["tagline"],
+        "__BRAND_MODE__": brand["brand_mode"],
+        "__ORG_LINE__": brand["org_line"],
         "__ORG_NAME__": brand["name"],
         "__ORG_SHORT__": brand["short_name"],
         "__CURRENCY__": brand["currency"],
