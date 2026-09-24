@@ -74,6 +74,59 @@ class FiscalCalendarTests(unittest.TestCase):
         self.assertEqual(u.fy_quarter(12), "Q4")
 
 
+PLACEHOLDERS = ("__ORG_SHORT__", "__CURRENCY__", "__CUR_SYM__", "__NRW_TARGET__",
+                "__FY_MONTHS__", "__ZONE_COLORS__", "__PRODUCT_TITLE__", "__ORG_NAME__", "__PLAN_TITLE__")
+
+
+def _assert_valid_js(test: unittest.TestCase, js: str):
+    import shutil
+    import subprocess
+    node = shutil.which("node")
+    if not node:
+        return
+    with TemporaryDirectory() as d:
+        path = Path(d) / "app.js"
+        path.write_text(js, encoding="utf-8")
+        r = subprocess.run([node, "--check", str(path)], capture_output=True, text=True)
+        test.assertEqual(r.returncode, 0, r.stderr[:500])
+
+
+class RenderedAssetTests(unittest.TestCase):
+    def tearDown(self):
+        os.environ.pop("MADZI_TENANT", None)
+
+    def _render(self, tenant):
+        with TemporaryDirectory() as d:
+            main, *_ = _boot(d, tenant)
+            with TestClient(main.app) as c:
+                r = c.get("/static/assets/js/app-core.js")
+                self.assertEqual(r.status_code, 200)
+                again = c.get("/static/assets/js/app-core.js", headers={"If-None-Match": r.headers["etag"]})
+                self.assertEqual(again.status_code, 304)
+                return r.text
+
+    def test_srwb_js_keeps_reference_values(self):
+        js = self._render("srwb")
+        for p in PLACEHOLDERS:
+            self.assertNotIn(p, js)
+        self.assertIn("nrw:27,", js)
+        self.assertIn("'SRWB <27%'", js)
+        self.assertIn("'MK '", js)
+        self.assertIn('const ALL_FY_MONTHS=["April",', js)
+        _assert_valid_js(self, js)
+
+    def test_demo_js_uses_demo_values(self):
+        js = self._render("demo")
+        for p in PLACEHOLDERS:
+            self.assertNotIn(p, js)
+        for legacy in ("SRWB", "MWK", "'MK ", "Liwonde"):
+            self.assertNotIn(legacy, js)
+        self.assertIn("nrw:25,", js)
+        self.assertIn('const ALL_FY_MONTHS=["July",', js)
+        self.assertIn('"North": "#0f766e"', js)
+        _assert_valid_js(self, js)
+
+
 class DemoTenantTests(unittest.TestCase):
     def tearDown(self):
         os.environ.pop("MADZI_TENANT", None)

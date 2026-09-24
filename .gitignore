@@ -42,3 +42,4 @@ dataupdater/FY2627/A6D65900
 !tenants/*/samples/**
 dataupdater/
 tenants/*/secrets*
+!.env.example

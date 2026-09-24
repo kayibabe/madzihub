@@ -19,7 +19,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 import os
 import time
@@ -276,6 +276,70 @@ app.include_router(upload.router, dependencies=[Depends(require_admin)])
 # ── Static assets ─────────────────────────────────────────────
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 INDEX_PATH  = os.path.join(STATIC_DIR, "index.html")
+APP_CORE_JS = os.path.join(STATIC_DIR, "assets", "js", "app-core.js")
+
+
+def _brand_values() -> dict:
+    """Tenant identity with admin org-profile overrides applied."""
+    from app.core.tenant import tenant
+    from app.database import OrgProfile
+    ident = tenant.identity
+    db = SessionLocal()
+    try:
+        profile = db.query(OrgProfile).filter(OrgProfile.id == 1).first()
+    finally:
+        db.close()
+    return {
+        "product_title": ident.product_title,
+        "name": (profile and profile.org_name) or ident.name,
+        "short_name": (profile and profile.short_name) or ident.short_name,
+        "currency": tenant.currency.code,
+        "currency_symbol": tenant.currency.symbol,
+        "plan_title": tenant.strategic_plan.title,
+    }
+
+
+def _js_text(value: str) -> str:
+    """Make a value safe inside any JS string literal ('', "", ``) and in innerHTML."""
+    import json
+    cleaned = "".join(ch for ch in (value or "") if ch not in "<>\"'`\\$")
+    return json.dumps(cleaned)[1:-1]
+
+
+_JS_CACHE: dict = {}
+
+
+# Registered before the /static mount so it takes precedence over the static file.
+@app.get("/static/assets/js/app-core.js", include_in_schema=False)
+def serve_app_core_js(request: Request):
+    """Serve app-core.js with tenant placeholders filled (labels, currency, targets, calendar)."""
+    import hashlib
+    import json
+    from app.core.tenant import tenant
+    from app.utils import MONTHS_ORDER
+
+    brand = _brand_values()
+    subs = {
+        "__ORG_SHORT__": _js_text(brand["short_name"]),
+        "__CURRENCY__": _js_text(brand["currency"]),
+        "__CUR_SYM__": _js_text(brand["currency_symbol"]),
+        "__NRW_TARGET__": f"{tenant.target('nrw_pct', 25.0):g}",
+        "__FY_MONTHS__": json.dumps(MONTHS_ORDER),
+        "__ZONE_COLORS__": json.dumps(tenant.zone_colors),
+    }
+    key = (os.path.getmtime(APP_CORE_JS), tuple(sorted(subs.items())))
+    if key not in _JS_CACHE:
+        _JS_CACHE.clear()
+        with open(APP_CORE_JS, encoding="utf-8") as f:
+            content = f.read()
+        for placeholder, value in subs.items():
+            content = content.replace(placeholder, value)
+        _JS_CACHE[key] = (content, hashlib.sha256(content.encode()).hexdigest()[:32])
+    content, etag = _JS_CACHE[key]
+    headers = {"Cache-Control": "no-cache", "ETag": f'"{etag}"'}
+    if request.headers.get("if-none-match") == f'"{etag}"':
+        return Response(status_code=304, headers=headers)
+    return Response(content, media_type="application/javascript", headers=headers)
 if os.path.isdir(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
@@ -320,22 +384,13 @@ async def add_request_context(request: Request, call_next):
 def _brand_html(content: str) -> str:
     """Fill the tenant placeholders in index.html (HTML-escaped)."""
     from html import escape
-    from app.core.tenant import tenant
-    ident = tenant.identity
-    try:
-        db = SessionLocal()
-        from app.database import OrgProfile
-        profile = db.query(OrgProfile).filter(OrgProfile.id == 1).first()
-    finally:
-        db.close()
-    name = (profile and profile.org_name) or ident.name
-    short = (profile and profile.short_name) or ident.short_name
+    brand = _brand_values()
     values = {
-        "__PRODUCT_TITLE__": ident.product_title,
-        "__ORG_NAME__": name,
-        "__ORG_SHORT__": short,
-        "__CURRENCY__": tenant.currency.code,
-        "__PLAN_TITLE__": tenant.strategic_plan.title,
+        "__PRODUCT_TITLE__": brand["product_title"],
+        "__ORG_NAME__": brand["name"],
+        "__ORG_SHORT__": brand["short_name"],
+        "__CURRENCY__": brand["currency"],
+        "__PLAN_TITLE__": brand["plan_title"],
     }
     for key, value in values.items():
         content = content.replace(key, escape(value or ""))

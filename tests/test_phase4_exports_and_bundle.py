@@ -33,17 +33,17 @@ class TestReleaseBundleValidator(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             zip_path = Path(tmpdir) / 'bad.zip'
             with zipfile.ZipFile(zip_path, 'w') as zf:
-                zf.writestr('opswebmobile/data/srwb.secret', 'secret')
-                zf.writestr('opswebmobile/app/main.py', 'print(1)')
-                zf.writestr('opswebmobile/requirements.txt', 'fastapi')
-                zf.writestr('opswebmobile/.env.example', 'KEY=VALUE')
+                zf.writestr('madzihub/data/srwb.secret', 'secret')
+                zf.writestr('madzihub/app/main.py', 'print(1)')
+                zf.writestr('madzihub/requirements.txt', 'fastapi')
+                zf.writestr('madzihub/.env.example', 'KEY=VALUE')
             self.assertEqual(validate_bundle(zip_path), 1)
 
     def test_validator_accepts_minimal_safe_bundle(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             zip_path = Path(tmpdir) / 'good.zip'
             with zipfile.ZipFile(zip_path, 'w') as zf:
-                zf.writestr('opswebmobile/app/main.py', 'print(1)')
-                zf.writestr('opswebmobile/requirements.txt', 'fastapi')
-                zf.writestr('opswebmobile/.env.example', 'KEY=VALUE')
+                zf.writestr('madzihub/app/main.py', 'print(1)')
+                zf.writestr('madzihub/requirements.txt', 'fastapi')
+                zf.writestr('madzihub/.env.example', 'KEY=VALUE')
             self.assertEqual(validate_bundle(zip_path), 0)
