@@ -560,7 +560,7 @@ class ExcelParser:
             raise ValueError(
                 f"Required columns not found in sheet: "
                 f"{', '.join(missing_required)}. "
-                f"Check the file matches the SRWB template and re-upload."
+                f"Check the file matches the expected upload template and re-upload."
             )
 
         for row_num, raw_row in enumerate(

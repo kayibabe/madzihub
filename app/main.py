@@ -30,6 +30,7 @@ from app.core.config import settings
 from app.core.logging import REQUEST_ID_CTX, logger as app_logger
 from app.database import SessionLocal, create_tables
 from app.routers import analytics, benchmarking, budget, catalogue, compliance, fiscal_years, panels, records, report_generator, reports, strategic, upload, insights
+from app.routers import config as config_router
 from app.routers.users import admin_router, auth_router
 from app.core.limiter import limiter as _limiter
 from slowapi import _rate_limit_exceeded_handler
@@ -210,19 +211,19 @@ def _auto_import(db):
 
 
 app = FastAPI(
-    title="SRWB Operations Dashboard API",
+    title="MadziHub API",
     description=(
-        "Backend API for the Southern Region Water Board "
-        "Operations & Performance Dashboard.\n\n"
-        "All monetary values are in **MWK (Malawian Kwacha)**. "
-        "Volume in **m³**. Financial year runs April → March.\n\n"
+        "MadziHub — water utility performance & intelligence platform.\n\n"
+        "Monetary values are in the installation's reporting currency and the "
+        "financial year follows its configured start month (see `GET /api/config`). "
+        "Volume in **m³**.\n\n"
         "**Authentication:** `POST /api/auth/login` with username + password "
         "to obtain a Bearer token.  Include it as:\n"
         "`Authorization: Bearer <token>`\n\n"
         "**Roles:** `admin` · `user` · `viewer`"
     ),
     version="2.0.0",
-    contact={"name": "SRWB IT / Corporate Planning"},
+    contact={"name": "MadziHub"},
     license_info={"name": "Internal Use"},
     lifespan=lifespan,
 )
@@ -247,6 +248,9 @@ app.add_middleware(
 
 # ── Auth endpoints (public — no auth dependency) ───────────────
 app.include_router(auth_router)
+
+# ── Installation config (public branding + authenticated client config) ──
+app.include_router(config_router.router)
 
 # ── Admin user-management (admin role required) ───────────────
 app.include_router(admin_router, dependencies=[Depends(require_admin)])
@@ -312,15 +316,42 @@ async def add_request_context(request: Request, call_next):
     return response
 
 
-# ── Root — inject API base URL then serve dashboard ───────────
+# ── Root — inject API base URL and tenant branding, then serve dashboard ──
+def _brand_html(content: str) -> str:
+    """Fill the tenant placeholders in index.html (HTML-escaped)."""
+    from html import escape
+    from app.core.tenant import tenant
+    ident = tenant.identity
+    try:
+        db = SessionLocal()
+        from app.database import OrgProfile
+        profile = db.query(OrgProfile).filter(OrgProfile.id == 1).first()
+    finally:
+        db.close()
+    name = (profile and profile.org_name) or ident.name
+    short = (profile and profile.short_name) or ident.short_name
+    values = {
+        "__PRODUCT_TITLE__": ident.product_title,
+        "__ORG_NAME__": name,
+        "__ORG_SHORT__": short,
+        "__CURRENCY__": tenant.currency.code,
+        "__PLAN_TITLE__": tenant.strategic_plan.title,
+    }
+    for key, value in values.items():
+        content = content.replace(key, escape(value or ""))
+    return content
+
+
+
 @app.get("/", include_in_schema=False)
 async def serve_dashboard(request: Request):
     if not os.path.exists(INDEX_PATH):
-        return {"message": "SRWB API running. Place index.html in app/static/"}
+        return {"message": "MadziHub API running. Place index.html in app/static/"}
     base_url = str(request.base_url).rstrip("/")
     with open(INDEX_PATH, encoding="utf-8") as f:
         content = f.read()
     content = content.replace("__API_BASE__", base_url)
+    content = _brand_html(content)
     return HTMLResponse(
         content=content,
         headers={

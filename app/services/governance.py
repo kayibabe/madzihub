@@ -7,7 +7,12 @@ from typing import Any, Iterable
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app.core.tenant import tenant as _tenant
 from app.database import Record
+
+_ORG = _tenant.identity.short_name
+_CUR = _tenant.currency.code
+_NRW = _tenant.target("nrw_pct", 25.0)
 
 
 @dataclass
@@ -33,7 +38,7 @@ KPI_REGISTRY: list[KPIRegistryItem] = [
         unit="%",
         owner="Operations / Commercial",
         benchmark_type="Target line allowed",
-        benchmark_value="SRWB target 27%; international good practice 20%",
+        benchmark_value=f"{_ORG} target {_NRW:g}%; international good practice 20%",
         chart_guidance="Use target lines on time-series and zone-comparison charts.",
         required_fields=["vol_produced", "nrw", "pct_nrw"],
         currently_supported=True,
@@ -306,7 +311,7 @@ CHART_GOVERNANCE_REGISTRY: list[ChartGovernanceItem] = [
         title="NRW Rate — Monthly Trend",
         benchmark_mode="line",
         benchmark_label="Target line",
-        note="Benchmark context: SRWB target 27%; IWA good-practice benchmark 20%. Dashed benchmark lines should remain visible in trend interpretation.",
+        note=f"Benchmark context: {_ORG} target {_NRW:g}%; IWA good-practice benchmark 20%. Dashed benchmark lines should remain visible in trend interpretation.",
         rationale="The chart measures an explicitly benchmarked efficiency KPI with a literal corporate target and sector comparison point.",
         legend_style="compact-top",
         print_priority="high",
@@ -326,7 +331,7 @@ CHART_GOVERNANCE_REGISTRY: list[ChartGovernanceItem] = [
         title="Volume Produced (m³) & NRW Rate — Monthly",
         benchmark_mode="line",
         benchmark_label="Target line",
-        note="Benchmark context: track NRW against the 27% SRWB target and 20% IWA benchmark while reading production in parallel.",
+        note=f"Benchmark context: track NRW against the {_NRW:g}% {_ORG} target and 20% IWA benchmark while reading production in parallel.",
         rationale="The chart contains a benchmarkable NRW series alongside production; only the NRW component legitimately receives a target line.",
         legend_style="compact-top",
         print_priority="high",
@@ -343,7 +348,7 @@ CHART_GOVERNANCE_REGISTRY: list[ChartGovernanceItem] = [
     ),
     ChartGovernanceItem(
         page_key="collections",
-        title="Billing vs Collections — Monthly (MWK)",
+        title=f"Billing vs Collections — Monthly ({_CUR})",
         benchmark_mode="context",
         benchmark_label="Read note",
         note="Benchmark context: chart supports collection-efficiency review; read together with the IBNET collection-rate benchmark of 95% shown in KPI cards.",
@@ -363,7 +368,7 @@ CHART_GOVERNANCE_REGISTRY: list[ChartGovernanceItem] = [
     ),
     ChartGovernanceItem(
         page_key="collections",
-        title="Billed vs Collected — Monthly (MWK)",
+        title=f"Billed vs Collected — Monthly ({_CUR})",
         benchmark_mode="line",
         benchmark_label="Target line",
         note="Benchmark context: billed and collected values are paired with the monthly collection-rate line and the IBNET 95% benchmark, so cash conversion can be read directly against the approved efficiency threshold.",
@@ -393,7 +398,7 @@ CHART_GOVERNANCE_REGISTRY: list[ChartGovernanceItem] = [
     ),
     ChartGovernanceItem(
         page_key="budget",
-        title="Monthly Revenue: Actual vs Budget (MWK)",
+        title=f"Monthly Revenue: Actual vs Budget ({_CUR})",
         benchmark_mode="line",
         benchmark_label="Budget line",
         note="Benchmark context: review actual water sales against the prorated annual budget and read collections as cash-conversion support rather than budget basis.",
@@ -423,7 +428,7 @@ CHART_GOVERNANCE_REGISTRY: list[ChartGovernanceItem] = [
     ),
     ChartGovernanceItem(
         page_key="budget",
-        title="Revenue Decomposition — Volume Effect Waterfall (MWK)",
+        title=f"Revenue Decomposition — Volume Effect Waterfall ({_CUR})",
         benchmark_mode="context",
         benchmark_label="Read note",
         note="Interpretation note: with tariff held constant, the waterfall isolates how much of the revenue gap is attributable to water-volume underperformance and cash conversion effects.",
@@ -483,7 +488,7 @@ CHART_GOVERNANCE_REGISTRY: list[ChartGovernanceItem] = [
     ),
     ChartGovernanceItem(
         page_key="wt-ei",
-        title="Chemical Costs — Actual vs Budget (MWK/month)",
+        title=f"Chemical Costs — Actual vs Budget ({_CUR}/month)",
         benchmark_mode="line",
         benchmark_label="Budget line",
         note="Benchmark context: recurring monthly overruns indicate a structural cost issue, not just a timing issue, especially late in the financial year.",
@@ -493,7 +498,7 @@ CHART_GOVERNANCE_REGISTRY: list[ChartGovernanceItem] = [
     ),
     ChartGovernanceItem(
         page_key="wt-ei",
-        title="Power / Electricity — Actual vs Budget (MWK/month)",
+        title=f"Power / Electricity — Actual vs Budget ({_CUR}/month)",
         benchmark_mode="line",
         benchmark_label="Budget line",
         note="Benchmark context: read this as field electricity only; under-budget results do not capture uncoded head-office or zonal electricity spend.",
@@ -503,7 +508,7 @@ CHART_GOVERNANCE_REGISTRY: list[ChartGovernanceItem] = [
     ),
     ChartGovernanceItem(
         page_key="wt-ei",
-        title="Chemical & Power Cost per m³ by Zone (MWK)",
+        title=f"Chemical & Power Cost per m³ by Zone ({_CUR})",
         benchmark_mode="context",
         benchmark_label="Read note",
         note="Benchmark context: highest-cost zones warrant joint review of treatment efficiency, pump efficiency, and NRW performance.",
@@ -523,7 +528,7 @@ CHART_GOVERNANCE_REGISTRY: list[ChartGovernanceItem] = [
     ),
     ChartGovernanceItem(
         page_key="budget",
-        title="Revenue Variance by Zone (MWK)",
+        title=f"Revenue Variance by Zone ({_CUR})",
         benchmark_mode="context",
         benchmark_label="Read note",
         note="Benchmark context: compare actual sales with proportional budget by zone and use variance/BPI details to isolate the weakest commercial segment.",
@@ -533,7 +538,7 @@ CHART_GOVERNANCE_REGISTRY: list[ChartGovernanceItem] = [
     ),
     ChartGovernanceItem(
         page_key="budget",
-        title="Revenue vs Budget by Zone (MWK)",
+        title=f"Revenue vs Budget by Zone ({_CUR})",
         benchmark_mode="context",
         benchmark_label="Read note",
         note="Benchmark context: compare actual sales with proportional budget by zone and use variance/BPI details to isolate the weakest commercial segment.",

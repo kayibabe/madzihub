@@ -17,7 +17,7 @@ from __future__ import annotations
 import calendar
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import yaml
 from pydantic import BaseModel, Field, field_validator
@@ -82,8 +82,9 @@ class StrategicKpi(BaseModel):
     focus_area: str
     name: str
     unit: str
-    baseline: Optional[float] = None
-    targets: Dict[int, Optional[float]] = {}
+    # int | float keeps whole numbers as ints so API output matches the source plan.
+    baseline: Optional[Union[int, float]] = None
+    targets: Dict[int, Optional[Union[int, float]]] = {}
     actual_key: Optional[str] = None
     direction: str = "high"              # "high" | "low"
     capture: str = "gap"                 # "live" | "operational" | "gap"
@@ -155,7 +156,7 @@ class Tenant(BaseModel):
             "product_title": self.identity.product_title,
             "tagline": self.identity.tagline,
             "branding": self.branding.model_dump(),
-            "logo_url": "/api/config/logo" if self.logo_path else None,
+            "logo_url": "/api/config/logo",
         }
 
     def client_dict(self) -> Dict[str, Any]:

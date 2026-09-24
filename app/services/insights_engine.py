@@ -20,6 +20,8 @@ from app.database import Record
 # Alert thresholds and the NRW target come from the tenant configuration
 # (tenants/<name>/tenant.yaml → thresholds / targets.nrw_pct).
 THRESHOLDS = {**_tenant.thresholds, "nrw_target": _tenant.target("nrw_pct", 25.0)}
+_ORG = _tenant.identity.short_name
+_CUR = _tenant.currency.code
 
 
 def _nz_sum(rows, field):
@@ -163,15 +165,15 @@ def generate_alerts(db: Session, year: int = None) -> dict[str, Any]:
     if nrw_pct > T["nrw_warn"]:
         alert("critical","nrw",
               f"NRW Critical — {nrw_pct}% exceeds 35% action threshold",
-              f"YTD NRW rate of {nrw_pct}% is {nrw_pct - T['nrw_target']:.1f}pp above the SRWB "
+              f"YTD NRW rate of {nrw_pct}% is {nrw_pct - T['nrw_target']:.1f}pp above the {_ORG} "
               f"target of {T['nrw_target']}% and above the 35% action threshold. "
               f"Immediate investigation required.",
               metric="pct_nrw", value=nrw_pct)
     elif nrw_pct > T["nrw_target"]:
         alert("warning","nrw",
               f"NRW Above Target — {nrw_pct}% (target: {T['nrw_target']}%)",
-              f"YTD NRW of {nrw_pct}% is {nrw_pct - T['nrw_target']:.1f}pp above the SRWB "
-              f"27% target. Review pipe breakdown hotspots and meter reading coverage.",
+              f"YTD NRW of {nrw_pct}% is {nrw_pct - T['nrw_target']:.1f}pp above the {_ORG} "
+              f"{T['nrw_target']:g}% target. Review pipe breakdown hotspots and meter reading coverage.",
               metric="pct_nrw", value=nrw_pct)
 
     # MoM NRW rise
@@ -224,7 +226,7 @@ def generate_alerts(db: Session, year: int = None) -> dict[str, Any]:
         alert("warning","operations",
               f"Stuck Meters — {stuck_pct}% of accounts ({stuck_now:,} meters)",
               f"{stuck_now:,} meters are stuck ({stuck_pct}% of {active_now:,} active accounts). "
-              f"Estimated monthly billing at risk: approx MWK {unbilled}M.",
+              f"Estimated monthly billing at risk: approx {_CUR} {unbilled}M.",
               metric="stuck_meters", value=stuck_now)
 
     # ── 5. Days to Connect ────────────────────────────────────────────────
@@ -248,7 +250,7 @@ def generate_alerts(db: Session, year: int = None) -> dict[str, Any]:
             alert("warning","financial",
                   f"Debtors Rising — +{dbt_chg:.0f}% in {latest_month}",
                   f"Total debtors grew {dbt_chg:.0f}% month-on-month "
-                  f"(MWK {cur['total_debtors']/1e6:.0f}M vs MWK {prev['total_debtors']/1e6:.0f}M). "
+                  f"({_CUR} {cur['total_debtors']/1e6:.0f}M vs {_CUR} {prev['total_debtors']/1e6:.0f}M). "
                   f"Accelerate recovery activity.",
                   metric="total_debtors", value=round(cur["total_debtors"] / 1e6, 1))
 
@@ -280,7 +282,7 @@ def generate_alerts(db: Session, year: int = None) -> dict[str, Any]:
         elif znrw_pct > T["nrw_target"]:
             alert("warning","nrw",
                   f"{zone} Zone — NRW Above Target at {znrw_pct}%",
-                  f"{zone} zone NRW of {znrw_pct}% exceeds the SRWB 27% target.",
+                  f"{zone} zone NRW of {znrw_pct}% exceeds the {_ORG} {T['nrw_target']:g}% target.",
                   zone=zone, metric="pct_nrw", value=znrw_pct)
 
         # Zone collection rate

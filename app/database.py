@@ -13,6 +13,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 from app.core.config import settings
+from app.core.tenant import tenant as _tenant
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATABASE_URL = settings.database_url
@@ -48,7 +49,7 @@ class Record(Base):
     vol_billed_inst_prepaid  = Column(Float, default=0.0)
     vol_billed_comm_prepaid  = Column(Float, default=0.0)
     total_vol_billed_prepaid = Column(Float, default=0.0)
-    revenue_water            = Column(Numeric(15, 2, asdecimal=False), default=0.0)  # MWK
+    revenue_water            = Column(Numeric(15, 2, asdecimal=False), default=0.0)  # currency
     nrw                      = Column(Float, default=0.0)
     pct_nrw                  = Column(Float, default=0.0)
     # Chemicals  (physical units — Float)
@@ -58,8 +59,8 @@ class Record(Base):
     algae_floc_litres        = Column(Float, default=0.0)
     sud_floc_litres          = Column(Float, default=0.0)
     kmno4_kg                 = Column(Float, default=0.0)
-    chem_cost                = Column(Numeric(15, 2, asdecimal=False), default=0.0)  # MWK
-    chem_cost_per_m3         = Column(Float, default=0.0)   # MWK/m³ rate — Float ok
+    chem_cost                = Column(Numeric(15, 2, asdecimal=False), default=0.0)  # currency
+    chem_cost_per_m3         = Column(Float, default=0.0)   # currency/m³ rate — Float ok
     chlorine_kg_per_m3       = Column(Float, default=0.0)
     alum_kg_per_m3           = Column(Float, default=0.0)
     soda_ash_kg_per_m3       = Column(Float, default=0.0)
@@ -82,20 +83,20 @@ class Record(Base):
     wq_ph_compliant          = Column(Integer, default=0)
     # Power
     power_kwh                = Column(Float, default=0.0)
-    power_cost               = Column(Numeric(15, 2, asdecimal=False), default=0.0)  # MWK
-    power_cost_per_m3        = Column(Float, default=0.0)   # MWK/m³ rate — Float ok
+    power_cost               = Column(Numeric(15, 2, asdecimal=False), default=0.0)  # currency
+    power_cost_per_m3        = Column(Float, default=0.0)   # currency/m³ rate — Float ok
     power_kwh_per_m3         = Column(Float, default=0.0)
     # Transport & ops
     distances_km             = Column(Float, default=0.0)
     fuel_used_litres         = Column(Float, default=0.0)
-    fuel_cost                = Column(Numeric(15, 2, asdecimal=False), default=0.0)  # MWK
-    maintenance              = Column(Numeric(15, 2, asdecimal=False), default=0.0)  # MWK
-    staff_costs              = Column(Numeric(15, 2, asdecimal=False), default=0.0)  # MWK
-    wages                    = Column(Numeric(15, 2, asdecimal=False), default=0.0)  # MWK
-    other_overhead           = Column(Numeric(15, 2, asdecimal=False), default=0.0)  # MWK
-    op_cost                  = Column(Numeric(15, 2, asdecimal=False), default=0.0)  # MWK
-    op_cost_per_m3_produced  = Column(Float, default=0.0)   # MWK/m³ rate — Float ok
-    op_cost_per_m3_billed    = Column(Float, default=0.0)   # MWK/m³ rate — Float ok
+    fuel_cost                = Column(Numeric(15, 2, asdecimal=False), default=0.0)  # currency
+    maintenance              = Column(Numeric(15, 2, asdecimal=False), default=0.0)  # currency
+    staff_costs              = Column(Numeric(15, 2, asdecimal=False), default=0.0)  # currency
+    wages                    = Column(Numeric(15, 2, asdecimal=False), default=0.0)  # currency
+    other_overhead           = Column(Numeric(15, 2, asdecimal=False), default=0.0)  # currency
+    op_cost                  = Column(Numeric(15, 2, asdecimal=False), default=0.0)  # currency
+    op_cost_per_m3_produced  = Column(Float, default=0.0)   # currency/m³ rate — Float ok
+    op_cost_per_m3_billed    = Column(Float, default=0.0)   # currency/m³ rate — Float ok
     # Staffing
     perm_staff               = Column(Float, default=0.0)
     temp_staff               = Column(Float, default=0.0)
@@ -236,7 +237,7 @@ class Record(Base):
     dev_lines_90mm           = Column(Float, default=0.0)
     dev_lines_110mm          = Column(Float, default=0.0)
     dev_lines_total          = Column(Float, default=0.0)
-    # Cash collected  (MWK — Numeric)
+    # Cash collected  (currency — Numeric)
     cash_coll_pp             = Column(Numeric(15, 2, asdecimal=False), default=0.0)
     cash_coll_prepaid        = Column(Numeric(15, 2, asdecimal=False), default=0.0)
     cash_collected           = Column(Numeric(15, 2, asdecimal=False), default=0.0)
@@ -248,7 +249,7 @@ class Record(Base):
     cash_coll_cwp_prepaid    = Column(Numeric(15, 2, asdecimal=False), default=0.0)
     cash_coll_comm_prepaid   = Column(Numeric(15, 2, asdecimal=False), default=0.0)
     cash_coll_inst_prepaid   = Column(Numeric(15, 2, asdecimal=False), default=0.0)
-    # Amounts billed  (MWK — Numeric)
+    # Amounts billed  (currency — Numeric)
     amt_billed_pp            = Column(Numeric(15, 2, asdecimal=False), default=0.0)
     amt_billed_prepaid       = Column(Numeric(15, 2, asdecimal=False), default=0.0)
     amt_billed               = Column(Numeric(15, 2, asdecimal=False), default=0.0)
@@ -260,7 +261,7 @@ class Record(Base):
     amt_billed_cwp_prepaid   = Column(Numeric(15, 2, asdecimal=False), default=0.0)
     amt_billed_inst_prepaid  = Column(Numeric(15, 2, asdecimal=False), default=0.0)
     amt_billed_comm_prepaid  = Column(Numeric(15, 2, asdecimal=False), default=0.0)
-    # Charges  (MWK — Numeric)
+    # Charges  (currency — Numeric)
     service_charge              = Column(Numeric(15, 2, asdecimal=False), default=0.0)
     meter_rental                = Column(Numeric(15, 2, asdecimal=False), default=0.0)
     total_sales                 = Column(Numeric(15, 2, asdecimal=False), default=0.0)
@@ -272,7 +273,7 @@ class Record(Base):
     meter_rental_cwp            = Column(Numeric(15, 2, asdecimal=False), default=0.0)
     meter_rental_institutions   = Column(Numeric(15, 2, asdecimal=False), default=0.0)
     meter_rental_commercial     = Column(Numeric(15, 2, asdecimal=False), default=0.0)
-    # Debtors  (MWK — Numeric)
+    # Debtors  (currency — Numeric)
     private_debtors          = Column(Numeric(15, 2, asdecimal=False), default=0.0)
     public_debtors           = Column(Numeric(15, 2, asdecimal=False), default=0.0)
     total_debtors            = Column(Numeric(15, 2, asdecimal=False), default=0.0)
@@ -333,7 +334,7 @@ class FiscalYear(Base):
     start_date     = Column(String(10), nullable=False)     # "2025-04-01"
     end_date       = Column(String(10), nullable=False)     # "2026-03-31"
     status         = Column(String(12), nullable=False, default="historical")
-    tariff_per_m3  = Column(Float, nullable=True)           # MK/m³ (None = TBD)
+    tariff_per_m3  = Column(Float, nullable=True)           # currency/m³ (None = TBD)
     notes          = Column(String(500), nullable=True)
     created_at     = Column(DateTime, default=datetime.utcnow)
     updated_at     = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -353,7 +354,7 @@ class BudgetLine(Base):
     year       = Column(Integer, ForeignKey("fiscal_years.year"), nullable=False, index=True)
     category   = Column(String(60), nullable=False)
     value      = Column(Numeric(15, 2, asdecimal=False), nullable=False, default=0.0)
-    unit       = Column(String(20), nullable=True)   # "MWK", "m3", "pct", "count", "hrs", "km"
+    unit       = Column(String(20), nullable=True)   # currency code, "m3", "pct", "count", "hrs", "km"
     notes      = Column(String(300), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -416,17 +417,18 @@ class OrgProfile(Base):
     __tablename__ = "org_profile"
 
     id                 = Column(Integer, primary_key=True, default=1)
-    org_name           = Column(String(120),  default="Southern Region Water Board")
-    short_name         = Column(String(20),   default="SRWB")
-    registration_no    = Column(String(60),   nullable=True)
-    regulator          = Column(String(120),  nullable=True)
-    country            = Column(String(60),   default="Malawi")
-    reporting_currency = Column(String(10),   default="MWK")
-    service_area_km2   = Column(Float,        nullable=True)
-    population_served  = Column(Integer,      nullable=True)
-    contact_email      = Column(String(120),  nullable=True)
-    contact_phone      = Column(String(40),   nullable=True)
-    website            = Column(String(200),  nullable=True)
+    # Defaults come from the tenant configuration (tenants/<name>/tenant.yaml).
+    org_name           = Column(String(120),  default=lambda: _tenant.identity.name)
+    short_name         = Column(String(20),   default=lambda: _tenant.identity.short_name)
+    registration_no    = Column(String(60),   nullable=True, default=lambda: _tenant.identity.registration_no)
+    regulator          = Column(String(120),  nullable=True, default=lambda: _tenant.identity.regulator)
+    country            = Column(String(60),   default=lambda: _tenant.identity.country)
+    reporting_currency = Column(String(10),   default=lambda: _tenant.currency.code)
+    service_area_km2   = Column(Float,        nullable=True, default=lambda: _tenant.identity.service_area_km2)
+    population_served  = Column(Integer,      nullable=True, default=lambda: _tenant.identity.population_served)
+    contact_email      = Column(String(120),  nullable=True, default=lambda: _tenant.identity.contact_email)
+    contact_phone      = Column(String(40),   nullable=True, default=lambda: _tenant.identity.contact_phone)
+    website            = Column(String(200),  nullable=True, default=lambda: _tenant.identity.website)
     updated_at         = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 

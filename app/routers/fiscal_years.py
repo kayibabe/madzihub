@@ -1,6 +1,6 @@
 """
 routers/fiscal_years.py  —  Multi-FY Configuration & Budget Admin
-SRWB Southern Region Water Board
+MadziHub
 
 Public endpoints (any authenticated user):
   GET  /api/fiscal-years           — list all configured fiscal years
@@ -23,6 +23,7 @@ from typing import Any
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from app.core.tenant import tenant as _tenant
 from app.auth import require_admin
 from app.utils import fy_dates, fy_label
 from app.database import BudgetLine, BudgetZoneShare, FiscalYear, SpcLimit, get_db
@@ -49,7 +50,9 @@ def _fy_to_dict(fy: FiscalYear) -> dict:
     }
 
 # Monetary unit keywords — used by copy-from to decide what to inflate
-_MONETARY_UNITS = {"MWK", "MWK/m3"}
+# (the tenant currency, plus legacy "MWK" units stored before configuration existed)
+_CURRENCY_CODES = {_tenant.currency.code, "MWK"}
+_MONETARY_UNITS = {u for c in _CURRENCY_CODES for u in (c, f"{c}/m3")}
 
 
 # ── Public read endpoints ──────────────────────────────────────────────────────
@@ -338,7 +341,7 @@ def copy_budget_from(
             continue
         multiplier = (1 + inflation_rate) if (
             line.unit in _MONETARY_UNITS or
-            (line.unit and line.unit.startswith("MWK"))
+            (line.unit and line.unit.startswith(tuple(_CURRENCY_CODES)))
         ) else 1.0
         db.add(BudgetLine(
             year=year, category=line.category,

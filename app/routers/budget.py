@@ -1,6 +1,6 @@
 """
 routers/budget.py  —  Comprehensive Budget vs Actuals Variance Engine
-Multi-FY  |  SRWB Southern Region Water Board
+Multi-FY
 
 ANALYTICAL FRAMEWORK:
   Revenue Decomposition:  tariff is loaded per-FY from `fiscal_years` table,
@@ -13,7 +13,7 @@ ANALYTICAL FRAMEWORK:
     for revenue/volume; Budget÷Actual for costs).
   Scheme Scoring:  composite of NRW, collection rate, revenue/m³, connections.
 
-All monetary values: MWK.
+All monetary values are in the tenant reporting currency.
 Budget figures are loaded dynamically from the database; add a new FY via the
   /api/fiscal-years  admin endpoints or the seed script.
 """
@@ -22,12 +22,15 @@ import statistics
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_, or_
+from app.core.tenant import tenant as _tenant
 from app.database import (
     BudgetLine, BudgetZoneShare, FiscalYear, Record, SpcLimit, get_db,
 )
 from app.utils import FY_MONTH_NOS, MONTHS_LBL, fy_calendar_year, fy_month_index, fy_span_expr
 
 router = APIRouter(prefix="/api/budget", tags=["Budget"])
+
+_SYM = _tenant.currency.symbol
 
 
 def safe_div(numerator, denominator, default=0.0):
@@ -88,7 +91,7 @@ def _fy_scope_expr(year: int, selected_months: list[int] | None = None):
         parts.append(and_(Record.year == scope_year, Record.month_no == month_no))
     return or_(*parts)
 
-def _var(metric, actual, budget, unit="MWK", invert=False, scope="full", note="", iwa_pi=""):
+def _var(metric, actual, budget, unit=_tenant.currency.code, invert=False, scope="full", note="", iwa_pi=""):
     v = actual - budget
     vpct = (v / budget * 100) if budget else None
     if abs(vpct or 0) < 2:   direction = "on_budget"
@@ -392,7 +395,7 @@ def get_variance(
     revenue_rows = [
         _var("Water Sales (Tariff Revenue)", act_sales,
              B("water_sales") * f * revenue_share_factor,
-             note=f"Fixed tariff MK {tariff:,.0f}/m³. All variance = volume effect.",
+             note=f"Fixed tariff {_SYM} {tariff:,.0f}/m³. All variance = volume effect.",
              iwa_pi="Fi1/IBNET Revenue"),
         _var("Service Charges", act_svc,
              B("service_charges") * f * customer_share_factor,
@@ -416,10 +419,10 @@ def get_variance(
         "nrw_vol_variance_m3":      round(nrw_var_vol),
         "nrw_revenue_impact_mk":    round(nrw_rev_impact),
         "interpretation": (
-            f"At fixed tariff MK {tariff:,.0f}/m³, the {round(vol_var_m3/1e6, 2)}M m³ "
-            f"volume shortfall accounts for MK {abs(rev_vol_effect)/1e9:.2f}B of revenue loss. "
+            f"At fixed tariff {_SYM} {tariff:,.0f}/m³, the {round(vol_var_m3/1e6, 2)}M m³ "
+            f"volume shortfall accounts for {_SYM} {abs(rev_vol_effect)/1e9:.2f}B of revenue loss. "
             f"Excess NRW ({act_nrw_pct:.1f}% vs {B('nrw_pct')}% target) represents an additional "
-            f"MK {abs(nrw_rev_impact)/1e9:.2f}B in unbilled production cost."
+            f"{_SYM} {abs(nrw_rev_impact)/1e9:.2f}B in unbilled production cost."
         ) if has_budget else "No approved budget loaded for this fiscal year.",
     }
 
@@ -431,7 +434,7 @@ def get_variance(
              unit="m³", iwa_pi="Op24"),
         _var("NRW %",                act_nrw_pct, B("nrw_pct"),
              unit="%", invert=True, scope="target",
-             note=f"Vol-weighted. SRWB target {B('nrw_pct')}%, IWA <20%.", iwa_pi="Op23/Wn1"),
+             note=f"Vol-weighted. {_tenant.identity.short_name} target {B('nrw_pct')}%, IWA <20%.", iwa_pi="Op23/Wn1"),
         _var("NRW Volume",           act_nrw_vol,
              B("vol_produced") * f * volume_share_factor * B("nrw_pct") / 100,
              unit="m³", invert=True, iwa_pi="Wn1"),
@@ -458,15 +461,15 @@ def get_variance(
     cost_rows = [
         _var("Electricity / Power",  act_power,
              B("electricity") * f * volume_share_factor, invert=True,
-             note=f"Scheme power only. Budget MK {B('electricity')/1e9:.2f}B, excl. bottled water.",
+             note=f"Scheme power only. Budget {_SYM} {B('electricity')/1e9:.2f}B, excl. bottled water.",
              iwa_pi="Op39/Ee1", scope="field"),
         _var("Water Treatment Chemicals", act_chems,
              B("chemicals") * f * volume_share_factor, invert=True,
-             note=f"Scheme chemicals only. Budget MK {B('chemicals')/1e9:.2f}B.",
+             note=f"Scheme chemicals only. Budget {_SYM} {B('chemicals')/1e9:.2f}B.",
              iwa_pi="Op34", scope="field"),
         _var("Fuel", act_fuel,
              B("fuel") * f * volume_share_factor, invert=True,
-             note=f"Operating fuel only. Budget MK {B('fuel')/1e9:.2f}B. DB capture may be incomplete.",
+             note=f"Operating fuel only. Budget {_SYM} {B('fuel')/1e9:.2f}B. DB capture may be incomplete.",
              scope="field"),
         _var("Employee Costs", act_employee,
              (B("salaries") + B("wages")) * f * volume_share_factor, invert=True,

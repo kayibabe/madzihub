@@ -269,13 +269,13 @@ strategic_plan:
   - focus_area: Business Growth
     name: Current Ratio
     unit: ratio
-    baseline: 2
+    baseline: 2.0
     targets:
-      2024: 2
-      2025: 2
-      2026: 2
-      2027: 2
-      2028: 2
+      2024: 2.0
+      2025: 2.0
+      2026: 2.0
+      2027: 2.0
+      2028: 2.0
     actual_key: null
     direction: high
     capture: gap
