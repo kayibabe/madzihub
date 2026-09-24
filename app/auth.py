@@ -14,7 +14,8 @@ from datetime import datetime, timedelta
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
+import jwt
+from jwt import InvalidTokenError
 import bcrypt as _bcrypt
 from sqlalchemy.orm import Session
 
@@ -107,7 +108,7 @@ async def get_current_user_allow_pending(
         username = payload.get("sub")
         if not username:
             raise _AUTH_EXC
-    except JWTError:
+    except InvalidTokenError:
         raise _AUTH_EXC
 
     user = db.query(User).filter(User.username == username, User.is_active == True).first()

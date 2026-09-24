@@ -1,0 +1,29 @@
+{
+  "code": "billing",
+  "name": "Billing system (monthly view)",
+  "system_type": "billing",
+  "connector": "sql",
+  "priority": 50,
+  "schedule_minutes": 1440,
+  "owner": "Commercial Manager (billing system owner)",
+  "config": {
+    "url_env": "MADZI_SRC_BILLING_DB_URL",
+    "watermark_field": "updated_at",
+    "initial_since": "1900-01-01",
+    "query": "SELECT branch_code, period_month, billed_volume_m3, billed_amount, cash_collected, active_accounts, new_connections, disconnections, updated_at FROM v_madzi_monthly WHERE updated_at > :since"
+  },
+  "mapping": {
+    "layout": "wide",
+    "period": {"field": "period_month"},
+    "period_type": "month",
+    "org_unit": {"field": "branch_code"},
+    "metrics": {
+      "revenue_water": "billed_volume_m3",
+      "amt_billed": "billed_amount",
+      "cash_collected": "cash_collected",
+      "active_customers": "active_accounts",
+      "new_connections": "new_connections",
+      "disconnections": "disconnections"
+    }
+  }
+}

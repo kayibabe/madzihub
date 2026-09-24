@@ -68,7 +68,7 @@ Before public launch: formal trademark, domain and regional-language clearance (
 | Stale SRWB budget snapshot baked into UI | fixed tariff `1,450/m³`, `1.057B` chemicals budget, dated source citation | Made generic; real values come from the fiscal-year tables. |
 | Release bundle only excluded `srwb.secret` by name | `build_release_bundle.py` | Excludes data/, uploads/, secrets, keys, DBs, spreadsheets by pattern. |
 | CI bundle validation required a `.env.example` that was never committed | `.gitignore` had `.env.*` | Added `.env.example`. |
-| Front-end libraries from a CDN at runtime | Chart.js, DOMPurify, SheetJS via cdnjs | **Open**: air-gapped installs break. Vendor them (Stage 3). |
+| Front-end libraries from a CDN at runtime | Chart.js, DOMPurify, SheetJS via cdnjs; fonts from Google Fonts | **Fixed**: vendored in `app/static/vendor` with licences and a SHA-256 manifest; `scripts/update_vendor_assets.py` refreshes them. Verified with all external hosts blocked. |
 | Public opsapp repo contains SRWB workbooks | `dataupdater/` | Not imported here. **Owner action** on opsapp (make private / history rewrite). |
 
 ---

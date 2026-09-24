@@ -14,12 +14,14 @@ Role-based access is enforced via FastAPI dependencies at the router level:
   - /api/upload/*             → require_admin     (admin only)
   - /api/records/export/csv   → require_export    (admin or user; not viewer)
   - /api/admin/*              → require_admin     (admin only)
+  - /api/integration/*        → require_admin     (admin only)
+  - /api/ingest/{source}      → per-source push token (X-Madzi-Ingest-Token), no user session
 """
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 import os
 import time
@@ -29,7 +31,7 @@ from app.auth import ensure_default_admin, get_current_user, require_admin
 from app.core.config import settings
 from app.core.logging import REQUEST_ID_CTX, logger as app_logger
 from app.database import SessionLocal, create_tables
-from app.routers import analytics, benchmarking, budget, catalogue, compliance, fiscal_years, panels, records, report_generator, reports, strategic, upload, insights
+from app.routers import analytics, benchmarking, budget, catalogue, compliance, fiscal_years, integration, panels, records, report_generator, reports, strategic, upload, insights
 from app.routers import config as config_router
 from app.routers.users import admin_router, auth_router
 from app.core.limiter import limiter as _limiter
@@ -273,6 +275,12 @@ app.include_router(strategic.router,    dependencies=[Depends(get_current_user)]
 # ── Upload (admin only) ───────────────────────────────────────
 app.include_router(upload.router, dependencies=[Depends(require_admin)])
 
+# Integration hub: sources and catalogue (admin), strategic position (users),
+# push ingest (per-source machine token, checked in the handler).
+app.include_router(integration.admin_router,    dependencies=[Depends(require_admin)])
+app.include_router(integration.position_router, dependencies=[Depends(get_current_user)])
+app.include_router(integration.ingest_router)
+
 # ── Static assets ─────────────────────────────────────────────
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 INDEX_PATH  = os.path.join(STATIC_DIR, "index.html")
@@ -422,6 +430,13 @@ async def serve_dashboard(request: Request):
             "Pragma": "no-cache",
         }
     )
+
+
+# Browsers (and /docs) request /favicon.ico at the root regardless of <link> tags.
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return FileResponse(os.path.join(STATIC_DIR, "brand", "favicon.ico"),
+                        headers={"Cache-Control": "public, max-age=86400"})
 
 
 # ── Health check (public) ─────────────────────────────────────

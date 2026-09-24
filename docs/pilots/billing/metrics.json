@@ -1,0 +1,5 @@
+[
+  {"code": "disconnections", "name": "Disconnections", "unit": "count", "category": "Customers",
+   "aggregation": "sum", "direction": "lower",
+   "description": "Accounts disconnected during the month (all reasons), from the billing system."}
+]

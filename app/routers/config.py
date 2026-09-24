@@ -24,7 +24,7 @@ from app.database import OrgProfile, get_db
 
 router = APIRouter(prefix="/api/config", tags=["Configuration"])
 
-DEFAULT_LOGO = Path(__file__).resolve().parents[1] / "static" / "madzihub-logo.svg"
+DEFAULT_LOGO = Path(__file__).resolve().parents[1] / "static" / "brand" / "madzihub-mark.svg"
 
 # org_profile column → identity key
 _ORG_OVERRIDES = {

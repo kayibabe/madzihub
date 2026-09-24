@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import sys
 import zipfile
 from pathlib import Path
+
+VENDOR_PREFIX = 'app/static/vendor/'
 
 FORBIDDEN_PARTS = [
     '.git/', '.vs/', '__pycache__/', '.pytest_cache/', 'uploads/', 'data/',
@@ -30,6 +34,7 @@ def validate_bundle(zip_path: Path) -> int:
             failures.append('Bundle missing .env.example')
         if not any(name.endswith('app/main.py') for name in names):
             failures.append('Bundle missing app/main.py')
+        failures.extend(_vendor_failures(zf, names))
 
     if failures:
         print('[FAIL] Release bundle validation failed:')
@@ -39,6 +44,24 @@ def validate_bundle(zip_path: Path) -> int:
 
     print(f"[OK] Bundle validation passed: {zip_path}")
     return 0
+
+
+def _vendor_failures(zf: zipfile.ZipFile, names: list[str]) -> list[str]:
+    """Offline installs need every vendored library and font, byte-identical to the manifest."""
+    by_suffix = {n.replace('\\', '/'): n for n in names}
+    manifest_name = next((n for n in by_suffix if n.endswith(VENDOR_PREFIX + 'manifest.json')), None)
+    if manifest_name is None:
+        return [f'Bundle missing {VENDOR_PREFIX}manifest.json (vendored front-end assets)']
+    prefix = manifest_name[: -len('manifest.json')]
+    manifest = json.loads(zf.read(by_suffix[manifest_name]))
+    problems = []
+    for rel, info in manifest.items():
+        name = by_suffix.get(prefix + rel)
+        if name is None:
+            problems.append(f'Bundle missing vendored file {VENDOR_PREFIX}{rel}')
+        elif hashlib.sha256(zf.read(name)).hexdigest() != info['sha256']:
+            problems.append(f'Vendored file changed: {VENDOR_PREFIX}{rel} (checksum differs from manifest)')
+    return problems
 
 
 if __name__ == '__main__':

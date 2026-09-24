@@ -435,6 +435,15 @@ html,body{height:100%;min-height:100%;font-family:var(--ds-font);font-weight:400
   text-align:center;
 }
 
+/* "Powered by MadziHub" lockup. The light artwork is the default; the dark
+   artwork takes over when a dark theme sets data-theme="dark" on <html>. */
+.login-powered{display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:6px}
+.login-powered span{font-size:9.5px;letter-spacing:.02em;text-transform:uppercase}
+.login-powered img{display:block;height:22px;width:auto}
+.brand-on-dark{display:none!important}
+[data-theme="dark"] .brand-on-light{display:none!important}
+[data-theme="dark"] .brand-on-dark{display:block!important}
+
 @media(max-width:1040px){
   #login-view{padding:22px}
   #login-view::before{inset:12px;border-radius:24px}
