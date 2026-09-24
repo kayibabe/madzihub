@@ -31,6 +31,7 @@ class BudgetVarianceTests(unittest.TestCase):
         db.add_all(database.Record(**r) for r in extra_records)
         db.add(database.FiscalYear(year=2025, label="FY2024/25", start_date="2024-07-01",
                                    end_date="2025-06-30", status="historical", tariff_per_m3=tariff))
+        db.flush()  # budget lines reference fiscal_years.year (foreign keys are enforced)
         for cat, val in (budget or {}).items():
             db.add(database.BudgetLine(year=2025, category=cat, value=val, unit="USD"))
         db.commit()

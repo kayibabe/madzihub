@@ -96,7 +96,7 @@ Principles:
 - **Config precedence:** tenant YAML → admin-edited organisation profile (identity only). Later: versioned DB tables for hierarchy and targets.
 - **API supplies labels, currency and thresholds** to the UI; no business constants in browser code.
 - **Keep the wide `records` table** as a compatibility layer while the metric catalogue arrives. Measure real query needs before any metric-row-store rewrite.
-- **Migrations:** today `create_all` plus additive column checks at startup; adopt Alembic in Stage 2 before the first non-additive change.
+- **Migrations:** Alembic (`app/migrations/`, baseline `0001`). Startup builds only an empty database; existing databases are upgraded or adopted by an operator with `python -m app.migrate`, which backs SQLite up first.
 
 ### Tenant configuration (implemented)
 

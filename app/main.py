@@ -31,6 +31,7 @@ from app.auth import ensure_default_admin, get_current_user, require_admin
 from app.core.config import settings
 from app.core.logging import REQUEST_ID_CTX, logger as app_logger
 from app.database import SessionLocal, create_tables
+from app.migrate import SchemaNotReady
 from app.routers import analytics, benchmarking, budget, catalogue, compliance, fiscal_years, integration, panels, records, report_generator, reports, strategic, upload, insights
 from app.routers import config as config_router
 from app.routers.users import admin_router, auth_router
@@ -44,7 +45,11 @@ from slowapi.middleware import SlowAPIMiddleware
 async def lifespan(app: FastAPI):
     """Startup: create DB tables, bootstrap default admin if needed."""
     settings.validate_startup()
-    create_tables()
+    try:
+        create_tables()
+    except SchemaNotReady as exc:
+        print(f"[STOP] {exc}")
+        raise
     db = SessionLocal()
     try:
         ensure_default_admin(db)

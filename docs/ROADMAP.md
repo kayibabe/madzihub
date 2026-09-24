@@ -49,7 +49,7 @@ All development happens in this repository; `kayibabe/opsapp` is frozen. For the
 - [ ] Move existing panels from `records` to `metric_values` (parity-guarded)
 
 ## Stage 2: Generalise data entry
-- [ ] Alembic migrations (baseline = current schema)
+- [x] Alembic migrations: baseline `0001` = schema at 8de1ef9; startup builds only empty databases; `python -m app.migrate status|upgrade|adopt` with automatic SQLite backups; pre-Alembic databases checked against a baseline fingerprint before stamping; SQLite foreign keys and WAL on ([DEPLOYMENT_RUNBOOK.md](DEPLOYMENT_RUNBOOK.md#database-migrations))
 - [ ] Hierarchy table: N levels, parent/child, codes ✅ (`org_units`); aliases via key mappings ✅; effective dates ⏳
 - [ ] Versioned targets: KPI × fiscal year × org scope, with benchmark provenance (fixes per-year SP NRW targets)
 - [ ] Metric catalogue: code, unit, aggregation, direction, formula ✅ (`metrics`); valid range ⏳

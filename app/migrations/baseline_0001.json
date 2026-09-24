@@ -1,0 +1,1935 @@
+{
+ "revision": "0001",
+ "tables": {
+  "activity_log": {
+   "columns": {
+    "action": {
+     "nullable": false,
+     "type": "string(60)"
+    },
+    "detail": {
+     "nullable": true,
+     "type": "string(500)"
+    },
+    "id": {
+     "nullable": false,
+     "type": "integer"
+    },
+    "ip_address": {
+     "nullable": true,
+     "type": "string(60)"
+    },
+    "logged_at": {
+     "nullable": true,
+     "type": "datetime"
+    },
+    "username": {
+     "nullable": false,
+     "type": "string(60)"
+    }
+   },
+   "foreign_keys": [],
+   "indexes": {
+    "ix_activity_log_logged_at": {
+     "columns": [
+      "logged_at"
+     ],
+     "unique": false
+    },
+    "ix_activity_log_username": {
+     "columns": [
+      "username"
+     ],
+     "unique": false
+    }
+   },
+   "uniques": []
+  },
+  "budget_lines": {
+   "columns": {
+    "category": {
+     "nullable": false,
+     "type": "string(60)"
+    },
+    "created_at": {
+     "nullable": true,
+     "type": "datetime"
+    },
+    "id": {
+     "nullable": false,
+     "type": "integer"
+    },
+    "notes": {
+     "nullable": true,
+     "type": "string(300)"
+    },
+    "unit": {
+     "nullable": true,
+     "type": "string(20)"
+    },
+    "updated_at": {
+     "nullable": true,
+     "type": "datetime"
+    },
+    "value": {
+     "nullable": false,
+     "type": "numeric(15,2)"
+    },
+    "year": {
+     "nullable": false,
+     "type": "integer"
+    }
+   },
+   "foreign_keys": [
+    [
+     [
+      "year"
+     ],
+     "fiscal_years",
+     [
+      "year"
+     ]
+    ]
+   ],
+   "indexes": {
+    "ix_budget_lines_year": {
+     "columns": [
+      "year"
+     ],
+     "unique": false
+    }
+   },
+   "uniques": [
+    [
+     "category",
+     "year"
+    ]
+   ]
+  },
+  "budget_zone_shares": {
+   "columns": {
+    "conn_share": {
+     "nullable": false,
+     "type": "float"
+    },
+    "created_at": {
+     "nullable": true,
+     "type": "datetime"
+    },
+    "id": {
+     "nullable": false,
+     "type": "integer"
+    },
+    "rev_share": {
+     "nullable": false,
+     "type": "float"
+    },
+    "updated_at": {
+     "nullable": true,
+     "type": "datetime"
+    },
+    "vol_share": {
+     "nullable": false,
+     "type": "float"
+    },
+    "year": {
+     "nullable": false,
+     "type": "integer"
+    },
+    "zone": {
+     "nullable": false,
+     "type": "string(60)"
+    }
+   },
+   "foreign_keys": [
+    [
+     [
+      "year"
+     ],
+     "fiscal_years",
+     [
+      "year"
+     ]
+    ]
+   ],
+   "indexes": {
+    "ix_budget_zone_shares_year": {
+     "columns": [
+      "year"
+     ],
+     "unique": false
+    }
+   },
+   "uniques": [
+    [
+     "year",
+     "zone"
+    ]
+   ]
+  },
+  "data_sources": {
+   "columns": {
+    "code": {
+     "nullable": false,
+     "type": "string(60)"
+    },
+    "config": {
+     "nullable": false,
+     "type": "json"
+    },
+    "connector": {
+     "nullable": false,
+     "type": "string(20)"
+    },
+    "created_at": {
+     "nullable": true,
+     "type": "datetime"
+    },
+    "enabled": {
+     "nullable": false,
+     "type": "boolean"
+    },
+    "id": {
+     "nullable": false,
+     "type": "integer"
+    },
+    "ingest_token_hash": {
+     "nullable": true,
+     "type": "string(128)"
+    },
+    "last_run_at": {
+     "nullable": true,
+     "type": "datetime"
+    },
+    "last_success_at": {
+     "nullable": true,
+     "type": "datetime"
+    },
+    "mapping": {
+     "nullable": false,
+     "type": "json"
+    },
+    "name": {
+     "nullable": false,
+     "type": "string(160)"
+    },
+    "owner": {
+     "nullable": true,
+     "type": "string(120)"
+    },
+    "priority": {
+     "nullable": false,
+     "type": "integer"
+    },
+    "schedule_minutes": {
+     "nullable": true,
+     "type": "integer"
+    },
+    "system_type": {
+     "nullable": false,
+     "type": "string(20)"
+    },
+    "updated_at": {
+     "nullable": true,
+     "type": "datetime"
+    },
+    "watermark": {
+     "nullable": true,
+     "type": "string(64)"
+    }
+   },
+   "foreign_keys": [],
+   "indexes": {
+    "ix_data_sources_code": {
+     "columns": [
+      "code"
+     ],
+     "unique": true
+    }
+   },
+   "uniques": []
+  },
+  "fiscal_years": {
+   "columns": {
+    "created_at": {
+     "nullable": true,
+     "type": "datetime"
+    },
+    "end_date": {
+     "nullable": false,
+     "type": "string(10)"
+    },
+    "label": {
+     "nullable": false,
+     "type": "string(12)"
+    },
+    "notes": {
+     "nullable": true,
+     "type": "string(500)"
+    },
+    "start_date": {
+     "nullable": false,
+     "type": "string(10)"
+    },
+    "status": {
+     "nullable": false,
+     "type": "string(12)"
+    },
+    "tariff_per_m3": {
+     "nullable": true,
+     "type": "float"
+    },
+    "updated_at": {
+     "nullable": true,
+     "type": "datetime"
+    },
+    "year": {
+     "nullable": false,
+     "type": "integer"
+    }
+   },
+   "foreign_keys": [],
+   "indexes": {},
+   "uniques": []
+  },
+  "key_mappings": {
+   "columns": {
+    "external_key": {
+     "nullable": false,
+     "type": "string(200)"
+    },
+    "id": {
+     "nullable": false,
+     "type": "integer"
+    },
+    "internal_code": {
+     "nullable": false,
+     "type": "string(80)"
+    },
+    "kind": {
+     "nullable": false,
+     "type": "string(20)"
+    },
+    "source_id": {
+     "nullable": false,
+     "type": "integer"
+    }
+   },
+   "foreign_keys": [
+    [
+     [
+      "source_id"
+     ],
+     "data_sources",
+     [
+      "id"
+     ]
+    ]
+   ],
+   "indexes": {
+    "ix_key_mappings_source_id": {
+     "columns": [
+      "source_id"
+     ],
+     "unique": false
+    }
+   },
+   "uniques": [
+    [
+     "external_key",
+     "kind",
+     "source_id"
+    ]
+   ]
+  },
+  "metric_targets": {
+   "columns": {
+    "basis": {
+     "nullable": false,
+     "type": "string(40)"
+    },
+    "id": {
+     "nullable": false,
+     "type": "integer"
+    },
+    "lower": {
+     "nullable": true,
+     "type": "float"
+    },
+    "metric_code": {
+     "nullable": false,
+     "type": "string(80)"
+    },
+    "note": {
+     "nullable": true,
+     "type": "string(300)"
+    },
+    "org_unit_code": {
+     "nullable": false,
+     "type": "string(80)"
+    },
+    "period_start": {
+     "nullable": false,
+     "type": "date"
+    },
+    "period_type": {
+     "nullable": false,
+     "type": "string(10)"
+    },
+    "updated_at": {
+     "nullable": true,
+     "type": "datetime"
+    },
+    "upper": {
+     "nullable": true,
+     "type": "float"
+    },
+    "value": {
+     "nullable": false,
+     "type": "float"
+    }
+   },
+   "foreign_keys": [],
+   "indexes": {
+    "ix_metric_targets_metric_code": {
+     "columns": [
+      "metric_code"
+     ],
+     "unique": false
+    }
+   },
+   "uniques": [
+    [
+     "basis",
+     "metric_code",
+     "org_unit_code",
+     "period_start",
+     "period_type"
+    ]
+   ]
+  },
+  "metric_values": {
+   "columns": {
+    "id": {
+     "nullable": false,
+     "type": "integer"
+    },
+    "loaded_at": {
+     "nullable": true,
+     "type": "datetime"
+    },
+    "metric_code": {
+     "nullable": false,
+     "type": "string(80)"
+    },
+    "org_unit_code": {
+     "nullable": false,
+     "type": "string(80)"
+    },
+    "period_start": {
+     "nullable": false,
+     "type": "date"
+    },
+    "period_type": {
+     "nullable": false,
+     "type": "string(10)"
+    },
+    "run_id": {
+     "nullable": true,
+     "type": "integer"
+    },
+    "source_id": {
+     "nullable": false,
+     "type": "integer"
+    },
+    "source_ref": {
+     "nullable": true,
+     "type": "string(300)"
+    },
+    "status": {
+     "nullable": false,
+     "type": "string(12)"
+    },
+    "value": {
+     "nullable": true,
+     "type": "float"
+    }
+   },
+   "foreign_keys": [
+    [
+     [
+      "run_id"
+     ],
+     "sync_runs",
+     [
+      "id"
+     ]
+    ],
+    [
+     [
+      "source_id"
+     ],
+     "data_sources",
+     [
+      "id"
+     ]
+    ]
+   ],
+   "indexes": {
+    "ix_metric_values_lookup": {
+     "columns": [
+      "metric_code",
+      "org_unit_code",
+      "period_type",
+      "period_start"
+     ],
+     "unique": false
+    }
+   },
+   "uniques": [
+    [
+     "metric_code",
+     "org_unit_code",
+     "period_start",
+     "period_type",
+     "source_id"
+    ]
+   ]
+  },
+  "metrics": {
+   "columns": {
+    "aggregation": {
+     "nullable": false,
+     "type": "string(10)"
+    },
+    "category": {
+     "nullable": true,
+     "type": "string(60)"
+    },
+    "code": {
+     "nullable": false,
+     "type": "string(80)"
+    },
+    "created_at": {
+     "nullable": true,
+     "type": "datetime"
+    },
+    "description": {
+     "nullable": true,
+     "type": "text"
+    },
+    "direction": {
+     "nullable": false,
+     "type": "string(10)"
+    },
+    "formula": {
+     "nullable": true,
+     "type": "text"
+    },
+    "id": {
+     "nullable": false,
+     "type": "integer"
+    },
+    "is_active": {
+     "nullable": false,
+     "type": "boolean"
+    },
+    "name": {
+     "nullable": false,
+     "type": "string(160)"
+    },
+    "unit": {
+     "nullable": true,
+     "type": "string(40)"
+    }
+   },
+   "foreign_keys": [],
+   "indexes": {
+    "ix_metrics_code": {
+     "columns": [
+      "code"
+     ],
+     "unique": true
+    }
+   },
+   "uniques": []
+  },
+  "org_profile": {
+   "columns": {
+    "contact_email": {
+     "nullable": true,
+     "type": "string(120)"
+    },
+    "contact_phone": {
+     "nullable": true,
+     "type": "string(40)"
+    },
+    "country": {
+     "nullable": true,
+     "type": "string(60)"
+    },
+    "id": {
+     "nullable": false,
+     "type": "integer"
+    },
+    "org_name": {
+     "nullable": true,
+     "type": "string(120)"
+    },
+    "population_served": {
+     "nullable": true,
+     "type": "integer"
+    },
+    "registration_no": {
+     "nullable": true,
+     "type": "string(60)"
+    },
+    "regulator": {
+     "nullable": true,
+     "type": "string(120)"
+    },
+    "reporting_currency": {
+     "nullable": true,
+     "type": "string(10)"
+    },
+    "service_area_km2": {
+     "nullable": true,
+     "type": "float"
+    },
+    "short_name": {
+     "nullable": true,
+     "type": "string(20)"
+    },
+    "updated_at": {
+     "nullable": true,
+     "type": "datetime"
+    },
+    "website": {
+     "nullable": true,
+     "type": "string(200)"
+    }
+   },
+   "foreign_keys": [],
+   "indexes": {},
+   "uniques": []
+  },
+  "org_units": {
+   "columns": {
+    "code": {
+     "nullable": false,
+     "type": "string(80)"
+    },
+    "created_at": {
+     "nullable": true,
+     "type": "datetime"
+    },
+    "id": {
+     "nullable": false,
+     "type": "integer"
+    },
+    "is_active": {
+     "nullable": false,
+     "type": "boolean"
+    },
+    "name": {
+     "nullable": false,
+     "type": "string(160)"
+    },
+    "parent_id": {
+     "nullable": true,
+     "type": "integer"
+    },
+    "unit_type": {
+     "nullable": false,
+     "type": "string(40)"
+    }
+   },
+   "foreign_keys": [
+    [
+     [
+      "parent_id"
+     ],
+     "org_units",
+     [
+      "id"
+     ]
+    ]
+   ],
+   "indexes": {
+    "ix_org_units_code": {
+     "columns": [
+      "code"
+     ],
+     "unique": true
+    },
+    "ix_org_units_parent_id": {
+     "columns": [
+      "parent_id"
+     ],
+     "unique": false
+    }
+   },
+   "uniques": []
+  },
+  "records": {
+   "columns": {
+    "ac_100mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "ac_150mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "ac_50mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "ac_75mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "active_customers": {
+     "nullable": true,
+     "type": "float"
+    },
+    "active_post_commercial": {
+     "nullable": true,
+     "type": "float"
+    },
+    "active_post_cwp": {
+     "nullable": true,
+     "type": "float"
+    },
+    "active_post_individual": {
+     "nullable": true,
+     "type": "float"
+    },
+    "active_post_inst": {
+     "nullable": true,
+     "type": "float"
+    },
+    "active_postpaid": {
+     "nullable": true,
+     "type": "float"
+    },
+    "active_prep_commercial": {
+     "nullable": true,
+     "type": "float"
+    },
+    "active_prep_cwp": {
+     "nullable": true,
+     "type": "float"
+    },
+    "active_prep_individual": {
+     "nullable": true,
+     "type": "float"
+    },
+    "active_prep_inst": {
+     "nullable": true,
+     "type": "float"
+    },
+    "active_prepaid": {
+     "nullable": true,
+     "type": "float"
+    },
+    "algae_floc_litres": {
+     "nullable": true,
+     "type": "float"
+    },
+    "algae_floc_per_m3": {
+     "nullable": true,
+     "type": "float"
+    },
+    "all_conn_applied": {
+     "nullable": true,
+     "type": "float"
+    },
+    "all_conn_bfwd": {
+     "nullable": true,
+     "type": "float"
+    },
+    "all_conn_cfwd": {
+     "nullable": true,
+     "type": "float"
+    },
+    "all_stuck_cfwd": {
+     "nullable": true,
+     "type": "float"
+    },
+    "alum_kg": {
+     "nullable": true,
+     "type": "float"
+    },
+    "alum_kg_per_m3": {
+     "nullable": true,
+     "type": "float"
+    },
+    "amt_billed": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "amt_billed_comm_pp": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "amt_billed_comm_prepaid": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "amt_billed_cwp_pp": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "amt_billed_cwp_prepaid": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "amt_billed_indiv_pp": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "amt_billed_indiv_prepaid": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "amt_billed_inst_pp": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "amt_billed_inst_prepaid": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "amt_billed_pp": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "amt_billed_prepaid": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "cash_coll_comm_pp": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "cash_coll_comm_prepaid": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "cash_coll_cwp_pp": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "cash_coll_cwp_prepaid": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "cash_coll_indiv_pp": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "cash_coll_indiv_prepaid": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "cash_coll_inst_pp": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "cash_coll_inst_prepaid": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "cash_coll_pp": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "cash_coll_prepaid": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "cash_collected": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "chem_cost": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "chem_cost_per_m3": {
+     "nullable": true,
+     "type": "float"
+    },
+    "chlorine_kg": {
+     "nullable": true,
+     "type": "float"
+    },
+    "chlorine_kg_per_m3": {
+     "nullable": true,
+     "type": "float"
+    },
+    "collection_per_sales": {
+     "nullable": true,
+     "type": "float"
+    },
+    "collection_rate": {
+     "nullable": true,
+     "type": "float"
+    },
+    "conn_applied": {
+     "nullable": true,
+     "type": "float"
+    },
+    "conn_comm_applied_pp": {
+     "nullable": true,
+     "type": "float"
+    },
+    "conn_comm_bfwd": {
+     "nullable": true,
+     "type": "float"
+    },
+    "conn_comm_cfwd": {
+     "nullable": true,
+     "type": "float"
+    },
+    "conn_comm_done_pp": {
+     "nullable": true,
+     "type": "float"
+    },
+    "conn_comm_done_prepaid": {
+     "nullable": true,
+     "type": "float"
+    },
+    "conn_comm_total_done": {
+     "nullable": true,
+     "type": "float"
+    },
+    "conn_cwp_applied_pp": {
+     "nullable": true,
+     "type": "float"
+    },
+    "conn_cwp_bfwd": {
+     "nullable": true,
+     "type": "float"
+    },
+    "conn_cwp_cfwd": {
+     "nullable": true,
+     "type": "float"
+    },
+    "conn_cwp_done_pp": {
+     "nullable": true,
+     "type": "float"
+    },
+    "conn_cwp_done_prepaid": {
+     "nullable": true,
+     "type": "float"
+    },
+    "conn_cwp_total_done": {
+     "nullable": true,
+     "type": "float"
+    },
+    "conn_fully_paid": {
+     "nullable": true,
+     "type": "float"
+    },
+    "conn_indiv_applied_pp": {
+     "nullable": true,
+     "type": "float"
+    },
+    "conn_indiv_bfwd": {
+     "nullable": true,
+     "type": "float"
+    },
+    "conn_indiv_cfwd": {
+     "nullable": true,
+     "type": "float"
+    },
+    "conn_indiv_done_pp": {
+     "nullable": true,
+     "type": "float"
+    },
+    "conn_indiv_done_prepaid": {
+     "nullable": true,
+     "type": "float"
+    },
+    "conn_indiv_total_done": {
+     "nullable": true,
+     "type": "float"
+    },
+    "conn_inst_applied_pp": {
+     "nullable": true,
+     "type": "float"
+    },
+    "conn_inst_bfwd": {
+     "nullable": true,
+     "type": "float"
+    },
+    "conn_inst_cfwd": {
+     "nullable": true,
+     "type": "float"
+    },
+    "conn_inst_done_pp": {
+     "nullable": true,
+     "type": "float"
+    },
+    "conn_inst_done_prepaid": {
+     "nullable": true,
+     "type": "float"
+    },
+    "conn_inst_total_done": {
+     "nullable": true,
+     "type": "float"
+    },
+    "connection_days": {
+     "nullable": true,
+     "type": "float"
+    },
+    "connectivity_rate": {
+     "nullable": true,
+     "type": "float"
+    },
+    "days_to_connect": {
+     "nullable": true,
+     "type": "float"
+    },
+    "days_to_quotation": {
+     "nullable": true,
+     "type": "float"
+    },
+    "dev_lines_110mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "dev_lines_32mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "dev_lines_50mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "dev_lines_63mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "dev_lines_90mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "dev_lines_total": {
+     "nullable": true,
+     "type": "float"
+    },
+    "di_150mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "di_200mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "di_250mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "di_300mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "di_350mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "di_525mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "disconnected_commercial": {
+     "nullable": true,
+     "type": "float"
+    },
+    "disconnected_cwp": {
+     "nullable": true,
+     "type": "float"
+    },
+    "disconnected_individual": {
+     "nullable": true,
+     "type": "float"
+    },
+    "disconnected_inst": {
+     "nullable": true,
+     "type": "float"
+    },
+    "distances_km": {
+     "nullable": true,
+     "type": "float"
+    },
+    "fiscal_year": {
+     "nullable": true,
+     "type": "string(12)"
+    },
+    "fuel_cost": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "fuel_used_litres": {
+     "nullable": true,
+     "type": "float"
+    },
+    "gi_100mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "gi_150mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "gi_15mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "gi_200mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "gi_20mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "gi_25mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "gi_40mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "gi_50mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "gi_75mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "hdpe_20mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "hdpe_25mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "hdpe_32mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "hdpe_50mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "id": {
+     "nullable": false,
+     "type": "integer"
+    },
+    "kmno4_kg": {
+     "nullable": true,
+     "type": "float"
+    },
+    "kmno4_per_m3": {
+     "nullable": true,
+     "type": "float"
+    },
+    "maintenance": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "meter_rental": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "meter_rental_commercial": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "meter_rental_cwp": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "meter_rental_individual": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "meter_rental_institutions": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "month": {
+     "nullable": false,
+     "type": "string(20)"
+    },
+    "month_no": {
+     "nullable": false,
+     "type": "integer"
+    },
+    "new_connections": {
+     "nullable": true,
+     "type": "float"
+    },
+    "nrw": {
+     "nullable": true,
+     "type": "float"
+    },
+    "op_cost": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "op_cost_per_m3_billed": {
+     "nullable": true,
+     "type": "float"
+    },
+    "op_cost_per_m3_produced": {
+     "nullable": true,
+     "type": "float"
+    },
+    "op_cost_per_sales": {
+     "nullable": true,
+     "type": "float"
+    },
+    "other_overhead": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "paid_up_applicants": {
+     "nullable": true,
+     "type": "float"
+    },
+    "pct_nrw": {
+     "nullable": true,
+     "type": "float"
+    },
+    "pct_pop_supplied": {
+     "nullable": true,
+     "type": "float"
+    },
+    "perm_staff": {
+     "nullable": true,
+     "type": "float"
+    },
+    "pipe_breakdowns": {
+     "nullable": true,
+     "type": "float"
+    },
+    "pipe_di": {
+     "nullable": true,
+     "type": "float"
+    },
+    "pipe_gi": {
+     "nullable": true,
+     "type": "float"
+    },
+    "pipe_hdpe_ac": {
+     "nullable": true,
+     "type": "float"
+    },
+    "pipe_pvc": {
+     "nullable": true,
+     "type": "float"
+    },
+    "pop_supplied": {
+     "nullable": true,
+     "type": "float"
+    },
+    "pop_supply_area": {
+     "nullable": true,
+     "type": "float"
+    },
+    "power_cost": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "power_cost_per_m3": {
+     "nullable": true,
+     "type": "float"
+    },
+    "power_fail_hours": {
+     "nullable": true,
+     "type": "float"
+    },
+    "power_kwh": {
+     "nullable": true,
+     "type": "float"
+    },
+    "power_kwh_per_m3": {
+     "nullable": true,
+     "type": "float"
+    },
+    "prepaid_meters_installed": {
+     "nullable": true,
+     "type": "float"
+    },
+    "private_debtors": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "public_debtors": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "pump_breakdowns": {
+     "nullable": true,
+     "type": "float"
+    },
+    "pump_hours_lost": {
+     "nullable": true,
+     "type": "float"
+    },
+    "pvc_110mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "pvc_160mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "pvc_200mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "pvc_20mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "pvc_250mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "pvc_25mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "pvc_315mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "pvc_32mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "pvc_40mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "pvc_50mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "pvc_63mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "pvc_75mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "pvc_90mm": {
+     "nullable": true,
+     "type": "float"
+    },
+    "quarter": {
+     "nullable": false,
+     "type": "string(4)"
+    },
+    "queries_received": {
+     "nullable": true,
+     "type": "float"
+    },
+    "response_time_avg": {
+     "nullable": true,
+     "type": "float"
+    },
+    "revenue_water": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "scheme": {
+     "nullable": false,
+     "type": "string(80)"
+    },
+    "service_charge": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "service_charge_commercial": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "service_charge_cwp": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "service_charge_individual": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "service_charge_institutions": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "soda_ash_kg": {
+     "nullable": true,
+     "type": "float"
+    },
+    "soda_ash_kg_per_m3": {
+     "nullable": true,
+     "type": "float"
+    },
+    "staff_costs": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "staff_per_1000m3_12h": {
+     "nullable": true,
+     "type": "float"
+    },
+    "stuck_comm_bfwd": {
+     "nullable": true,
+     "type": "float"
+    },
+    "stuck_comm_cfwd": {
+     "nullable": true,
+     "type": "float"
+    },
+    "stuck_comm_new": {
+     "nullable": true,
+     "type": "float"
+    },
+    "stuck_comm_repaired": {
+     "nullable": true,
+     "type": "float"
+    },
+    "stuck_comm_replaced": {
+     "nullable": true,
+     "type": "float"
+    },
+    "stuck_cwp_bfwd": {
+     "nullable": true,
+     "type": "float"
+    },
+    "stuck_cwp_cfwd": {
+     "nullable": true,
+     "type": "float"
+    },
+    "stuck_cwp_new": {
+     "nullable": true,
+     "type": "float"
+    },
+    "stuck_cwp_repaired": {
+     "nullable": true,
+     "type": "float"
+    },
+    "stuck_cwp_replaced": {
+     "nullable": true,
+     "type": "float"
+    },
+    "stuck_indiv_bfwd": {
+     "nullable": true,
+     "type": "float"
+    },
+    "stuck_indiv_cfwd": {
+     "nullable": true,
+     "type": "float"
+    },
+    "stuck_indiv_new": {
+     "nullable": true,
+     "type": "float"
+    },
+    "stuck_indiv_repaired": {
+     "nullable": true,
+     "type": "float"
+    },
+    "stuck_indiv_replaced": {
+     "nullable": true,
+     "type": "float"
+    },
+    "stuck_inst_bfwd": {
+     "nullable": true,
+     "type": "float"
+    },
+    "stuck_inst_cfwd": {
+     "nullable": true,
+     "type": "float"
+    },
+    "stuck_inst_new": {
+     "nullable": true,
+     "type": "float"
+    },
+    "stuck_inst_repaired": {
+     "nullable": true,
+     "type": "float"
+    },
+    "stuck_inst_replaced": {
+     "nullable": true,
+     "type": "float"
+    },
+    "stuck_meters": {
+     "nullable": true,
+     "type": "float"
+    },
+    "stuck_new": {
+     "nullable": true,
+     "type": "float"
+    },
+    "stuck_repaired": {
+     "nullable": true,
+     "type": "float"
+    },
+    "stuck_replaced": {
+     "nullable": true,
+     "type": "float"
+    },
+    "sud_floc_litres": {
+     "nullable": true,
+     "type": "float"
+    },
+    "sud_floc_per_m3": {
+     "nullable": true,
+     "type": "float"
+    },
+    "supply_hours": {
+     "nullable": true,
+     "type": "float"
+    },
+    "temp_staff": {
+     "nullable": true,
+     "type": "float"
+    },
+    "time_to_resolve": {
+     "nullable": true,
+     "type": "float"
+    },
+    "total_debtors": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "total_disconnected": {
+     "nullable": true,
+     "type": "float"
+    },
+    "total_metered": {
+     "nullable": true,
+     "type": "float"
+    },
+    "total_sales": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "total_vol_billed_pp": {
+     "nullable": true,
+     "type": "float"
+    },
+    "total_vol_billed_prepaid": {
+     "nullable": true,
+     "type": "float"
+    },
+    "vol_billed_comm_pp": {
+     "nullable": true,
+     "type": "float"
+    },
+    "vol_billed_comm_prepaid": {
+     "nullable": true,
+     "type": "float"
+    },
+    "vol_billed_cwp_pp": {
+     "nullable": true,
+     "type": "float"
+    },
+    "vol_billed_cwp_prepaid": {
+     "nullable": true,
+     "type": "float"
+    },
+    "vol_billed_indiv_pp": {
+     "nullable": true,
+     "type": "float"
+    },
+    "vol_billed_indiv_prepaid": {
+     "nullable": true,
+     "type": "float"
+    },
+    "vol_billed_inst_pp": {
+     "nullable": true,
+     "type": "float"
+    },
+    "vol_billed_inst_prepaid": {
+     "nullable": true,
+     "type": "float"
+    },
+    "vol_produced": {
+     "nullable": true,
+     "type": "float"
+    },
+    "wages": {
+     "nullable": true,
+     "type": "numeric(15,2)"
+    },
+    "wq_bact_compliant": {
+     "nullable": true,
+     "type": "integer"
+    },
+    "wq_bact_samples": {
+     "nullable": true,
+     "type": "integer"
+    },
+    "wq_cl_compliant": {
+     "nullable": true,
+     "type": "integer"
+    },
+    "wq_cl_samples": {
+     "nullable": true,
+     "type": "integer"
+    },
+    "wq_ph_compliant": {
+     "nullable": true,
+     "type": "integer"
+    },
+    "wq_ph_samples": {
+     "nullable": true,
+     "type": "integer"
+    },
+    "wq_residual_cl_mg_l": {
+     "nullable": true,
+     "type": "float"
+    },
+    "wq_samples_taken": {
+     "nullable": true,
+     "type": "integer"
+    },
+    "wq_turbidity_compliant": {
+     "nullable": true,
+     "type": "integer"
+    },
+    "wq_turbidity_ntu": {
+     "nullable": true,
+     "type": "float"
+    },
+    "wq_turbidity_samples": {
+     "nullable": true,
+     "type": "integer"
+    },
+    "year": {
+     "nullable": false,
+     "type": "integer"
+    },
+    "zone": {
+     "nullable": false,
+     "type": "string(60)"
+    }
+   },
+   "foreign_keys": [],
+   "indexes": {
+    "ix_record_year_month": {
+     "columns": [
+      "year",
+      "month_no"
+     ],
+     "unique": false
+    },
+    "ix_records_month": {
+     "columns": [
+      "month"
+     ],
+     "unique": false
+    },
+    "ix_records_scheme": {
+     "columns": [
+      "scheme"
+     ],
+     "unique": false
+    },
+    "ix_records_zone": {
+     "columns": [
+      "zone"
+     ],
+     "unique": false
+    },
+    "ix_zone_scheme_year_monthno": {
+     "columns": [
+      "zone",
+      "scheme",
+      "year",
+      "month_no"
+     ],
+     "unique": false
+    }
+   },
+   "uniques": [
+    [
+     "month_no",
+     "scheme",
+     "year",
+     "zone"
+    ]
+   ]
+  },
+  "spc_limits": {
+   "columns": {
+    "created_at": {
+     "nullable": true,
+     "type": "datetime"
+    },
+    "id": {
+     "nullable": false,
+     "type": "integer"
+    },
+    "lcl2": {
+     "nullable": true,
+     "type": "float"
+    },
+    "lcl3": {
+     "nullable": true,
+     "type": "float"
+    },
+    "mean": {
+     "nullable": true,
+     "type": "float"
+    },
+    "metric": {
+     "nullable": false,
+     "type": "string(40)"
+    },
+    "std": {
+     "nullable": true,
+     "type": "float"
+    },
+    "ucl2": {
+     "nullable": true,
+     "type": "float"
+    },
+    "ucl3": {
+     "nullable": true,
+     "type": "float"
+    },
+    "updated_at": {
+     "nullable": true,
+     "type": "datetime"
+    },
+    "year": {
+     "nullable": false,
+     "type": "integer"
+    }
+   },
+   "foreign_keys": [
+    [
+     [
+      "year"
+     ],
+     "fiscal_years",
+     [
+      "year"
+     ]
+    ]
+   ],
+   "indexes": {
+    "ix_spc_limits_year": {
+     "columns": [
+      "year"
+     ],
+     "unique": false
+    }
+   },
+   "uniques": [
+    [
+     "metric",
+     "year"
+    ]
+   ]
+  },
+  "sync_runs": {
+   "columns": {
+    "error": {
+     "nullable": true,
+     "type": "text"
+    },
+    "finished_at": {
+     "nullable": true,
+     "type": "datetime"
+    },
+    "id": {
+     "nullable": false,
+     "type": "integer"
+    },
+    "rejects": {
+     "nullable": true,
+     "type": "json"
+    },
+    "rows_read": {
+     "nullable": false,
+     "type": "integer"
+    },
+    "rows_rejected": {
+     "nullable": false,
+     "type": "integer"
+    },
+    "source_id": {
+     "nullable": false,
+     "type": "integer"
+    },
+    "started_at": {
+     "nullable": true,
+     "type": "datetime"
+    },
+    "status": {
+     "nullable": false,
+     "type": "string(12)"
+    },
+    "triggered_by": {
+     "nullable": true,
+     "type": "string(60)"
+    },
+    "values_loaded": {
+     "nullable": false,
+     "type": "integer"
+    },
+    "watermark_after": {
+     "nullable": true,
+     "type": "string(64)"
+    },
+    "watermark_before": {
+     "nullable": true,
+     "type": "string(64)"
+    }
+   },
+   "foreign_keys": [
+    [
+     [
+      "source_id"
+     ],
+     "data_sources",
+     [
+      "id"
+     ]
+    ]
+   ],
+   "indexes": {
+    "ix_sync_runs_source_id": {
+     "columns": [
+      "source_id"
+     ],
+     "unique": false
+    },
+    "ix_sync_runs_started_at": {
+     "columns": [
+      "started_at"
+     ],
+     "unique": false
+    }
+   },
+   "uniques": []
+  },
+  "upload_log": {
+   "columns": {
+    "filename": {
+     "nullable": true,
+     "type": "string(200)"
+    },
+    "id": {
+     "nullable": false,
+     "type": "integer"
+    },
+    "logged_at": {
+     "nullable": true,
+     "type": "datetime"
+    },
+    "period": {
+     "nullable": true,
+     "type": "string(30)"
+    },
+    "rows_errored": {
+     "nullable": true,
+     "type": "integer"
+    },
+    "rows_inserted": {
+     "nullable": true,
+     "type": "integer"
+    },
+    "rows_skipped": {
+     "nullable": true,
+     "type": "integer"
+    },
+    "rows_updated": {
+     "nullable": true,
+     "type": "integer"
+    },
+    "uploaded_by": {
+     "nullable": false,
+     "type": "string(60)"
+    }
+   },
+   "foreign_keys": [],
+   "indexes": {
+    "ix_upload_log_logged_at": {
+     "columns": [
+      "logged_at"
+     ],
+     "unique": false
+    }
+   },
+   "uniques": []
+  },
+  "users": {
+   "columns": {
+    "created_at": {
+     "nullable": true,
+     "type": "datetime"
+    },
+    "created_by": {
+     "nullable": true,
+     "type": "string(60)"
+    },
+    "full_name": {
+     "nullable": true,
+     "type": "string(120)"
+    },
+    "id": {
+     "nullable": false,
+     "type": "integer"
+    },
+    "is_active": {
+     "nullable": false,
+     "type": "boolean"
+    },
+    "last_login": {
+     "nullable": true,
+     "type": "datetime"
+    },
+    "must_change_password": {
+     "nullable": false,
+     "type": "boolean"
+    },
+    "password_hash": {
+     "nullable": false,
+     "type": "string(128)"
+    },
+    "role": {
+     "nullable": false,
+     "type": "string(20)"
+    },
+    "username": {
+     "nullable": false,
+     "type": "string(60)"
+    }
+   },
+   "foreign_keys": [],
+   "indexes": {
+    "ix_users_username": {
+     "columns": [
+      "username"
+     ],
+     "unique": true
+    }
+   },
+   "uniques": []
+  }
+ }
+}

@@ -69,6 +69,9 @@ def seed(refresh_fy: int | None = None):
     try:
         budgets = {int(y): b or {} for y, b in (cfg.get("budgets") or {}).items()}
         _seed_fiscal_years(db, cfg.get("fiscal_years") or {}, budgets)
+        # Budget rows reference fiscal_years.year; without an ORM relationship the flush
+        # order is not guaranteed, so write the parent rows first (foreign keys are enforced).
+        db.flush()
         for year, budget in sorted(budgets.items()):
             refresh = refresh_fy == year
             lines = list(budget.get("lines") or [])
