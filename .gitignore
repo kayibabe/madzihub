@@ -1,0 +1,36 @@
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+.env.*
+venv/
+env/
+.venv/
+uploads/
+data/
+excel files/
+*.rar
+*.zip
+Thumbs.db
+.DS_Store
+index - Copy*.html
+dist/
+.pytest_cache/
+.vs/
+.idea/
+.vscode/
+*.sqlite
+*.db
+data/*.secret
+data/*.key
+
+# --- Added: local tooling, logs, copies, reports ---
+.claude/
+.codex/
+logs/
+*.log
+*- Copy.*
+*.docx
+*.pdf
+*.ffs_db
+dataupdater/FY2627/A6D65900

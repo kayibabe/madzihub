@@ -1,0 +1,410 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Department tabs — top-level organisational switcher
+   Board View · Operations · Finance (coming soon) · Human Resource &
+   Administration · Infrastructure. Sits beneath #db-topbar in #db-right-col.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root{ --dept-tabs-h:48px; }
+
+#dept-tabs{
+  display:flex;align-items:stretch;gap:4px;
+  flex-shrink:0;
+  height:var(--dept-tabs-h);
+  padding:0 var(--page-x);
+  background:var(--ds-surface);
+  border-bottom:1.5px solid var(--ds-border);
+  box-shadow:0 1px 4px rgba(15,23,42,.04);
+  overflow-x:auto;
+  scrollbar-width:none;
+  z-index:45;
+}
+#dept-tabs::-webkit-scrollbar{display:none}
+
+.dept-tab{
+  position:relative;
+  display:inline-flex;align-items:center;gap:9px;
+  padding:0 18px;
+  border:0;background:transparent;
+  font-family:var(--ds-font);font-size:13.5px;font-weight:650;
+  letter-spacing:-.01em;
+  color:var(--ds-text-muted);
+  cursor:pointer;white-space:nowrap;
+  transition:color .15s,background .15s;
+  border-radius:9px 9px 0 0;
+}
+.dept-tab .dept-tab-icon{width:17px;height:17px;flex-shrink:0;opacity:.8}
+.dept-tab:hover{color:var(--ds-text-primary);background:var(--ds-bg)}
+.dept-tab.active{color:var(--ds-blue)}
+.dept-tab.active .dept-tab-icon{opacity:1}
+.dept-tab.active::after{
+  content:"";position:absolute;left:10px;right:10px;bottom:-1.5px;height:2.5px;
+  background:var(--ds-blue);border-radius:3px 3px 0 0;
+}
+.dept-tab:focus-visible{outline:2px solid var(--ds-blue);outline-offset:-3px;border-radius:7px}
+
+/* ── Per-tab accent colours — tints on hover/active only ───────────────────── */
+.dept-tab[data-dept="board"]:hover          {background:rgba(30,64,175,.2);   color:#1e40af}
+.dept-tab[data-dept="operations"]:hover     {background:rgba(8,145,178,.2);   color:#0369a1}
+.dept-tab[data-dept="finance"]:hover        {background:rgba(21,128,61,.2);   color:#15803d}
+.dept-tab[data-dept="hr"]:hover             {background:rgba(124,58,237,.2);  color:#7c3aed}
+.dept-tab[data-dept="infrastructure"]:hover {background:rgba(194,65,12,.2);   color:#c2410c}
+.dept-tab[data-dept="reports"]:hover        {background:rgba(180,83,9,.2);    color:#b45309}
+
+.dept-tab[data-dept="board"].active          {background:rgba(30,64,175,.16);  color:#1e40af}
+.dept-tab[data-dept="operations"].active     {background:rgba(8,145,178,.16);  color:#0369a1}
+.dept-tab[data-dept="finance"].active        {background:rgba(21,128,61,.16);  color:#15803d}
+.dept-tab[data-dept="hr"].active             {background:rgba(124,58,237,.16); color:#7c3aed}
+.dept-tab[data-dept="infrastructure"].active {background:rgba(194,65,12,.16);  color:#c2410c}
+.dept-tab[data-dept="reports"].active        {background:rgba(180,83,9,.16);   color:#b45309}
+
+.dept-tab[data-dept="board"].active::after          {background:#1e40af}
+.dept-tab[data-dept="operations"].active::after     {background:#0891b2}
+.dept-tab[data-dept="finance"].active::after        {background:#15803d}
+.dept-tab[data-dept="hr"].active::after             {background:#7c3aed}
+.dept-tab[data-dept="infrastructure"].active::after {background:#c2410c}
+.dept-tab[data-dept="reports"].active::after        {background:#b45309}
+.dept-tab .dept-tab-soon{
+  font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  color:#B45309;
+  background:var(--ds-amber-bg,#fef3c7);
+  border-radius:5px;padding:2px 6px;line-height:1;
+}
+
+/* When a non-Operations (stub) department is active, hide the report
+   pages and reveal the coming-soon welcome screen. The sidebar stays
+   visible and shows the department's own (coming-soon) menu. */
+body.dept-stub #db-main > .db-page{display:none !important}
+body.dept-stub #tb-export{display:none !important}
+body.dept-stub .tb-quickfilters{opacity:.55}
+
+/* ── Per-department sidebar menus ────────────────────────────────────────
+   Only the active department's menu is shown. */
+#db-nav .dept-menu{display:none}
+#db-nav .dept-menu.is-active{display:block}
+
+/* "Soon" pill on coming-soon menu items */
+.nav-item-soon{cursor:default}
+.nav-item-soon .nav-item-label{opacity:.8}
+.nav-soon{
+  margin-left:auto;flex-shrink:0;
+  font-size:8.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  color:#B45309;background:var(--ds-amber-bg);border:1px solid var(--ds-amber-border);
+  border-radius:5px;padding:2px 5px;line-height:1;
+}
+
+#dept-coming-soon{display:none}
+body.dept-stub #dept-coming-soon{display:block}
+
+/* Keep the scroll area correctly sized on desktop now that an extra
+   ~48px tab strip sits above the main pane. Flex handles most engines,
+   but we pin the calc for determinism. Mobile (≤900px) keeps base.css's
+   auto height. */
+@media (min-width:901px){
+  #db-main{
+    height:calc(100vh - 60px - var(--dept-tabs-h));
+    height:calc(100dvh - 60px - var(--dept-tabs-h));
+  }
+}
+
+/* ── Coming-soon welcome screen ──────────────────────────────────────── */
+.dept-soon-wrap{
+  max-width:1040px;margin:0 auto;
+  padding:42px var(--page-x) 60px;
+}
+.dept-soon-hero{
+  display:flex;align-items:flex-start;gap:22px;
+  padding:32px 34px;
+  background:linear-gradient(135deg,var(--ds-surface) 0%,var(--ds-bg) 100%);
+  border:1.5px solid var(--ds-border);
+  border-radius:18px;
+  box-shadow:0 6px 24px rgba(15,23,42,.05);
+}
+.dept-soon-badge-ico{
+  flex-shrink:0;width:64px;height:64px;border-radius:16px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--ds-blue-bg);color:var(--ds-blue);
+}
+.dept-soon-badge-ico svg{width:34px;height:34px}
+.dept-soon-hero-body{flex:1;min-width:0}
+.dept-soon-eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ds-amber,#b45309);
+  background:var(--ds-amber-bg,#fef3c7);
+  border-radius:20px;padding:5px 12px;margin-bottom:12px;
+}
+.dept-soon-eyebrow .pulse-dot{
+  width:7px;height:7px;border-radius:50%;background:currentColor;
+  box-shadow:0 0 0 0 currentColor;animation:deptPulse 1.8s infinite;
+}
+@keyframes deptPulse{
+  0%{box-shadow:0 0 0 0 rgba(180,83,9,.5)}
+  70%{box-shadow:0 0 0 7px rgba(180,83,9,0)}
+  100%{box-shadow:0 0 0 0 rgba(180,83,9,0)}
+}
+.dept-soon-title{font-size:26px;font-weight:850;letter-spacing:-.025em;color:var(--ds-text-primary);margin:0 0 6px}
+.dept-soon-tagline{font-size:14.5px;line-height:1.55;color:var(--ds-text-secondary);margin:0;max-width:62ch}
+.dept-soon-scope{
+  display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;
+  margin-top:16px;padding:9px 14px;
+  background:var(--ds-bg);border:1px solid var(--ds-border);border-radius:10px;
+  font-size:12.5px;color:var(--ds-text-secondary);
+}
+.dept-soon-scope b{color:var(--ds-text-primary);font-weight:700}
+
+.dept-soon-section-label{
+  font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--ds-text-muted);margin:38px 0 14px;
+}
+.dept-soon-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;
+}
+.dept-soon-card{
+  position:relative;
+  padding:18px 18px 16px;
+  background:var(--ds-surface);
+  border:1.5px solid var(--ds-border);
+  border-radius:14px;
+  transition:border-color .15s,transform .15s,box-shadow .15s;
+}
+.dept-soon-card:hover{border-color:var(--ds-blue);transform:translateY(-2px);box-shadow:0 8px 22px rgba(15,23,42,.07)}
+.dept-soon-card-ico{
+  width:38px;height:38px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--ds-blue-bg);color:var(--ds-blue);margin-bottom:12px;
+}
+.dept-soon-card-ico svg{width:20px;height:20px}
+.dept-soon-card-title{font-size:14.5px;font-weight:750;color:var(--ds-text-primary);margin:0 0 5px;letter-spacing:-.01em}
+.dept-soon-card-desc{font-size:12.5px;line-height:1.5;color:var(--ds-text-muted);margin:0}
+.dept-soon-card-tag{
+  position:absolute;top:14px;right:14px;
+  font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--ds-text-muted);background:var(--ds-bg);
+  border:1px solid var(--ds-border);border-radius:5px;padding:2px 6px;
+}
+
+.dept-soon-foot{
+  margin-top:34px;padding:18px 22px;
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  background:var(--ds-blue-bg);border:1px solid var(--ds-blue);border-radius:14px;
+}
+.dept-soon-foot svg{width:22px;height:22px;color:var(--ds-blue);flex-shrink:0}
+.dept-soon-foot-txt{flex:1;min-width:200px;font-size:13px;line-height:1.5;color:var(--ds-text-secondary)}
+.dept-soon-foot-txt b{color:var(--ds-text-primary)}
+.dept-soon-foot button{
+  border:0;background:var(--ds-blue);color:#fff;font-family:var(--ds-font);
+  font-size:12.5px;font-weight:650;border-radius:9px;padding:9px 16px;cursor:pointer;
+  transition:filter .15s;
+}
+.dept-soon-foot button:hover{filter:brightness(1.08)}
+
+@media (max-width:900px){
+  .dept-soon-wrap{padding:24px 16px 48px}
+  .dept-soon-hero{flex-direction:column;padding:24px}
+  .dept-soon-title{font-size:22px}
+  /* Tighter tabs so all five fit / scroll comfortably on phones. */
+  #dept-tabs{padding:0 10px;gap:2px}
+  .dept-tab{padding:0 11px;font-size:12.5px;gap:6px}
+  .dept-tab .dept-tab-icon{width:15px;height:15px}
+}
+
+/* ── Report density toggle (Summary / Analysis / Detail) ─────────────────── */
+.tb-viewmode{
+  display:inline-flex;align-items:center;gap:2px;
+  background:var(--ds-bg);border:1px solid var(--ds-border);
+  border-radius:9px;padding:2px;flex-shrink:0;
+}
+.tb-viewmode.is-hidden{display:none}
+.tb-mode-btn{
+  border:0;background:transparent;cursor:pointer;
+  font-family:var(--ds-font);font-size:11.5px;font-weight:650;
+  color:var(--ds-text-muted);border-radius:7px;padding:5px 11px;line-height:1;
+  transition:background .14s,color .14s;
+}
+.tb-mode-btn:hover{color:var(--ds-text-primary)}
+.tb-mode-btn[aria-pressed="true"]{background:var(--ds-surface);color:var(--ds-blue);box-shadow:0 1px 2px rgba(15,23,42,.08)}
+.tb-mode-btn:focus-visible{outline:2px solid var(--ds-blue);outline-offset:1px}
+.tb-mode-btn:disabled{opacity:.5;cursor:default}
+@media (max-width:900px){ .tb-viewmode{display:none} }
+
+/* Clean print for the board / HRA / infrastructure pages, whose Print
+   buttons call window.print() directly (not the printReport flow). Hide all
+   app chrome so only the active page content prints. Harmless for the
+   printReport flow, which already hides the same elements. */
+@media print{
+  #dept-tabs, #db-nav, #db-topbar, #filter-panel, #attr-footer, #alert-float{ display:none !important; }
+  #db-right-col, #db-main{ height:auto !important; overflow:visible !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Board View — consolidated cross-department roll-up page
+   ═══════════════════════════════════════════════════════════════════════ */
+.bv-dept-grid{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;
+  margin-top:6px;
+}
+@media (max-width:1100px){ .bv-dept-grid{grid-template-columns:1fr} }
+
+.bv-panel{
+  background:var(--ds-surface);
+  border:1.5px solid var(--ds-border);
+  border-radius:16px;
+  padding:18px 18px 16px;
+  box-shadow:0 1px 3px rgba(15,23,42,.04);
+  transition:border-color .15s,box-shadow .15s;
+}
+.bv-panel:hover{border-color:var(--ds-blue-border);box-shadow:0 6px 18px rgba(15,23,42,.06)}
+
+.bv-panel-hdr{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+  margin-bottom:16px;
+}
+.bv-panel-id{display:flex;align-items:flex-start;gap:12px;min-width:0}
+.bv-panel-ico{
+  flex-shrink:0;width:40px;height:40px;border-radius:11px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--ds-blue-bg);color:var(--ds-blue);
+}
+.bv-panel-ico svg{width:22px;height:22px}
+.bv-panel-name{font-size:16px;font-weight:800;letter-spacing:-.02em;color:var(--ds-text-primary);line-height:1.2}
+.bv-panel-note{font-size:11.5px;color:var(--ds-text-muted);margin-top:3px;line-height:1.4}
+
+.bv-panel-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.bv-status{
+  font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  border-radius:6px;padding:3px 8px;line-height:1;white-space:nowrap;
+}
+.bv-status-live{color:var(--ds-green,#16a34a);background:var(--ds-green-bg,#f0fdf4);border:1px solid var(--ds-green-border,#bbf7d0)}
+.bv-status-soon{color:#B45309;background:var(--ds-amber-bg);border:1px solid var(--ds-amber-border)}
+.bv-status-preview{color:var(--ds-blue);background:var(--ds-blue-bg);border:1px solid var(--ds-blue-border)}
+.bv-open{
+  display:inline-flex;align-items:center;gap:4px;
+  border:1px solid var(--ds-border);background:var(--ds-surface);
+  color:var(--ds-text-secondary);font-family:var(--ds-font);
+  font-size:11.5px;font-weight:650;border-radius:8px;padding:5px 10px;cursor:pointer;
+  transition:all .14s;
+}
+.bv-open:hover{border-color:var(--ds-blue);color:var(--ds-blue);background:var(--ds-blue-bg)}
+.bv-open:focus-visible{outline:2px solid var(--ds-blue);outline-offset:1px}
+.bv-open svg{width:12px;height:12px}
+
+/* The .kc KPI cards inside a panel sit a touch tighter than full pages. */
+.bv-panel-kpis{margin-bottom:0}
+
+.bv-health-strip{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  margin-bottom:14px;padding:10px 14px;
+  background:var(--ds-surface);border:1.5px solid var(--ds-border);border-radius:12px;
+  min-height:40px;
+}
+.bv-health-strip:empty{display:none}
+.bv-hs-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:11.5px;font-weight:650;border-radius:20px;padding:4px 12px;
+  border:1px solid transparent;white-space:nowrap;
+}
+.bv-hs-pill-good{background:var(--ds-green-bg,#f0fdf4);color:#15803d;border-color:var(--ds-green-border,#bbf7d0)}
+.bv-hs-pill-watch{background:var(--ds-amber-bg);color:#b45309;border-color:var(--ds-amber-border)}
+.bv-hs-pill-high{background:#fff1f2;color:#b91c1c;border-color:#fecdd3}
+.bv-hs-pill-info{background:var(--ds-blue-bg);color:var(--ds-blue);border-color:var(--ds-blue-border)}
+.bv-hs-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.bv-hs-divider{width:1px;height:18px;background:var(--ds-border);margin:0 2px}
+.bv-hs-label{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ds-text-muted);margin-right:2px}
+
+.bv-foot{
+  margin-top:18px;padding:12px 16px;
+  font-size:11.5px;line-height:1.5;color:var(--ds-text-muted);
+  background:var(--ds-bg);border:1px solid var(--ds-border);border-radius:11px;
+}
+
+/* ── Executive Narrative Callout ─────────────────────────────────────────── */
+.bv-narrative:empty{display:none}
+.bv-narrative{
+  display:flex;align-items:flex-start;gap:10px;
+  margin-bottom:14px;padding:11px 14px;
+  background:var(--ds-blue-bg);border:1.5px solid var(--ds-blue-border);border-radius:12px;
+  font-size:12.5px;line-height:1.6;color:var(--ds-text-secondary);
+}
+.bv-narr-icon{font-size:15px;flex-shrink:0;line-height:1.5}
+.bv-narr-text{flex:1}
+
+/* ── Zone Risk Matrix ────────────────────────────────────────────────────── */
+#bv-zone-matrix:empty{display:none}
+#bv-zone-matrix{
+  margin-top:16px;
+  background:var(--ds-surface);border:1.5px solid var(--ds-border);border-radius:14px;overflow:hidden;
+}
+.bv-zmz-hdr{
+  display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
+  padding:12px 16px 11px;border-bottom:1px solid var(--ds-border);
+}
+.bv-zmz-title{font-size:13px;font-weight:750;color:var(--ds-text-primary)}
+.bv-zmz-sub{font-size:10.5px;color:var(--ds-text-muted)}
+.bv-zmz-tbl-wrap{overflow-x:auto}
+.bv-zmz-tbl{width:100%;border-collapse:collapse}
+.bv-zmz-tbl th{
+  padding:7px 12px;text-align:right;
+  font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--ds-text-muted);border-bottom:1px solid var(--ds-border);white-space:nowrap;
+}
+.bv-zmz-tbl th:first-child{text-align:left}
+.bv-zmz-tbl td{
+  padding:9px 12px;text-align:right;border-bottom:1px solid var(--ds-border);
+  white-space:nowrap;font-variant-numeric:tabular-nums;font-size:12px;color:var(--ds-text-primary);
+}
+.bv-zmz-tbl td:first-child{text-align:left}
+.bv-zmz-tbl tr:last-child td{border-bottom:none}
+.bv-zmz-tbl tbody tr:hover{background:var(--ds-bg)}
+.bv-zmz-zone{display:inline-flex;align-items:center;gap:8px;font-weight:650;color:var(--ds-text-primary)}
+.bv-zmz-zdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;display:inline-block}
+.bv-rag{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:middle;flex-shrink:0}
+.bv-rag-good{background:#16a34a}
+.bv-rag-watch{background:#d97706}
+.bv-rag-high{background:#dc2626}
+.bv-rag-info{background:#94a3b8}
+.bv-zmz-tbl tfoot tr.bv-zmz-total td{
+  font-weight:700;border-top:2px solid var(--ds-blue-border);border-bottom:none;
+  background:var(--ds-blue-bg);color:var(--ds-text-primary);
+}
+.bv-zmz-tbl tfoot tr.bv-zmz-total:hover td{background:var(--ds-blue-bg)}
+.bv-zmz-total-lbl{color:var(--ds-text-primary);font-weight:700}
+
+/* ── Shared "coming soon / awaiting data" placeholder page ───────────────── */
+.soon-panel{
+  max-width:620px;margin:36px auto;text-align:center;
+  padding:40px 32px;background:var(--ds-surface);
+  border:1.5px solid var(--ds-border);border-radius:18px;
+  box-shadow:0 6px 24px rgba(15,23,42,.05);
+}
+.soon-panel-ico{
+  width:56px;height:56px;margin:0 auto 16px;border-radius:15px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--ds-amber-bg);color:#B45309;
+}
+.soon-panel-ico svg{width:30px;height:30px}
+.soon-panel-eyebrow{
+  display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:#B45309;background:var(--ds-amber-bg);border:1px solid var(--ds-amber-border);
+  border-radius:20px;padding:4px 12px;margin-bottom:14px;
+}
+.soon-panel-title{font-size:22px;font-weight:850;letter-spacing:-.02em;color:var(--ds-text-primary);margin:0 0 8px}
+.soon-panel-msg{font-size:14px;line-height:1.55;color:var(--ds-text-secondary);margin:0 0 14px;max-width:48ch;margin-left:auto;margin-right:auto}
+.soon-panel-note{font-size:12px;line-height:1.5;color:var(--ds-text-muted);margin:0;max-width:52ch;margin-left:auto;margin-right:auto}
+
+/* ── Board View KPI card layout & sizing ─────────────────────────────────
+   The default .kc card is a tall 194px tile; scope compact cards to the
+   board page only. */
+
+/* Department panels: tidy 2×2 KPI clusters inside each half-width panel. */
+#page-board .bv-panel-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:0}
+@media (max-width:560px){ #page-board .bv-panel-kpis{grid-template-columns:1fr} }
+
+/* Smaller, tighter cards than the full-page default (overrides min-height:194px). */
+#page-board .kc{min-height:0;padding:13px 13px 12px}
+#page-board .kc-top{margin-bottom:7px}
+#page-board .kc-icon{font-size:18px}
+#page-board .kc-val{font-size:23px;margin-bottom:4px}
+#page-board .kc-lbl{font-size:10.5px;letter-spacing:.06em;margin-bottom:3px}
+#page-board .kc-sub,
+#page-board .kc-bm-txt{font-size:10.5px}
+#page-board .kc-bm{margin-top:6px}
