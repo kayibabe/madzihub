@@ -296,6 +296,9 @@ def _brand_values() -> dict:
         "currency": tenant.currency.code,
         "currency_symbol": tenant.currency.symbol,
         "plan_title": tenant.strategic_plan.title,
+        "country": (profile and profile.country) or ident.country or "",
+        "zone_count": str(len(tenant.hierarchy.zones)),
+        "zone_plural": tenant.hierarchy.levels[0].plural if tenant.hierarchy.levels else "Zones",
     }
 
 
@@ -321,6 +324,8 @@ def serve_app_core_js(request: Request):
     brand = _brand_values()
     subs = {
         "__ORG_SHORT__": _js_text(brand["short_name"]),
+        "__ORG_NAME_COUNTRY__": _js_text(" · ".join(v for v in (brand["name"], brand["country"]) if v)),
+        "__ORG_NAME__": _js_text(brand["name"]),
         "__CURRENCY__": _js_text(brand["currency"]),
         "__CUR_SYM__": _js_text(brand["currency_symbol"]),
         "__NRW_TARGET__": f"{tenant.target('nrw_pct', 25.0):g}",
@@ -391,6 +396,9 @@ def _brand_html(content: str) -> str:
         "__ORG_SHORT__": brand["short_name"],
         "__CURRENCY__": brand["currency"],
         "__PLAN_TITLE__": brand["plan_title"],
+        "__ORG_COUNTRY__": brand["country"],
+        "__ZONE_COUNT__": brand["zone_count"],
+        "__ZONE_PLURAL__": brand["zone_plural"],
     }
     for key, value in values.items():
         content = content.replace(key, escape(value or ""))

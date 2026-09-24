@@ -724,7 +724,7 @@ function mountExportBar(page){
     const ph=document.createElement('div');
     ph.className='print-report-header';
     ph.innerHTML= DOMPurify.sanitize(`
-      <div class="prh-org">Southern Region Water Board · Operations &amp; Performance Dashboard</div>
+      <div class="prh-org">__ORG_NAME__ · Operations &amp; Performance Dashboard</div>
       <div class="prh-title">${cfg.title}</div>
       <div class="prh-meta" id="prh-meta-${page}"></div>
       <div class="prh-meta prh-meta-secondary" id="prh-meta-secondary-${page}"></div>
@@ -834,7 +834,7 @@ function printReport(page){
   if(!document.querySelector(`#page-${page} .print-report-header`) && pageEl){
       const ph=document.createElement('div');
       ph.className='print-report-header';
-      ph.innerHTML= DOMPurify.sanitize(`<div class="prh-org">Southern Region Water Board · Operations &amp; Performance Dashboard</div><div class="prh-title">${cfg.title}</div><div class="prh-meta" id="prh-meta-${page}"></div><div class="prh-meta prh-meta-secondary" id="prh-meta-secondary-${page}"></div><div class="prh-gov" id="prh-gov-${page}"></div>`);
+      ph.innerHTML= DOMPurify.sanitize(`<div class="prh-org">__ORG_NAME__ · Operations &amp; Performance Dashboard</div><div class="prh-title">${cfg.title}</div><div class="prh-meta" id="prh-meta-${page}"></div><div class="prh-meta prh-meta-secondary" id="prh-meta-secondary-${page}"></div><div class="prh-gov" id="prh-gov-${page}"></div>`);
       pageEl.prepend(ph);
   }
   if(!document.querySelector(`#page-${page} .print-report-footer`) && pageEl){
@@ -7085,7 +7085,7 @@ async function buildBoardPack(){
     }
 
     const cover=`<section class="bp-cover">
-      <div class="bp-cover-org">Southern Region Water Board · Malawi</div>
+      <div class="bp-cover-org">__ORG_NAME_COUNTRY__</div>
       <div class="bp-cover-title">Board Pack</div>
       <div class="bp-cover-scope">${scope}</div>
       <div class="bp-cover-gen">Generated ${generated}</div>
@@ -7322,7 +7322,7 @@ function _rcPct(n,d=1){return n==null?'—':Number(n).toFixed(d)+'%';}
 function _rcTone(v,good,warn,rev=false){if(v==null)return'';if(rev){if(v<=good)return'rc-good';if(v<=warn)return'rc-warn';return'rc-bad';}if(v>=good)return'rc-good';if(v>=warn)return'rc-warn';return'rc-bad';}
 function _rcHeader(title,scope,generated){
   return `<div class="rc-rpt-header">
-    <div class="rc-rpt-org">Southern Region Water Board · Malawi</div>
+    <div class="rc-rpt-org">__ORG_NAME_COUNTRY__</div>
     <div class="rc-rpt-title">${title}</div>
     <div class="rc-rpt-meta">${scope} &nbsp;·&nbsp; Generated ${generated}</div>
     <div class="rc-rpt-rule"></div>

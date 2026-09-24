@@ -126,7 +126,7 @@
       </span>
       <span class="fpill fpill-teal">
         <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-        5 Zones
+        __ZONE_COUNT__ __ZONE_PLURAL__
       </span>
       <span class="fpill fpill-green">
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" fill="currentColor"/><rect x="14" y="3" width="7" height="7" rx="1" fill="currentColor" opacity=".6"/><rect x="3" y="14" width="7" height="7" rx="1" fill="currentColor" opacity=".6"/><rect x="14" y="14" width="7" height="7" rx="1" fill="currentColor" opacity=".3"/></svg>
@@ -467,7 +467,7 @@
       <img src="/api/config/logo" alt="__ORG_SHORT__">
       <div>
         <div class="nlt">__PRODUCT_TITLE__</div>
-        <div class="nls">Southern Region Water Board</div>
+        <div class="nls">__ORG_NAME__</div>
       </div>
     </div>
 
@@ -2951,7 +2951,7 @@
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
                   <div>
                     <label style="font-size:11px;font-weight:600;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em">Full Legal Name</label>
-                    <input type="text" id="org-name" class="adm-input" style="margin-top:4px;width:100%" placeholder="e.g. Southern Region Water Board">
+                    <input type="text" id="org-name" class="adm-input" style="margin-top:4px;width:100%" placeholder="e.g. Lakeside Water Utility">
                   </div>
                   <div>
                     <label style="font-size:11px;font-weight:600;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em">Acronym / Short Name</label>
@@ -2967,7 +2967,7 @@
                   </div>
                   <div>
                     <label style="font-size:11px;font-weight:600;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em">Country</label>
-                    <input type="text" id="org-country" class="adm-input" style="margin-top:4px;width:100%" placeholder="e.g. Malawi">
+                    <input type="text" id="org-country" class="adm-input" style="margin-top:4px;width:100%" placeholder="e.g. Zambia">
                   </div>
                   <div>
                     <label style="font-size:11px;font-weight:600;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em">Reporting Currency</label>
@@ -3176,7 +3176,7 @@
               <div class="adm-sys-card">
                 <div class="adm-sys-card-title">Data Coverage</div>
                 <div class="adm-sys-row"><span class="adm-sys-key">Organisation</span><span class="adm-sys-val" id="sys-org-name">__ORG_SHORT__</span></div>
-                <div class="adm-sys-row"><span class="adm-sys-key">Country</span><span class="adm-sys-val" id="sys-org-country">Malawi</span></div>
+                <div class="adm-sys-row"><span class="adm-sys-key">Country</span><span class="adm-sys-val" id="sys-org-country">__ORG_COUNTRY__</span></div>
                 <div class="adm-sys-row"><span class="adm-sys-key">Currency</span><span class="adm-sys-val" id="sys-org-currency">__CURRENCY__</span></div>
                 <div class="adm-sys-row"><span class="adm-sys-key">Regulator</span><span class="adm-sys-val" id="sys-org-regulator">—</span></div>
               </div>
@@ -3221,7 +3221,7 @@
 
 <!-- ══ ATTRIBUTION FOOTER ════════════════════════════════════════════════ -->
 <div id="attr-footer">
-  <span>Southern Region Water Board</span>
+  <span>__ORG_NAME__</span>
   <span style="margin:0 10px;color:var(--ds-border)">|</span>
   <span>&copy;</span>&nbsp;<a href="mailto:cmhango@gmail.com">Cromwell Mhango</a>
   <span>&nbsp;·&nbsp;Corporate Planning Manager</span>

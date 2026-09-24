@@ -74,7 +74,7 @@ class FiscalCalendarTests(unittest.TestCase):
         self.assertEqual(u.fy_quarter(12), "Q4")
 
 
-PLACEHOLDERS = ("__ORG_SHORT__", "__CURRENCY__", "__CUR_SYM__", "__NRW_TARGET__",
+PLACEHOLDERS = ("__ORG_NAME_COUNTRY__", "__ORG_COUNTRY__", "__ZONE_COUNT__", "__ZONE_PLURAL__", "__ORG_SHORT__", "__CURRENCY__", "__CUR_SYM__", "__NRW_TARGET__",
                 "__FY_MONTHS__", "__ZONE_COLORS__", "__PRODUCT_TITLE__", "__ORG_NAME__", "__PLAN_TITLE__")
 
 
@@ -119,7 +119,7 @@ class RenderedAssetTests(unittest.TestCase):
         js = self._render("demo")
         for p in PLACEHOLDERS:
             self.assertNotIn(p, js)
-        for legacy in ("SRWB", "MWK", "'MK ", "Liwonde"):
+        for legacy in ("SRWB", "MWK", "'MK ", "Liwonde", "Southern Region", "Malawi"):
             self.assertNotIn(legacy, js)
         self.assertIn("nrw:25,", js)
         self.assertIn('const ALL_FY_MONTHS=["July",', js)
@@ -160,6 +160,10 @@ class DemoTenantTests(unittest.TestCase):
                 html = c.get("/").text
                 self.assertIn("<title>Lakeside Performance Hub</title>", html)
                 self.assertNotIn("SRWB", html)
+                self.assertNotIn("Southern Region", html)
+                self.assertIn("3 Regions", html)
+                for p in PLACEHOLDERS:
+                    self.assertNotIn(p, html)
                 self.assertNotIn("MWK", html)
                 self.assertNotIn("__ORG_SHORT__", html)
 
