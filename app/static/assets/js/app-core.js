@@ -519,6 +519,7 @@ function resetAllFilters(){
 // Registry: page → {tableId, title, landscape}
 const EXPORT_CFG = {
   overview:     {tableId:'ov-zone-summary-export', title:'Executive Dashboard Summary', orientation:'portrait',  landscape:false},
+  board:        {tableId:null, title:'Board View — Consolidated Executive Summary', orientation:'landscape', landscape:true},
   production:   {tableId:'tbl-production',  title:'Production & Non-Revenue Water',   orientation:'portrait',  landscape:false},
   'wt-ei':      {tableId:'tbl-wt-ei',       title:'Water Treatment & Energy',          orientation:'portrait',  landscape:false},
   customers:    {tableId:'tbl-customers',   title:'Customer Accounts',                 orientation:'portrait',  landscape:false},
@@ -741,7 +742,13 @@ function mountExportBar(page){
 
 // ── Excel export ────────────────────────────────────────────────────────
 function exportExcel(page){
-  const cfg=EXPORT_CFG[page];if(!cfg)return;
+  const cfg=EXPORT_CFG[page];
+  if(!cfg){
+    // A page without an export config used to fail silently; say so instead.
+    console.warn('exportExcel: no EXPORT_CFG entry for page', page);
+    alert('Excel export is not available for this page yet.');
+    return;
+  }
   expOverlay(true,'Building Excel file…');
   setTimeout(()=>{
     try{
@@ -767,6 +774,24 @@ function exportExcel(page){
         XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(kpiRows),'Executive KPIs');
         XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(zoneRows),'Zone Snapshot');
         note='Executive summary exported as structured sheets.';
+      } else if(page==='board'){
+        const txt=el=>(el?.innerText||'').replace(/\s+/g,' ').trim();
+        const kpiRows=[['Department','Metric','Value','Context']];
+        document.querySelectorAll('#page-board .bv-panel').forEach(panel=>{
+          const dept=txt(panel.querySelector('.bv-panel-name'));
+          panel.querySelectorAll('.kc').forEach(card=>{
+            kpiRows.push([dept,txt(card.querySelector('.kc-lbl')),txt(card.querySelector('.kc-val')),txt(card.querySelector('.kc-sub'))]);
+          });
+        });
+        const healthRows=[['Board health']];
+        document.querySelectorAll('#bv-health-strip .bv-hs-pill').forEach(p=>healthRows.push([txt(p)]));
+        const narrative=txt(document.querySelector('#bv-narrative .bv-narr-text')||document.getElementById('bv-narrative'));
+        if(narrative)healthRows.push([],['Narrative'],[narrative]);
+        XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(kpiRows),'Board KPIs');
+        XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(healthRows),'Health & Narrative');
+        const zoneTbl=document.querySelector('#page-board .bv-zmz-tbl');
+        if(zoneTbl)XLSX.utils.book_append_sheet(wb,XLSX.utils.table_to_sheet(zoneTbl),'Zone Matrix');
+        note='Board View exported: department KPIs, health status, narrative and zone matrix.';
       } else if(page==='strategic'){
         const spRows=[['Focus Area','Indicator','Unit','Baseline 22/23','Target','Actual','Status']];
         document.querySelectorAll('#sp-sections .ex-section').forEach(section=>{
@@ -780,7 +805,8 @@ function exportExcel(page){
         document.querySelectorAll('#sp-summary .kc').forEach(card=>{
           sumRows.push([card.querySelector('.kc-lbl')?.innerText||'',card.querySelector('.kc-val')?.innerText||'']);
         });
-        XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(sumRows),'Summary');
+        // Not 'Summary': the shared export metadata sheet below already uses that name.
+        XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(sumRows),'Plan Summary');
         XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(spRows),'All KPIs');
         note='Strategic Plan scorecard exported with all KPIs by focus area.';
       } else {
@@ -4854,7 +4880,7 @@ function admShowNavLink(role){
 function admTab(tabName){
   document.querySelectorAll('.adm-tab').forEach(t =>
     t.classList.toggle('active', t.dataset.tab === tabName));
-  ['users','profile','org-profile','roles','uploads','sources','activity','fy-budget','system'].forEach(t => {
+  ['users','profile','org-profile','roles','uploads','sources','measures','activity','fy-budget','system'].forEach(t => {
     const el = document.getElementById('adm-tab-'+t);
     if(el) el.style.display = t === tabName ? '' : 'none';
   });
@@ -4865,6 +4891,7 @@ function admTab(tabName){
   if(tabName === 'org-profile')  admLoadOrgProfile();
   if(tabName === 'system')       admLoadSystem();
   if(tabName === 'sources' && typeof ihLoadSources === 'function') ihLoadSources();
+  if(tabName === 'measures' && typeof ihmLoad === 'function') ihmLoad();
   // fy-budget loaded on demand via admLoadFyBudget() called from onclick
 }
 

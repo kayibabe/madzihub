@@ -4,6 +4,7 @@ Command-line runner for scheduled pulls.
     python -m app.integration.cli sync --due          # run every source whose schedule has elapsed
     python -m app.integration.cli sync --source sap-finance
     python -m app.integration.cli sync --all
+    python -m app.integration.cli sync --source billing --dry-run   # sample, map, report; write nothing
     python -m app.integration.cli bootstrap-legacy    # seed tree, metrics and legacy source from records
     python -m app.integration.cli status
 
@@ -32,6 +33,8 @@ def main(argv: list[str] | None = None) -> int:
     g.add_argument("--source", help="source code")
     g.add_argument("--all", action="store_true", help="every enabled pull source")
     g.add_argument("--due", action="store_true", help="enabled sources whose schedule has elapsed")
+    s.add_argument("--dry-run", action="store_true", help="read a sample and report what would load; write nothing")
+    s.add_argument("--limit", type=int, default=500, help="rows to sample in a dry run (default 500)")
     sub.add_parser("bootstrap-legacy", help="seed hierarchy, metrics and legacy source from records")
     sub.add_parser("status", help="source freshness as JSON")
     args = parser.parse_args(argv)
@@ -56,6 +59,16 @@ def main(argv: list[str] | None = None) -> int:
             sources = db.query(DataSource).filter(DataSource.enabled.is_(True), DataSource.connector != "push").all()
         else:
             sources = pipeline.due_sources(db)
+
+        if args.dry_run:
+            ok = True
+            for src in sources:
+                if src.connector == "push":
+                    continue
+                result = pipeline.test_source(db, src, limit=args.limit)
+                print(json.dumps({"source": src.code, **result}, indent=2, default=str))
+                ok = ok and result["ok"]
+            return 0 if ok else 1
 
         failed = False
         for src in sources:

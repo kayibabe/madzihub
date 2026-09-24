@@ -81,6 +81,28 @@ def period_start(d: date, period_type: str) -> date:
     return date(y, m, 1)
 
 
+def shift_period(start: date, period_type: str, n: int) -> date:
+    """The period ``n`` steps after (or before, if negative) the one starting at ``start``."""
+    if period_type == "day":
+        from datetime import timedelta
+        return start + timedelta(days=n)
+    months = {"month": 1, "quarter": 3, "year": 12}[period_type] * n
+    idx = start.year * 12 + (start.month - 1) + months
+    return date(idx // 12, idx % 12 + 1, 1)
+
+
+def period_label(start: date, period_type: str) -> str:
+    """Human label using the tenant fiscal calendar: 'FY2025/26', 'Q2 FY2025/26', 'Apr 2026'."""
+    from app.utils import fy_end_year, fy_label, fy_quarter
+    if period_type == "year":
+        return fy_label(fy_end_year(start.year, start.month))
+    if period_type == "quarter":
+        return f"{fy_quarter(start.month)} {fy_label(fy_end_year(start.year, start.month))}"
+    if period_type == "month":
+        return f"{calendar.month_abbr[start.month]} {start.year}"
+    return start.isoformat()
+
+
 def parse_number(raw: Any) -> float | None:
     """Number or None for blank; raises ValueError for text that is not a number."""
     if raw is None:

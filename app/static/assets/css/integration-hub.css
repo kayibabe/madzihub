@@ -13,8 +13,8 @@
 .ih-mono{font-family:var(--ds-mono);font-size:11.5px;word-break:break-all}
 .ih-err-line{font-size:11px;color:var(--ds-red);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
 .ih-row-selected{background:var(--ds-blue-bg)}
-#adm-tab-sources .adm-table td{vertical-align:top}
-#adm-tab-sources .adm-act-row{flex-wrap:wrap;gap:6px}
+#adm-tab-sources .adm-table td,#adm-tab-measures .adm-table td{vertical-align:top}
+#adm-tab-sources .adm-act-row,#adm-tab-measures .adm-act-row{flex-wrap:wrap;gap:6px}
 .ih-cell-meta{font-size:12px;color:var(--ds-text-muted);white-space:normal;overflow-wrap:anywhere}
 
 .ih-notice{margin:0 0 16px;padding:12px 16px;border-radius:14px;font-size:12.5px;line-height:1.6;border:1px solid}
@@ -80,3 +80,18 @@
 .pos-chart-wrap{position:relative;height:260px;margin-bottom:18px}
 .pos-cols{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:18px}
 @media (max-width: 900px){ .pos-cols{grid-template-columns:1fr} }
+
+/* ── Measures & Targets ─────────────────────────────────────────────── */
+.ih-code-chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 4px}
+.ih-code-chip{font-family:var(--ds-mono);font-size:11px;padding:3px 8px;border-radius:8px;cursor:pointer;
+  border:1px solid var(--ds-blue-border);background:var(--ds-blue-bg);color:var(--ds-blue)}
+.ih-code-chip:hover{background:var(--ds-blue);color:#fff}
+.ihm-check{margin-top:8px;font-size:12.5px;line-height:1.7;min-height:20px}
+.ihm-check code{font-family:var(--ds-mono);font-size:11.5px;background:rgba(15,23,42,.05);padding:1px 5px;border-radius:5px}
+.ihm-picker{display:grid;grid-template-columns:2fr 2fr 1fr;gap:12px;margin:8px 0 12px}
+.ihm-picker .adm-field,.ihm-target-form .adm-field{margin:0}
+.ihm-target-form{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1.2fr 2fr auto;gap:10px;align-items:end;margin-top:14px}
+@media (max-width: 1100px){ .ihm-target-form{grid-template-columns:1fr 1fr} .ihm-picker{grid-template-columns:1fr} }
+.ih-dry-meta{margin-top:6px;font-size:12px;line-height:1.8}
+.ih-dry-meta span{font-weight:700;color:var(--ds-text-secondary)}
+.ih-dry-meta code{font-family:var(--ds-mono);font-size:11px;background:rgba(15,23,42,.05);padding:1px 5px;border-radius:5px}

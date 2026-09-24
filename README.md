@@ -14,6 +14,7 @@ One installation serves one utility. Everything that differs between utilities l
 - **Roadmap / checklist:** [docs/ROADMAP.md](docs/ROADMAP.md)
 - **Market gap analysis:** [docs/COMPETITIVE_GAP_ANALYSIS.md](docs/COMPETITIVE_GAP_ANALYSIS.md)
 - **Integration hub (SAP, Maximo, billing, SCADA, HR, spreadsheets):** [docs/INTEGRATION_HUB.md](docs/INTEGRATION_HUB.md)
+- **First live connection, the billing pilot:** [docs/pilots/BILLING_PILOT.md](docs/pilots/BILLING_PILOT.md)
 
 ---
 

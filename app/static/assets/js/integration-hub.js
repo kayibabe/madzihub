@@ -115,6 +115,7 @@ async function ihLoadSources(){
         <td class="adm-td-meta" style="text-align:right">${ihEsc(s.priority)}</td>
         <td class="adm-td-meta" style="text-align:right">${(s.values || 0).toLocaleString('en-GB')}</td>
         <td><div class="adm-act-row">
+          ${push ? '' : `<button class="adm-act-btn edit" data-ih-act="test" data-code="${ihEsc(s.code)}" title="Dry run: read a sample and show what would load. Writes nothing.">Test</button>`}
           ${push ? '' : `<button class="adm-act-btn edit" data-ih-act="run" data-code="${ihEsc(s.code)}" ${s.enabled ? '' : 'disabled'}>Run</button>`}
           <button class="adm-act-btn edit" data-ih-act="upload" data-code="${ihEsc(s.code)}" ${s.enabled ? '' : 'disabled'}>Upload</button>
           <button class="adm-act-btn reset" data-ih-act="detail" data-code="${ihEsc(s.code)}">Runs &amp; mappings</button>
@@ -206,11 +207,70 @@ async function ihBootstrap(){
   ihLoadSources();
 }
 
+/* Dry run: read a sample, map it, show what would load. Nothing is written. */
+function ihRejectRows(rejects){
+  return rejects.map(x => {
+    const m = /unknown (org unit|metric) '([^']*)'/.exec(x.reason || '');
+    const kind = m ? (m[1] === 'org unit' ? 'org_unit' : 'metric') : '';
+    return `<tr><td class="ih-cell-meta">${ihEsc(x.ref || ('row ' + x.row))}</td><td>${ihEsc(x.reason)}</td>
+      <td class="ih-mono">${ihEsc(Object.entries(x.data || {}).map(([k, v]) => `${k}=${v}`).join(', '))}</td>
+      <td>${m ? `<button class="adm-act-btn edit" data-ih-act="prefill" data-kind="${kind}" data-key="${ihEsc(m[2])}">Map</button>` : ''}</td></tr>`;
+  }).join('');
+}
+function ihRenderDry(code, r, what){
+  const el = document.getElementById('ih-dry');
+  if(!r.ok){
+    ihSet(el, `<div class="ih-notice danger"><strong>Test failed</strong> (${ihEsc(what)}): ${ihEsc(r.error)}<br>Nothing was written.</div>`);
+    return;
+  }
+  const tone = r.rows_rejected ? 'warn' : (r.values_mapped ? 'ok' : 'warn');
+  ihSet(el, `<div class="ih-notice ${tone}"><strong>Test of ${ihEsc(code)}</strong> (${ihEsc(what)}), nothing written:
+      read ${ihEsc(r.rows_read)} rows${r.rows_read >= r.sample_limit ? ` (sample limit ${ihEsc(r.sample_limit)})` : ''} ·
+      would load ${ihEsc(r.values_mapped)} values · ${ihEsc(r.rows_rejected)} rejected.
+      ${r.periods ? `Periods ${ihEsc(ihPeriodLabel(r.periods.first, 'month'))} to ${ihEsc(ihPeriodLabel(r.periods.last, 'month'))}.` : ''}
+      <div class="ih-dry-meta"><span>Columns found:</span> ${r.columns.map(c => `<code>${ihEsc(c)}</code>`).join(' ') || '—'}</div>
+      <div class="ih-dry-meta"><span>Measures:</span> ${r.metrics.map(c => `<code>${ihEsc(c)}</code>`).join(' ') || '—'}
+        · <span>Units:</span> ${r.org_units.map(c => `<code>${ihEsc(c)}</code>`).join(' ') || '—'}</div></div>
+    ${r.sample_values.length ? `<details class="ih-run" open><summary><strong>Sample of what would load</strong><span class="adm-td-meta">first ${ihEsc(r.sample_values.length)}</span></summary>
+      <table class="adm-table"><thead><tr><th>Measure</th><th>Unit</th><th>Period</th><th style="text-align:right">Value</th><th>From</th></tr></thead><tbody>
+      ${r.sample_values.map(v => `<tr><td class="ih-mono">${ihEsc(v.metric)}</td><td class="ih-mono">${ihEsc(v.org_unit)}</td>
+        <td>${ihEsc(ihPeriodLabel(v.period, 'month'))}</td><td style="text-align:right" class="ih-mono">${ihEsc(ihNum(v.value))}</td>
+        <td class="ih-cell-meta">${ihEsc(v.source_ref || '')}</td></tr>`).join('')}</tbody></table></details>` : ''}
+    ${r.rejects.length ? `<details class="ih-run" open><summary><strong>Rows that would be rejected</strong><span class="adm-td-meta">${ihEsc(r.rows_rejected)}</span></summary>
+      <table class="adm-table ih-rejects"><thead><tr><th style="width:18%">Where</th><th>Why rejected</th><th style="width:34%">Row</th><th style="width:70px"></th></tr></thead>
+      <tbody>${ihRejectRows(r.rejects)}</tbody></table></details>` : ''}`);
+}
+async function ihTest(code){
+  IH.selected = code;
+  await ihLoadDetail(code);
+  const el = document.getElementById('ih-dry');
+  ihSet(el, `<div class="ih-notice info">Testing <strong>${ihEsc(code)}</strong>: connecting and reading a sample…</div>`);
+  document.getElementById('ih-detail').scrollIntoView({behavior:'smooth', block:'start'});
+  try{ ihRenderDry(code, await ihApi(`/api/integration/sources/${encodeURIComponent(code)}/test`, {method:'POST'}), 'connection'); }
+  catch(e){ ihSet(el, `<div class="ih-notice danger">${ihEsc(e.message)}</div>`); }
+}
+function ihTestFile(){
+  const code = IH.selected;
+  if(!code) return;
+  const input = document.getElementById('ih-upload-input');
+  input.value = '';
+  input.onchange = async () => {
+    const file = input.files[0];
+    if(!file) return;
+    const form = new FormData(); form.append('file', file);
+    ihSet(document.getElementById('ih-dry'), `<div class="ih-notice info">Testing <strong>${ihEsc(file.name)}</strong> against ${ihEsc(code)}…</div>`);
+    try{ ihRenderDry(code, await ihApi(`/api/integration/sources/${encodeURIComponent(code)}/test-upload`, {method:'POST', form}), file.name); }
+    catch(e){ ihSet(document.getElementById('ih-dry'), `<div class="ih-notice danger">${ihEsc(e.message)}</div>`); }
+  };
+  input.click();
+}
+
 /* Detail panel: recent runs, rejected rows, key mappings */
 async function ihLoadDetail(code){
   IH.selected = code;
   const panel = document.getElementById('ih-detail');
   panel.style.display = '';
+  if(document.getElementById('ih-detail-title').textContent !== code) ihSet(document.getElementById('ih-dry'), '');
   document.getElementById('ih-detail-title').textContent = code;
   const runsEl = document.getElementById('ih-runs');
   const mapsEl = document.getElementById('ih-maps');
@@ -229,13 +289,7 @@ async function ihLoadDetail(code){
           <span>read ${ihEsc(r.rows_read)} · loaded ${ihEsc(r.values_loaded)} · rejected ${ihEsc(r.rows_rejected)}</span></summary>
         ${r.error ? `<div class="adm-err">${ihEsc(r.error)}</div>` : ''}
         ${rejects.length ? `<table class="adm-table ih-rejects"><thead><tr><th style="width:18%">Where</th><th>Why rejected</th><th style="width:34%">Row</th><th style="width:70px"></th></tr></thead><tbody>
-          ${rejects.map(x => {
-            const m = /unknown (org unit|metric) '([^']*)'/.exec(x.reason || '');
-            const kind = m ? (m[1] === 'org unit' ? 'org_unit' : 'metric') : '';
-            return `<tr><td class="ih-cell-meta">${ihEsc(x.ref || ('row ' + x.row))}</td><td>${ihEsc(x.reason)}</td>
-              <td class="ih-mono">${ihEsc(Object.entries(x.data || {}).map(([k, v]) => `${k}=${v}`).join(', '))}</td>
-              <td>${m ? `<button class="adm-act-btn edit" data-ih-act="prefill" data-kind="${kind}" data-key="${ihEsc(m[2])}">Map</button>` : ''}</td></tr>`;
-          }).join('')}</tbody></table>
+          ${ihRejectRows(rejects)}</tbody></table>
           ${r.rows_rejected > rejects.length ? `<div class="adm-td-meta" style="padding:6px 14px">Showing ${rejects.length} of ${ihEsc(r.rows_rejected)} rejected rows.</div>` : ''}` : ''}
       </details>`;
     }).join('') : '<div class="adm-empty">No runs yet</div>');
@@ -333,7 +387,9 @@ document.addEventListener('click', ev => {
   const btn = ev.target.closest('[data-ih-act]');
   if(!btn) return;
   const {ihAct:act, code} = btn.dataset;
-  if(act === 'run') ihRun(code);
+  if(act === 'test') ihTest(code);
+  else if(act === 'test-file') ihTestFile();
+  else if(act === 'run') ihRun(code);
   else if(act === 'upload') ihUpload(code);
   else if(act === 'detail') { ihLoadDetail(code); document.getElementById('ih-detail').scrollIntoView({behavior:'smooth'}); }
   else if(act === 'edit') ihOpenEditor(code);
@@ -498,3 +554,202 @@ function ihDrawChart(p, series){
     },
   });
 }
+
+/* ───────────────────── Measures & Targets (admin) ───────────────────── */
+
+const IHM = { metrics: [], units: [], editing: null, checkTimer: null, periods: {} };
+const IHM_AGG = {
+  sum: 'Added up (volumes, money, counts)', avg: 'Averaged (ratios, rates, levels)',
+  last: 'Latest value (customers, stock)', max: 'Highest', min: 'Lowest',
+};
+const IHM_DIR = { higher: 'Higher is better', lower: 'Lower is better', range: 'Within a band' };
+const IHM_BASIS = { strategic_plan: 'Strategic plan', budget: 'Budget', regulator: 'Regulator', internal: 'Internal' };
+
+async function ihmLoad(){
+  const tbody = document.getElementById('ihm-tbody');
+  try{
+    [IHM.metrics, IHM.units] = await Promise.all([
+      ihApi('/api/integration/metrics', {fallback:[]}),
+      ihApi('/api/integration/org-units', {fallback:[]}),
+    ]);
+    if(!IHM.metrics.length){
+      ihSetRows(tbody, '<tr><td colspan="6" class="adm-empty">No measures yet. Add one, or set up from existing returns in Data Sources.</td></tr>');
+    }else{
+      ihSetRows(tbody, IHM.metrics.map(m => `<tr>
+        <td><div class="adm-user-name">${ihEsc(m.name)}</div><div class="adm-user-fullname">${ihEsc(m.code)}${m.category ? ' · ' + ihEsc(m.category) : ''}${m.unit ? ' · ' + ihEsc(m.unit) : ''}</div></td>
+        <td class="ih-cell-meta">${ihEsc(IHM_AGG[m.aggregation] || m.aggregation)}</td>
+        <td class="ih-cell-meta">${ihEsc(IHM_DIR[m.direction] || m.direction)}</td>
+        <td>${m.formula ? `<code class="ih-mono">${ihEsc(m.formula)}</code>` : '<span class="ih-cell-meta">Loaded from sources</span>'}</td>
+        <td>${m.is_active ? '<span class="ih-badge ok">✓ Active</span>' : '<span class="ih-badge viewer">Inactive</span>'}</td>
+        <td><div class="adm-act-row">
+          <button class="adm-act-btn edit" data-ihm-act="edit" data-code="${ihEsc(m.code)}">Edit</button>
+          <button class="adm-act-btn reset" data-ihm-act="targets" data-code="${ihEsc(m.code)}">Targets</button>
+          <button class="adm-act-btn ${m.is_active ? 'danger' : 'edit'}" data-ihm-act="toggle" data-code="${ihEsc(m.code)}">${m.is_active ? 'Deactivate' : 'Activate'}</button>
+        </div></td></tr>`).join(''));
+    }
+    ihmFillTargetPickers();
+  }catch(e){ ihSetRows(tbody, `<tr><td colspan="6" class="adm-err">${ihEsc(e.message)}</td></tr>`); }
+}
+
+function ihmNotice(html, tone='info'){
+  const el = document.getElementById('ihm-notice');
+  el.className = `ih-notice ${tone}`; ihSet(el, html); el.style.display = html ? '' : 'none';
+}
+
+function ihmMetricBody(m){
+  return {code:m.code, name:m.name, unit:m.unit || null, category:m.category || null, aggregation:m.aggregation,
+          direction:m.direction, formula:m.formula || null, description:m.description || null, is_active:m.is_active};
+}
+
+async function ihmToggle(code){
+  const m = IHM.metrics.find(x => x.code === code);
+  if(!m) return;
+  if(m.is_active && !confirm(`Deactivate ${m.name}? It disappears from the Strategic Position page; its data and targets are kept.`)) return;
+  try{
+    await ihApi('/api/integration/metrics', {method:'POST', body:[{...ihmMetricBody(m), is_active:!m.is_active}]});
+    ihmNotice(`${ihEsc(m.name)} ${m.is_active ? 'deactivated' : 'activated'}.`, 'ok');
+  }catch(e){ ihmNotice(ihEsc(e.message), 'danger'); }
+  ihmLoad();
+}
+
+/* Measure editor with live formula check */
+function ihmOpenEditor(code){
+  const m = code ? IHM.metrics.find(x => x.code === code) : null;
+  IHM.editing = m ? m.code : null;
+  const f = id => document.getElementById(id);
+  f('ihm-modal-title').textContent = m ? `Edit ${m.name}` : 'Add measure';
+  f('ihm-f-code').value = m ? m.code : ''; f('ihm-f-code').disabled = !!m;
+  f('ihm-f-name').value = m ? m.name : '';
+  f('ihm-f-unit').value = m && m.unit ? m.unit : '';
+  f('ihm-f-category').value = m && m.category ? m.category : '';
+  f('ihm-f-agg').value = m ? m.aggregation : 'sum';
+  f('ihm-f-dir').value = m ? m.direction : 'higher';
+  f('ihm-f-formula').value = m && m.formula ? m.formula : '';
+  f('ihm-f-desc').value = m && m.description ? m.description : '';
+  f('ihm-f-active').checked = m ? m.is_active : true;
+  f('ihm-modal-err').style.display = 'none';
+  ihSet(f('ihm-formula-check'), '');
+  ihmRefreshCodes();
+  f('ihm-modal').classList.add('open');
+  if(f('ihm-f-formula').value) ihmCheckFormula();
+}
+function ihmCloseEditor(){ document.getElementById('ihm-modal').classList.remove('open'); }
+function ihmRefreshCodes(){
+  ihSet(document.getElementById('ihm-codes'), IHM.metrics.filter(m => m.code !== IHM.editing).map(m =>
+    `<button type="button" class="ih-code-chip" data-ihm-act="insert" data-code="${ihEsc(m.code)}" title="${ihEsc(m.name)}">${ihEsc(m.code)}</button>`).join(''));
+}
+function ihmInsertCode(code){
+  const ta = document.getElementById('ihm-f-formula');
+  const at = ta.selectionStart ?? ta.value.length;
+  ta.value = ta.value.slice(0, at) + code + ta.value.slice(ta.selectionEnd ?? at);
+  ta.focus(); ta.selectionStart = ta.selectionEnd = at + code.length;
+  ihmCheckFormulaSoon();
+}
+function ihmCheckFormulaSoon(){ clearTimeout(IHM.checkTimer); IHM.checkTimer = setTimeout(ihmCheckFormula, 400); }
+async function ihmCheckFormula(){
+  const out = document.getElementById('ihm-formula-check');
+  const formula = document.getElementById('ihm-f-formula').value.trim();
+  const code = (document.getElementById('ihm-f-code').value.trim() || '_new_measure').toLowerCase();
+  if(!formula){ ihSet(out, '<span class="ih-cell-meta">No formula: values are loaded from data sources.</span>'); return; }
+  try{
+    const r = await ihApi('/api/integration/metrics/validate-formula', {method:'POST',
+      body:{code, formula, aggregation:document.getElementById('ihm-f-agg').value}});
+    if(!r.ok){ ihSet(out, `<span class="ih-badge danger">✕ ${ihEsc(r.error)}</span>`); return; }
+    const unit = document.getElementById('ihm-f-unit').value.trim();
+    const pv = r.preview
+      ? ` Organisation, ${ihEsc(ihPeriodLabel(r.preview.period, 'month'))}: <strong>${ihEsc(ihNum(r.preview.value, unit))}</strong>
+         <span class="ih-cell-meta">(${ihEsc(Object.entries(r.preview.inputs || {}).map(([k, v]) => `${k} = ${ihNum(v)}`).join(', '))})</span>`
+      : ' <span class="ih-cell-meta">No data yet to preview.</span>';
+    ihSet(out, `<span class="ih-badge ok">✓ Valid</span> Uses ${r.references.map(c => `<code>${ihEsc(c)}</code>`).join(', ')}.${pv}`);
+  }catch(e){ ihSet(out, `<span class="ih-badge danger">✕ ${ihEsc(e.message)}</span>`); }
+}
+async function ihmSaveEditor(){
+  const f = id => document.getElementById(id);
+  const err = f('ihm-modal-err');
+  const body = {
+    code: f('ihm-f-code').value.trim(), name: f('ihm-f-name').value.trim(),
+    unit: f('ihm-f-unit').value.trim() || null, category: f('ihm-f-category').value.trim() || null,
+    aggregation: f('ihm-f-agg').value, direction: f('ihm-f-dir').value,
+    formula: f('ihm-f-formula').value.trim() || null, description: f('ihm-f-desc').value.trim() || null,
+    is_active: f('ihm-f-active').checked,
+  };
+  if(!body.code || !body.name){ err.textContent = 'Code and name are required.'; err.style.display = ''; return; }
+  try{ await ihApi('/api/integration/metrics', {method:'POST', body:[body]}); }
+  catch(e){ err.textContent = e.message; err.style.display = ''; return; }
+  ihmCloseEditor();
+  ihmNotice(`Saved <strong>${ihEsc(body.name)}</strong>.`, 'ok');
+  ihmLoad();
+}
+
+/* Targets */
+function ihmFillTargetPickers(){
+  const mSel = document.getElementById('ihm-t-metric'), uSel = document.getElementById('ihm-t-unit');
+  const keepM = mSel.value, keepU = uSel.value;
+  const opt = (value, text) => { const o = document.createElement('option'); o.value = value; o.textContent = text; return o; };
+  mSel.replaceChildren(...IHM.metrics.map(m => opt(m.code, `${m.name} (${m.code})`)));
+  uSel.replaceChildren(...IHM.units.map(u => opt(u.code, `${u.name} (${u.code})`)));
+  if(keepM && IHM.metrics.some(m => m.code === keepM)) mSel.value = keepM;
+  if(keepU && IHM.units.some(u => u.code === keepU)) uSel.value = keepU;
+  else if(IHM.units.some(u => u.code === 'org')) uSel.value = 'org';
+  ihmLoadTargets();
+}
+async function ihmPeriods(type){
+  if(!IHM.periods[type]) IHM.periods[type] = await ihApi(`/api/integration/period-options?period_type=${type}&back=4&forward=8`, {fallback:[]});
+  return IHM.periods[type];
+}
+async function ihmLoadTargets(){
+  const metric = document.getElementById('ihm-t-metric').value;
+  const unit = document.getElementById('ihm-t-unit').value;
+  const ptype = document.getElementById('ihm-t-ptype').value;
+  const tbody = document.getElementById('ihm-t-tbody');
+  const pSel = document.getElementById('ihm-t-period');
+  const periods = await ihmPeriods(ptype);
+  pSel.replaceChildren(...periods.map(p => { const o = document.createElement('option'); o.value = p.start; o.textContent = p.label + (p.current ? ' (current)' : ''); return o; }));
+  const cur = periods.find(p => p.current); if(cur) pSel.value = cur.start;
+  if(!metric){ ihSetRows(tbody, '<tr><td colspan="6" class="adm-empty">Add a measure first.</td></tr>'); return; }
+  try{
+    const rows = await ihApi(`/api/integration/targets?metric_code=${encodeURIComponent(metric)}&org_unit_code=${encodeURIComponent(unit)}&period_type=${encodeURIComponent(ptype)}`, {fallback:[]});
+    const m = IHM.metrics.find(x => x.code === metric) || {};
+    ihSetRows(tbody, rows.length ? rows.map(t => `<tr>
+      <td>${ihEsc(t.label)}</td><td style="text-align:right" class="ih-mono">${ihEsc(ihNum(t.value, m.unit))}</td>
+      <td class="ih-cell-meta">${t.lower != null || t.upper != null ? `${ihEsc(ihNum(t.lower, m.unit))} – ${ihEsc(ihNum(t.upper, m.unit))}` : '—'}</td>
+      <td class="ih-cell-meta">${ihEsc(IHM_BASIS[t.basis] || t.basis)}</td><td class="ih-cell-meta">${ihEsc(t.note || '')}</td>
+      <td><button class="adm-act-btn danger" data-ihm-act="del-target" data-id="${ihEsc(t.id)}" data-label="${ihEsc(t.label)}">Remove</button></td></tr>`).join('')
+      : '<tr><td colspan="6" class="adm-empty">No targets for this measure, unit and period type.</td></tr>');
+  }catch(e){ ihSetRows(tbody, `<tr><td colspan="6" class="adm-err">${ihEsc(e.message)}</td></tr>`); }
+}
+async function ihmSaveTarget(){
+  const f = id => document.getElementById(id);
+  const num = id => { const v = f(id).value.trim(); return v === '' ? null : Number(v); };
+  const value = num('ihm-t-value');
+  if(value === null || Number.isNaN(value)){ ihmNotice('Enter a target value.', 'warn'); return; }
+  const body = [{metric_code:f('ihm-t-metric').value, org_unit_code:f('ihm-t-unit').value, period_type:f('ihm-t-ptype').value,
+                 period_start:f('ihm-t-period').value, value, lower:num('ihm-t-lower'), upper:num('ihm-t-upper'),
+                 basis:f('ihm-t-basis').value, note:f('ihm-t-note').value.trim() || null}];
+  try{
+    await ihApi('/api/integration/targets', {method:'POST', body});
+    ihmNotice(`Target saved for ${ihEsc(f('ihm-t-period').selectedOptions[0]?.textContent || '')}. Saving the same period and basis again replaces it.`, 'ok');
+    ['ihm-t-value','ihm-t-lower','ihm-t-upper','ihm-t-note'].forEach(id => { f(id).value = ''; });
+    ihmLoadTargets();
+  }catch(e){ ihmNotice(ihEsc(e.message), 'danger'); }
+}
+async function ihmDeleteTarget(id, label){
+  if(!confirm(`Remove the target for ${label}?`)) return;
+  try{ await ihApi(`/api/integration/targets/${encodeURIComponent(id)}`, {method:'DELETE'}); ihmLoadTargets(); }
+  catch(e){ ihmNotice(ihEsc(e.message), 'danger'); }
+}
+
+document.addEventListener('click', ev => {
+  const btn = ev.target.closest('[data-ihm-act]');
+  if(!btn) return;
+  const {ihmAct:act, code} = btn.dataset;
+  if(act === 'edit') ihmOpenEditor(code);
+  else if(act === 'toggle') ihmToggle(code);
+  else if(act === 'insert') ihmInsertCode(code);
+  else if(act === 'del-target') ihmDeleteTarget(btn.dataset.id, btn.dataset.label);
+  else if(act === 'targets'){
+    document.getElementById('ihm-t-metric').value = code;
+    ihmLoadTargets();
+    document.getElementById('ihm-targets').scrollIntoView({behavior:'smooth', block:'start'});
+  }
+});

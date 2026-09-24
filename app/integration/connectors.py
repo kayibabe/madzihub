@@ -131,7 +131,7 @@ def _extract_file(config: dict, watermark: str | None) -> Extract:
 
 # ── sql ──────────────────────────────────────────────────────────────────────
 
-def _extract_sql(config: dict, watermark: str | None) -> Extract:
+def _extract_sql(config: dict, watermark: str | None, limit: int | None = None) -> Extract:
     from sqlalchemy import create_engine, text
 
     url = _secret(config, "url_env")
@@ -147,7 +147,7 @@ def _extract_sql(config: dict, watermark: str | None) -> Extract:
     try:
         with engine.connect() as conn:
             result = conn.execute(text(query), params if ":since" in query else {})
-            rows = [dict(r._mapping) for r in result]
+            rows = [dict(r._mapping) for r in (result.fetchmany(limit) if limit else result)]
     finally:
         engine.dispose()
     for i, row in enumerate(rows):
@@ -167,7 +167,7 @@ def _dig(obj: Any, path: str | None) -> Any:
     return obj
 
 
-def _extract_rest(config: dict, watermark: str | None) -> Extract:
+def _extract_rest(config: dict, watermark: str | None, limit: int | None = None) -> Extract:
     import httpx
 
     base = config.get("base_url")
@@ -213,7 +213,7 @@ def _extract_rest(config: dict, watermark: str | None) -> Extract:
                 if isinstance(item, dict):
                     rows.append(item)
             nxt = _dig(body, config.get("next_link_path")) if config.get("next_link_path") else None
-            if not nxt:
+            if not nxt or (limit and len(rows) >= limit):
                 break
             url, params = (nxt if str(nxt).startswith("http") else base.rstrip("/") + "/" + str(nxt).lstrip("/")), {}
         else:
@@ -246,19 +246,26 @@ def _extract_legacy(db, config: dict, watermark: str | None) -> Extract:
     return Extract(rows, watermark)
 
 
-def extract(db, source, rows: list[dict] | None = None) -> Extract:
-    """Run the source's connector. ``rows`` short-circuits extraction (push, upload)."""
+def extract(db, source, rows: list[dict] | None = None, limit: int | None = None) -> Extract:
+    """Run the source's connector. ``rows`` short-circuits extraction (push, upload).
+
+    ``limit`` caps the rows read (a dry-run sample); SQL and REST stop reading early.
+    """
     if rows is not None:
-        return Extract(rows, source.watermark)
+        return Extract(rows[:limit] if limit else rows, source.watermark)
     config = source.config or {}
-    if source.connector == "file":
-        return _extract_file(config, source.watermark)
     if source.connector == "sql":
-        return _extract_sql(config, source.watermark)
+        return _extract_sql(config, source.watermark, limit)
     if source.connector == "rest":
-        return _extract_rest(config, source.watermark)
-    if source.connector == "legacy_records":
-        return _extract_legacy(db, config, source.watermark)
+        out = _extract_rest(config, source.watermark, limit)
+    elif source.connector == "file":
+        out = _extract_file(config, source.watermark)
+    elif source.connector == "legacy_records":
+        out = _extract_legacy(db, config, source.watermark)
+    else:
+        out = None
+    if out is not None:
+        return Extract(out.rows[:limit] if limit else out.rows, out.watermark)
     if source.connector == "push":
         raise ConnectorError("push sources receive data at POST /api/ingest/{code}; they cannot be pulled")
     raise ConnectorError(f"unknown connector: {source.connector}")
