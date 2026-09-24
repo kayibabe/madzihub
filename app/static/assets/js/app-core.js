@@ -7,7 +7,7 @@ function decodeJwt(t){try{return JSON.parse(atob(t.split('.')[1].replace(/-/g,'+
 function isExpired(t){const p=decodeJwt(t);return!p||!p.exp||Date.now()>=p.exp*1000}
 const LAST_PAGE_KEY='srwb_last_page';
 const ROLE_HOME_PAGE={viewer:'board',user:'board',admin:'board'};
-(function(){const t=getToken();if(t&&!isExpired(t))showApp(getUser(),{restoreLastPage:true})})();
+(function(){const t=getToken();if(t&&!isExpired(t)){if(decodeJwt(t)?.pwc){clearSession();return;}showApp(getUser(),{restoreLastPage:true})}})();
 (async function(){
   if(location.hash!=='#devpreview')return;
   if(!['localhost','127.0.0.1'].includes(location.hostname))return;
@@ -21,10 +21,41 @@ const ROLE_HOME_PAGE={viewer:'board',user:'board',admin:'board'};
     showApp(user,{forceRoleHome:true});
   }catch(e){console.warn('dev-preview-token failed',e);}
 })();
+// Blocking first-login / post-reset password change. The server rejects every
+// data request with 403 "password_change_required" until this succeeds.
+function forcePasswordChange(token,user,currentPw,remember){
+  document.getElementById('madzi-pwc')?.remove();
+  const dlg=document.createElement('dialog');dlg.id='madzi-pwc';
+  dlg.style.cssText='max-width:380px;width:92vw;border:1px solid var(--ds-border,#e2e8f0);border-radius:12px;padding:22px;font:inherit;color:var(--ds-text-primary,#0f172a);background:var(--ds-surface,#fff)';
+  dlg.innerHTML='<form method="dialog" style="display:grid;gap:10px">'
+    +'<div style="font-weight:700;font-size:1.05rem">Choose a new password</div>'
+    +'<div style="font-size:.85rem;opacity:.8">Your password was set by an administrator or at installation. Set your own before continuing.</div>'
+    +'<input id="pwc-new" type="password" autocomplete="new-password" placeholder="New password (min 8 characters)" required minlength="8" style="padding:9px;border:1px solid var(--ds-border,#cbd5e1);border-radius:8px">'
+    +'<input id="pwc-conf" type="password" autocomplete="new-password" placeholder="Repeat new password" required style="padding:9px;border:1px solid var(--ds-border,#cbd5e1);border-radius:8px">'
+    +'<div id="pwc-msg" role="alert" style="font-size:.82rem;color:var(--ds-red,#b91c1c);min-height:1em"></div>'
+    +'<button id="pwc-go" type="submit" style="padding:10px;border:0;border-radius:8px;background:var(--ds-primary,#0f766e);color:#fff;font-weight:600;cursor:pointer">Save and continue</button>'
+    +'</form>';
+  document.body.appendChild(dlg);
+  dlg.addEventListener('cancel',e=>e.preventDefault());
+  dlg.querySelector('form').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const nw=dlg.querySelector('#pwc-new').value,cf=dlg.querySelector('#pwc-conf').value,msg=dlg.querySelector('#pwc-msg');
+    if(nw.length<8)return msg.textContent='At least 8 characters.';
+    if(nw!==cf)return msg.textContent='Passwords do not match.';
+    try{
+      const r=await fetch(API+'/api/auth/change-password',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({current_password:currentPw,new_password:nw})});
+      if(!r.ok){const t=await r.text();let d={};try{d=JSON.parse(t)}catch{}return msg.textContent=d.detail||'Could not change password.';}
+      const fresh=await tryLogin(user.username,nw,'json');
+      if(!fresh)return msg.textContent='Password changed. Please sign in again.';
+      dlg.close();dlg.remove();saveSession(fresh,user,remember);showApp(user,{forceRoleHome:true});
+    }catch(err){msg.textContent='Network error: '+err.message;}
+  });
+  dlg.showModal();
+}
 async function handleLogin(e){
   e.preventDefault();const username=document.getElementById('username').value.trim();const password=document.getElementById('password').value;const remember=document.getElementById('remember-me').checked;
   if(!username||!password)return showError('Please enter your username and password.');setLoading(true);clearError();
-  try{let token=await tryLogin(username,password,'json');if(token===null)token=await tryLogin(username,password,'form');if(!token)throw new Error('Invalid username or password.');const d=decodeJwt(token);const user={username:d?.sub||username,role:d?.role||'user',full_name:d?.full_name||null};saveSession(token,user,remember);showApp(user,{forceRoleHome:true});}
+  try{let token=await tryLogin(username,password,'json');if(token===null)token=await tryLogin(username,password,'form');if(!token)throw new Error('Invalid username or password.');const d=decodeJwt(token);const user={username:d?.sub||username,role:d?.role||'user',full_name:d?.full_name||null};if(d?.pwc){setLoading(false);return forcePasswordChange(token,user,password,remember);}saveSession(token,user,remember);showApp(user,{forceRoleHome:true});}
   catch(err){showError(err.message||'Unable to sign in.')}finally{setLoading(false)}
 }
 async function tryLogin(u,p,fmt){const isJ=fmt==='json';let res;try{res=await fetch(`${API}/api/auth/login`,{method:'POST',headers:{'Content-Type':isJ?'application/json':'application/x-www-form-urlencoded'},body:isJ?JSON.stringify({username:u,password:p}):new URLSearchParams({username:u,password:p})});}catch{throw new Error('Cannot reach the server.')}
@@ -127,33 +158,19 @@ function openAdminUploadHistory(){
   setTimeout(()=>admTab('uploads'),0);
 }
 
-/* Quarter → month mapping (SRWB financial year: Apr–Mar) */
+/* Quarter → month mapping (tenant fiscal year; __FY_MONTHS__ is injected server-side) */
 const QUARTER_MAP={
-  Q1:['April','May','June'],
-  Q2:['July','August','September'],
-  Q3:['October','November','December'],
-  Q4:['January','February','March'],
+  Q1:__FY_MONTHS__.slice(0,3),
+  Q2:__FY_MONTHS__.slice(3,6),
+  Q3:__FY_MONTHS__.slice(6,9),
+  Q4:__FY_MONTHS__.slice(9,12),
 };
-const ALL_FY_MONTHS=['April','May','June','July','August','September','October','November','December','January','February','March'];
+const ALL_FY_MONTHS=__FY_MONTHS__;
 const QUICK_PERIOD_OPTIONS=[
   {value:'',label:'All Periods'},
   {value:'YTD',label:'YTD'},
-  {value:'Q1',label:'Q1 · Apr–Jun'},
-  {value:'Q2',label:'Q2 · Jul–Sep'},
-  {value:'Q3',label:'Q3 · Oct–Dec'},
-  {value:'Q4',label:'Q4 · Jan–Mar'},
-  {value:'M:April',label:'Apr'},
-  {value:'M:May',label:'May'},
-  {value:'M:June',label:'Jun'},
-  {value:'M:July',label:'Jul'},
-  {value:'M:August',label:'Aug'},
-  {value:'M:September',label:'Sep'},
-  {value:'M:October',label:'Oct'},
-  {value:'M:November',label:'Nov'},
-  {value:'M:December',label:'Dec'},
-  {value:'M:January',label:'Jan'},
-  {value:'M:February',label:'Feb'},
-  {value:'M:March',label:'Mar'},
+  ...[0,1,2,3].map(q=>({value:'Q'+(q+1),label:`Q${q+1} · ${ALL_FY_MONTHS[q*3].slice(0,3)}–${ALL_FY_MONTHS[q*3+2].slice(0,3)}`})),
+  ...ALL_FY_MONTHS.map(m=>({value:'M:'+m,label:m.slice(0,3)})),
 ];
 
 function formatTopbarDateTime(now=new Date()){
@@ -639,7 +656,7 @@ function buildExportFileStem(page,cfg){
   const schemePart=filterState.schemes.length?`${filterState.schemes.length}Schemes`:'AllSchemes';
   const datePart=new Date().toISOString().slice(0,10);
   const title=(cfg?.title||page).replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_+|_+$/g,'');
-  return `SRWB_${title}_${fy}_${zonePart}_${schemePart}_${datePart}`;
+  return `__ORG_SHORT___${title}_${fy}_${zonePart}_${schemePart}_${datePart}`;
 }
 
 
@@ -707,7 +724,7 @@ function mountExportBar(page){
     const ph=document.createElement('div');
     ph.className='print-report-header';
     ph.innerHTML= DOMPurify.sanitize(`
-      <div class="prh-org">Southern Region Water Board · Operations &amp; Performance Dashboard</div>
+      <div class="prh-org">__ORG_NAME__ · Operations &amp; Performance Dashboard</div>
       <div class="prh-title">${cfg.title}</div>
       <div class="prh-meta" id="prh-meta-${page}"></div>
       <div class="prh-meta prh-meta-secondary" id="prh-meta-secondary-${page}"></div>
@@ -774,7 +791,7 @@ function exportExcel(page){
       }
       const meta=exportMetaLines(page,cfg);
       const summary=[
-        ['SRWB Operations & Performance Dashboard'],
+        ['__ORG_SHORT__ Operations & Performance Dashboard'],
         ['Report:',cfg.title],
         ['Filters:',meta.scope],
         ['Generated:',meta.generated],
@@ -791,7 +808,7 @@ function exportExcel(page){
       const ws2=XLSX.utils.aoa_to_sheet(summary);
       XLSX.utils.book_append_sheet(wb,ws2,'Summary');
       const govSheet=[
-        ['SRWB Governance Export Status'],
+        ['__ORG_SHORT__ Governance Export Status'],
         ['Report',cfg.title],
         ['Data Quality',meta.dataQualityLabel],
         ['Data Quality Detail',meta.dataQualityDetail||''],
@@ -817,7 +834,7 @@ function printReport(page){
   if(!document.querySelector(`#page-${page} .print-report-header`) && pageEl){
       const ph=document.createElement('div');
       ph.className='print-report-header';
-      ph.innerHTML= DOMPurify.sanitize(`<div class="prh-org">Southern Region Water Board · Operations &amp; Performance Dashboard</div><div class="prh-title">${cfg.title}</div><div class="prh-meta" id="prh-meta-${page}"></div><div class="prh-meta prh-meta-secondary" id="prh-meta-secondary-${page}"></div><div class="prh-gov" id="prh-gov-${page}"></div>`);
+      ph.innerHTML= DOMPurify.sanitize(`<div class="prh-org">__ORG_NAME__ · Operations &amp; Performance Dashboard</div><div class="prh-title">${cfg.title}</div><div class="prh-meta" id="prh-meta-${page}"></div><div class="prh-meta prh-meta-secondary" id="prh-meta-secondary-${page}"></div><div class="prh-gov" id="prh-gov-${page}"></div>`);
       pageEl.prepend(ph);
   }
   if(!document.querySelector(`#page-${page} .print-report-footer`) && pageEl){
@@ -983,7 +1000,7 @@ async function apiPanel(panel){
 }
 
 /* ══════════════════════ REPORT TABLE ENGINE ═══════════════════════════ */
-const FY_MO=['April','May','June','July','August','September','October','November','December','January','February','March'];
+const FY_MO=__FY_MONTHS__;
 const MS={April:'APR',May:'MAY',June:'JUN',July:'JUL',August:'AUG',September:'SEP',October:'OCT',November:'NOV',December:'DEC',January:'JAN',February:'FEB',March:'MAR'};
 const Q_END_MAP={June:'1ST',September:'2ND',December:'3RD',March:'4TH'};
 
@@ -1077,7 +1094,7 @@ function renderTable(containerId,title,rows,moData,reportKey=null){
 function renderPipelinesTable(containerId,moData){
   const el=document.getElementById(containerId);if(!el)return;
   const bm={};for(const m of moData)if(m.has_data)bm[m.month]=m;
-  const Q=['April','May','June','July','August','September','October','November','December','January','February','March'];
+  const Q=__FY_MONTHS__;
   const QG=[[0,1,2],[3,4,5],[6,7,8],[9,10,11]];
   const QL=['1ST QTR','2ND QTR','3RD QTR','4TH QTR'];
   const rows=[
@@ -1125,14 +1142,14 @@ const ROWS={
     {label:'Algae Floc (litres)',             field:'algae_floc_litres',    fmt:'num', annType:'sum', color:'blue'},
     {label:'Sud Floc (litres)',               field:'sud_floc_litres',      fmt:'num', annType:'sum', color:'blue'},
     {label:'Potassium Permanganate (kg)',      field:'kmno4_kg',             fmt:'num', annType:'sum', color:'blue'},
-    {label:'Cost of Chemicals (MWK)',          field:'chem_cost',            fmt:'mwk', annType:'sum', bold:true},
+    {label:'Cost of Chemicals (__CURRENCY__)',          field:'chem_cost',            fmt:'mwk', annType:'sum', bold:true},
     {label:'Vol. Produced (m³)',              field:'vol_produced',         fmt:'num', annType:'sum', color:'green'},
-    // Ratio = vol_produced / chem_cost (production per MWK of chemical spend)
+    // Ratio = vol_produced / chem_cost (production per __CURRENCY__ of chemical spend)
     {label:'Ratio (Prd. v Chem. Cost)',
      computed:m=>m.chem_cost?m.vol_produced/m.chem_cost:null,
      fmt:'dec3', annType:'ratio', numF:'vol_produced', denF:'chem_cost', ratioMul:1},
     // Cost per m³ produced
-    {label:'Cost/Vol. Produced — Chemicals (MWK/m³)',
+    {label:'Cost/Vol. Produced — Chemicals (__CURRENCY__/m³)',
      field:'chem_cost_per_m3', fmt:'dec2',
      annType:'ratio', numF:'chem_cost', denF:'vol_produced', ratioMul:1},
     {type:'spacer'},
@@ -1144,7 +1161,7 @@ const ROWS={
     {label:'Sud Floc Intensity (L/m3)',       field:'sud_floc_per_m3', fmt:'dec3', annType:'avg'},
     {label:'KMnO4 Intensity (kg/m3)',         field:'kmno4_per_m3', fmt:'dec3', annType:'avg'},
     {label:'Power Intensity (kWh/m3)',        field:'power_kwh_per_m3', fmt:'dec3', annType:'avg'},
-    {label:'Power Cost (MWK/m3)',             field:'power_cost_per_m3', fmt:'dec2', annType:'avg'},
+    {label:'Power Cost (__CURRENCY__/m3)',             field:'power_cost_per_m3', fmt:'dec2', annType:'avg'},
   ],
   customers:[
     {label:'Metered Customers',               field:'total_metered',         fmt:'num', annType:'last'},
@@ -1329,9 +1346,9 @@ const ROWS={
     {label:'Permanent Staff', field:'perm_staff', fmt:'num', annType:'last'},
     {label:'Temporary Staff', field:'temp_staff', fmt:'num', annType:'last'},
     {label:'Fuel Used (litres)', field:'fuel_used_litres', fmt:'num', annType:'sum'},
-    {label:'Fuel Cost (MWK)', field:'fuel_cost', fmt:'mwk', annType:'sum'},
+    {label:'Fuel Cost (__CURRENCY__)', field:'fuel_cost', fmt:'mwk', annType:'sum'},
     {label:'Distance Covered (km)', field:'distances_km', fmt:'num', annType:'sum'},
-    {label:'Maintenance (MWK)', field:'maintenance', fmt:'mwk', annType:'sum'},
+    {label:'Maintenance (__CURRENCY__)', field:'maintenance', fmt:'mwk', annType:'sum'},
     {label:'Staff / 1000m³ (12h)', field:'staff_per_1000m3_12h', fmt:'dec3', annType:'avg'},
     {label:'OpEx / m³ Produced', field:'op_cost_per_m3_produced', fmt:'dec2', annType:'avg'},
     {label:'OpEx / m³ Billed', field:'op_cost_per_m3_billed', fmt:'dec2', annType:'avg'},
@@ -1481,14 +1498,14 @@ function applyReportDensityState(page=currentPage){
 }
 
 /* ══════════════════════ CHARTS & STATE ════════════════════════════════ */
-const MONTHS_SHORT={April:'Apr',May:'May',June:'Jun',July:'Jul',August:'Aug',September:'Sep',October:'Oct',November:'Nov',December:'Dec',January:'Jan',February:'Feb',March:'Mar'};
+const MONTHS_SHORT=Object.fromEntries(__FY_MONTHS__.map(m=>[m,m.slice(0,3)]));
 let dbState={year:2026};
 const pageCache={},chartReg={};
 const F={
   num:n=>n==null?'—':Math.round(n).toLocaleString(),
   M:n=>{if(n==null)return'—';const a=Math.abs(n);return a>=1e9?(n/1e9).toFixed(2)+'B':a>=1e6?(n/1e6).toFixed(1)+'M':Math.round(n).toLocaleString()},
   pct:n=>n==null?'—':n.toFixed(1)+'%',m3:n=>{if(n==null)return'—';return n>=1e6?(n/1e6).toFixed(2)+'M m³':Math.round(n).toLocaleString()+' m³'},
-  mwk:n=>'MWK '+F.M(n),dec:n=>n==null?'—':n.toFixed(1),
+  mwk:n=>'__CURRENCY__ '+F.M(n),dec:n=>n==null?'—':n.toFixed(1),
 };
 const GC='rgba(0,0,0,0.035)',LC='#6B7280';
 
@@ -1514,9 +1531,9 @@ const ICON={
 
 /* ── IWA / IBNET / World Bank benchmark constants ── */
 const IWA={
-  nrw:27,           // SRWB corporate NRW target <27%
+  nrw:__NRW_TARGET__, // tenant NRW target (targets.nrw_pct)
   nrw_iwa:20,        // IWA international benchmark <20%
-  nrw_warn:35,      // Warning threshold (action zone 27–35%)
+  nrw_warn:35,      // Warning threshold (action zone target–35%)
   coll_rate:90,     // IBNET collection rate >90%
   op_ratio:0.80,    // World Bank operating ratio <0.80
   dso:60,           // IBNET DSO <60 days
@@ -1663,12 +1680,12 @@ function governanceChipHtml(chips=[], base='pg-governance-chip'){
 function inferBenchmarkMode(title=''){
   const t=String(title||'').trim();
   if(!t) return 'none';
-  if(t==='Billed vs Collected — Monthly (MWK)') return 'line';
+  if(t==='Billed vs Collected — Monthly (__CURRENCY__)') return 'line';
   const lineTitles=new Set([
     'NRW Rate — Monthly Trend','NRW Rate by Zone — Current Period (%)','NRW Rate by Zone (%)',
     'Collection Rate by Zone (%)','Volume Produced (m³) & NRW Rate — Monthly',
-    'Monthly Revenue: Actual vs Budget (MWK)','Volume Produced: Actual vs Budget (m³)',
-    'New Connections — Cumulative YTD vs Budget','NRW % by Zone vs 27% Target',
+    'Monthly Revenue: Actual vs Budget (__CURRENCY__)','Volume Produced: Actual vs Budget (m³)',
+    'New Connections — Cumulative YTD vs Budget','NRW % by Zone vs __NRW_TARGET__% Target',
     'Corporate NRW % — Shewhart Control Chart (ISO 7870-2)'
   ]);
   const bandTitles=new Set([
@@ -1834,29 +1851,29 @@ const REPORT_META={
   'pipe-materials':{title:'Pipe Failure by Material and Size Report',note:'Pipe-failure counts presented by material and size class to support engineering diagnostics, renewal prioritisation, and network-risk review.'}
 };
 const CHART_BENCHMARK_NOTES={
-  'NRW Rate — Monthly Trend':'Benchmark context: SRWB target 27%; IWA good-practice benchmark 20%. Dashed benchmark lines should remain visible in trend interpretation.',
-  'Billing vs Collections — Monthly (MWK)':'Benchmark context: chart supports collection-efficiency review; read together with the IBNET collection-rate benchmark of 95% shown in KPI cards.',
-  'NRW Rate by Zone — Current Period (%)':'Benchmark context: compare every zone against the 27% corporate NRW target and the 20% good-practice benchmark.',
-  'Volume Produced (m³) & NRW Rate — Monthly':'Benchmark context: track NRW against the 27% SRWB target and 20% IWA benchmark while reading production in parallel.',
-  'NRW Rate by Zone (%)':'Benchmark context: compare each zone against the 27% target and 20% international good-practice benchmark.',
+  'NRW Rate — Monthly Trend':'Benchmark context: __ORG_SHORT__ target __NRW_TARGET__%; IWA good-practice benchmark 20%. Dashed benchmark lines should remain visible in trend interpretation.',
+  'Billing vs Collections — Monthly (__CURRENCY__)':'Benchmark context: chart supports collection-efficiency review; read together with the IBNET collection-rate benchmark of 95% shown in KPI cards.',
+  'NRW Rate by Zone — Current Period (%)':'Benchmark context: compare every zone against the __NRW_TARGET__% corporate NRW target and the 20% good-practice benchmark.',
+  'Volume Produced (m³) & NRW Rate — Monthly':'Benchmark context: track NRW against the __NRW_TARGET__% __ORG_SHORT__ target and 20% IWA benchmark while reading production in parallel.',
+  'NRW Rate by Zone (%)':'Benchmark context: compare each zone against the __NRW_TARGET__% target and 20% international good-practice benchmark.',
   'Collection Rate by Zone (%)':'Benchmark context: benchmark line set at 95% collection efficiency in line with common IBNET-style performance review.',
   'Days to Quotation & Days to Connect':'Benchmark context: quotation turnaround should trend toward 7 days and connection completion toward 30 days or better.',
   'Supply Hours vs Power Failure Hours':'Benchmark context: continuity charts are strongest when supply hours trend upward and outage hours approach zero.',
-  'Revenue Decomposition — Volume Effect Waterfall (MWK)':'Interpretation note: with tariff held constant, the waterfall isolates how much of the revenue gap is attributable to water-volume underperformance and cash conversion effects.',
-  'Monthly Revenue: Actual vs Budget (MWK)':'Benchmark context: review actual water sales against the prorated annual budget and read collections as cash-conversion support rather than budget basis.',
+  'Revenue Decomposition — Volume Effect Waterfall (__CURRENCY__)':'Interpretation note: with tariff held constant, the waterfall isolates how much of the revenue gap is attributable to water-volume underperformance and cash conversion effects.',
+  'Monthly Revenue: Actual vs Budget (__CURRENCY__)':'Benchmark context: review actual water sales against the prorated annual budget and read collections as cash-conversion support rather than budget basis.',
   'Budget Performance Index — Revenue by Zone':'Benchmark context: a BPI above 1.0 means the zone is ahead of its proportional revenue budget; below 1.0 signals under-delivery.',
   'Volume Produced: Actual vs Budget (m³)':'Benchmark context: production should track or exceed prorated budget where service demand and capacity assumptions hold.',
   'New Connections — Cumulative YTD vs Budget':'Benchmark context: the cumulative line should stay close to or above the prorated target to protect future revenue growth.',
   'Corporate NRW % — Shewhart Control Chart (ISO 7870-2)':'Control note: points outside warning and action limits indicate special-cause variation requiring management attention beyond routine target monitoring.',
-  'NRW % by Zone vs 27% Target':'Benchmark context: 27% is the internal management target; the most material operational priority is the largest-producing zone with persistent excess NRW.',
-  'NRW % Monthly Trend by Zone':'Benchmark context: sustained movement toward or below 27% matters more than isolated monthly swings.',
+  'NRW % by Zone vs __NRW_TARGET__% Target':'Benchmark context: __NRW_TARGET__% is the internal management target; the most material operational priority is the largest-producing zone with persistent excess NRW.',
+  'NRW % Monthly Trend by Zone':'Benchmark context: sustained movement toward or below __NRW_TARGET__% matters more than isolated monthly swings.',
   'Revenue Water vs NRW Volume — Monthly (m³)':'Interpretation note: growth in NRW volume without matching revenue-water growth indicates treatment effort that is not translating into billable output.',
-  'Chemical Costs — Actual vs Budget (MWK/month)':'Benchmark context: recurring monthly overruns indicate a structural cost issue, not just a timing issue, especially late in the financial year.',
-  'Power / Electricity — Actual vs Budget (MWK/month)':'Benchmark context: read this as field electricity only; under-budget results do not capture uncoded head-office or zonal electricity spend.',
-  'Chemical & Power Cost per m³ by Zone (MWK)':'Benchmark context: highest-cost zones warrant joint review of treatment efficiency, pump efficiency, and NRW performance.',
+  'Chemical Costs — Actual vs Budget (__CURRENCY__/month)':'Benchmark context: recurring monthly overruns indicate a structural cost issue, not just a timing issue, especially late in the financial year.',
+  'Power / Electricity — Actual vs Budget (__CURRENCY__/month)':'Benchmark context: read this as field electricity only; under-budget results do not capture uncoded head-office or zonal electricity spend.',
+  'Chemical & Power Cost per m³ by Zone (__CURRENCY__)':'Benchmark context: highest-cost zones warrant joint review of treatment efficiency, pump efficiency, and NRW performance.',
   'Zone Performance Radar — 5 Dimensions (normalised 0–100)':'Interpretation note: use the radar as a synthesis view only; confirm any weak axis against the detailed tables below before actioning.',
-  'Revenue Variance by Zone (MWK)':'Benchmark context: compare actual sales with proportional budget by zone and use variance/BPI details to isolate the weakest commercial segment.',
-  'Revenue vs Budget by Zone (MWK)':'Benchmark context: compare actual sales with proportional budget by zone and use variance/BPI details to isolate the weakest commercial segment.',
+  'Revenue Variance by Zone (__CURRENCY__)':'Benchmark context: compare actual sales with proportional budget by zone and use variance/BPI details to isolate the weakest commercial segment.',
+  'Revenue vs Budget by Zone (__CURRENCY__)':'Benchmark context: compare actual sales with proportional budget by zone and use variance/BPI details to isolate the weakest commercial segment.',
   'Zone Performance by Dimension (score 0–100)':'Interpretation note: use the score view as a synthesis summary only; confirm any weak dimension against the zone tables before management action.'
 };
 function getKpiHint(label=''){
@@ -1873,7 +1890,7 @@ function sanitizeRows(rowsHtml){
 function chartBenchmarkNote(title=''){
   return governanceChart(title)?.note || CHART_BENCHMARK_NOTES[title]||'Benchmark context: descriptive operational chart for the selected scope; interpret alongside the page KPI targets and notes.';
 }
-/* True when a formatted KPI value represents a real zero (e.g. "0", "MK 0",
+/* True when a formatted KPI value represents a real zero (e.g. "0", "__CUR_SYM__ 0",
    "0%", "0 km") — but NOT placeholders like "—", "Awaiting samples" or
    "Not recorded". Used to flag metrics that read 0 only because the in-progress
    fiscal year's monthly returns haven't captured them yet. */
@@ -2479,7 +2496,7 @@ async function loadBoard(){
     // Active Customers moved to Zone Risk Matrix; NRW Cost adds financial impact of losses.
     kpis('bv-ops-kpis',[
       {l:'Production (m³)', v:F.m3(n.vol_produced||0), s:'Volume produced in scope', icon:ICON.drop, badgeLabel:'INFO', trend:trendDir(tr.production)},
-      {l:'NRW Rate', v:nrwPct!=null?`${Number(nrwPct).toFixed(1)}%`:'—', s:(nrwPct||0)<=IWA.nrw?'Within SRWB target':'Above SRWB target', cls:nrwCls, icon:ICON.nrw, badgeLabel:(nrwPct||0)<=IWA.nrw?'GOOD':(nrwPct||0)<=IWA.nrw_warn?'WATCH':'HIGH', bm:`SRWB <${IWA.nrw}% · IWA <${IWA.nrw_iwa}%`, bmPct:bmPct(nrwPct,IWA.nrw,false), bmOk:nrwPct!=null&&nrwPct<=IWA.nrw, trend:trendDir(tr.nrw_pct,true)},
+      {l:'NRW Rate', v:nrwPct!=null?`${Number(nrwPct).toFixed(1)}%`:'—', s:(nrwPct||0)<=IWA.nrw?'Within __ORG_SHORT__ target':'Above __ORG_SHORT__ target', cls:nrwCls, icon:ICON.nrw, badgeLabel:(nrwPct||0)<=IWA.nrw?'GOOD':(nrwPct||0)<=IWA.nrw_warn?'WATCH':'HIGH', bm:`__ORG_SHORT__ <${IWA.nrw}% · IWA <${IWA.nrw_iwa}%`, bmPct:bmPct(nrwPct,IWA.nrw,false), bmOk:nrwPct!=null&&nrwPct<=IWA.nrw, trend:trendDir(tr.nrw_pct,true)},
       {l:'NRW Cost', v:F.mwk(n.nrw_cost||0), s:n.nrw_vol!=null?`${F.m3(n.nrw_vol)} unaccounted water`:'Revenue lost to water losses', cls:nrwCls, icon:ICON.cash, badgeLabel:(nrwPct||0)<=IWA.nrw?'GOOD':(nrwPct||0)<=IWA.nrw_warn?'WATCH':'HIGH'},
       {l:'Supply Hours / Day', v:supply!=null?Number(supply).toFixed(1):'—', s:(supply||0)>=20?'Strong continuity':'Monitor continuity', cls:supplyCls, icon:ICON.clock, badgeLabel:(supply||0)>=20?'GOOD':(supply||0)>=16?'WATCH':'HIGH'},
     ]);
@@ -2562,9 +2579,9 @@ async function loadBoard(){
       const narr=[];
       if(nrwPct!=null){
         const nrwOk=nrwPct<=IWA.nrw;
-        const nrwStatus=nrwOk?`within the SRWB target of ${IWA.nrw}%`
-          :nrwPct<=IWA.nrw_warn?`above the SRWB target of ${IWA.nrw}%`
-          :`significantly above the SRWB target of ${IWA.nrw}%`;
+        const nrwStatus=nrwOk?`within the __ORG_SHORT__ target of ${IWA.nrw}%`
+          :nrwPct<=IWA.nrw_warn?`above the __ORG_SHORT__ target of ${IWA.nrw}%`
+          :`significantly above the __ORG_SHORT__ target of ${IWA.nrw}%`;
         const worstNrw=[...zones].sort((a,b)=>(b.nrw_pct||0)-(a.nrw_pct||0))[0];
         const zoneNrwNote=(!nrwOk&&worstNrw&&(worstNrw.nrw_pct||0)>IWA.nrw)
           ?`; ${worstNrw.zone} is the highest contributor at ${Number(worstNrw.nrw_pct).toFixed(1)}%`:'';
@@ -2612,8 +2629,8 @@ async function loadFinance(){
     const dsoCls=dso==null?'':dso<=IWA.dso?'kc-up':dso<=90?'kc-nt':'kc-dn';
     // Quick-win ratios derived from the executive panel:
     const costRecovery=(opRatio&&opRatio>0)?(1/opRatio):null;   // revenue ÷ opex
-    const tariff=n.avg_tariff;                                   // realised MWK/m³
-    const revPerConn=f.rev_per_conn;                             // MWK per active connection
+    const tariff=n.avg_tariff;                                   // realised __CURRENCY__/m³
+    const revPerConn=f.rev_per_conn;                             // __CURRENCY__ per active connection
     kpis('fin-kpis',[
       {l:'Revenue Billed', v:F.mwk(f.amt_billed||0), s:'Billed value in scope', icon:ICON.revenue, badgeLabel:'INFO'},
       {l:'Cash Collected', v:F.mwk(f.cash_collected||0), s:'Receipts in scope', icon:ICON.cash, badgeLabel:'INFO'},
@@ -2621,14 +2638,14 @@ async function loadFinance(){
       {l:'Operating Ratio', v:opRatio?Number(opRatio).toFixed(2):'—', s:(opRatio||0)<IWA.op_ratio?'Costs below revenue':'Cost pressure on revenue', cls:opCls, icon:ICON.chart, bm:`World Bank <${IWA.op_ratio}`, bmPct:bmPct(opRatio,IWA.op_ratio,false), bmOk:opRatio!=null&&opRatio>0&&opRatio<IWA.op_ratio},
       {l:'Cost Recovery', v:costRecovery!=null?`${costRecovery.toFixed(2)}×`:'—', s:(costRecovery||0)>=1.25?'Revenue comfortably covers opex':(costRecovery||0)>=1?'Revenue covers opex':'Below full cost recovery', cls:(costRecovery||0)>=1.25?'kc-up':(costRecovery||0)>=1?'kc-nt':'kc-dn', icon:ICON.revenue, badgeLabel:(costRecovery||0)>=1.25?'GOOD':(costRecovery||0)>=1?'WATCH':'HIGH'},
       {l:'Revenue / Connection', v:revPerConn?F.mwk(revPerConn):'—', s:'Billed value per active connection', icon:ICON.people, badgeLabel:'INFO'},
-      {l:'Realised Tariff', v:tariff?`MWK ${F.num(tariff)}/m³`:'—', s:'Average revenue per m³ billed', icon:ICON.drop, badgeLabel:'INFO'},
+      {l:'Realised Tariff', v:tariff?`__CURRENCY__ ${F.num(tariff)}/m³`:'—', s:'Average revenue per m³ billed', icon:ICON.drop, badgeLabel:'INFO'},
       {l:'Days Sales Outstanding', v:dso?Math.round(dso):'—', s:(dso||0)<=IWA.dso?'Healthy debtor cycle':'Debtor cycle stretched', cls:dsoCls, icon:ICON.clock, bm:`IBNET <${IWA.dso} days`, bmPct:bmPct(dso,IWA.dso,false), bmOk:dso!=null&&dso<=IWA.dso},
     ]);
     const lb=(t.labels||[]).map(m=>MONTHS_SHORT[m]||m);
     mkChart('ch-fin-trend',{type:'line',data:{labels:lb,datasets:[
       {label:'Billed',data:(t.billed||[]).map(v=>+(v/1e9).toFixed(2)),borderColor:'#1A8FD1',backgroundColor:'rgba(26,143,209,.08)',tension:.3,fill:true,borderWidth:2,pointRadius:2},
       {label:'Collected',data:(t.collected||[]).map(v=>+(v/1e9).toFixed(2)),borderColor:'#16a34a',tension:.3,fill:false,borderWidth:2,pointRadius:2},
-    ]},options:{...baseOpts(v=>'MWK '+v+'B'),plugins:legendOpts('top')}});
+    ]},options:{...baseOpts(v=>'__CURRENCY__ '+v+'B'),plugins:legendOpts('top')}});
     const zl=z.map(x=>x.zone);
     mkChart('ch-fin-collzone',{type:'bar',data:{labels:zl,datasets:[
       {label:'Collection %',data:z.map(x=>+(x.collection_rate||0).toFixed(1)),backgroundColor:z.map(x=>(x.collection_rate||0)>=IWA.coll_rate?'#16a34a':(x.collection_rate||0)>=80?'#d97706':'#dc2626'),borderRadius:4},
@@ -2662,7 +2679,7 @@ async function loadHra(){
     const tl=trend.map(m=>MONTHS_SHORT[m.month]||m.month);
     mkChart('ch-hra-trend',{type:'line',data:{labels:tl,datasets:[
       {label:'Headcount',data:trend.map(m=>(m.perm_staff||0)+(m.temp_staff||0)),yAxisID:'yN',borderColor:'#1A8FD1',backgroundColor:'rgba(26,143,209,.08)',tension:.3,fill:true,borderWidth:2,pointRadius:2},
-      {label:'Staff Cost (MWK)',data:trend.map(m=>m.staff_costs||0),yAxisID:'yC',borderColor:'#7c3aed',tension:.3,fill:false,borderWidth:2,pointRadius:2},
+      {label:'Staff Cost (__CURRENCY__)',data:trend.map(m=>m.staff_costs||0),yAxisID:'yC',borderColor:'#7c3aed',tension:.3,fill:false,borderWidth:2,pointRadius:2},
     ]},options:{responsive:true,maintainAspectRatio:false,animation:chartAnim,plugins:legendOpts('top'),scales:{
       x:{ticks:{color:LC,font:{size:10}},grid:{color:GC}},
       yN:{position:'left',ticks:{color:LC,font:{size:10}},grid:{color:GC},border:{display:false}},
@@ -2745,7 +2762,7 @@ async function loadOverview(){
         <div class="iwa-tile-icon">💧</div>
         <div class="iwa-tile-lbl">NRW Rate</div>
         <div class="iwa-tile-val">${sc_nrw.toFixed(1)}%</div>
-        <div class="iwa-tile-bm">SRWB &lt;${IWA.nrw}% · IWA &lt;${IWA.nrw_iwa}%</div>
+        <div class="iwa-tile-bm">__ORG_SHORT__ &lt;${IWA.nrw}% · IWA &lt;${IWA.nrw_iwa}%</div>
       </div>
       <div class="iwa-tile ${tileCls(sc_cr,{good:IWA.coll_rate,watch:80})}">
         <div class="iwa-tile-icon">💰</div>
@@ -2774,7 +2791,7 @@ async function loadOverview(){
 
     kpis('ov-essentials',[
       {l:'Production (m³)', v:F.m3(n.vol_produced||0), s:'Selected-scope production volume', icon:ICON.drop, badgeLabel:'INFO'},
-      {l:'NRW Rate', v:n.nrw_pct!=null?`${Number(n.nrw_pct).toFixed(1)}%`:'—', s:(n.nrw_pct||0)<=IWA.nrw?'Within corporate threshold':'Above corporate threshold', cls:(n.nrw_pct||0)<=IWA.nrw?'kc-up':(n.nrw_pct||0)<=IWA.nrw_warn?'kc-nt':'kc-dn', icon:ICON.nrw, badgeLabel:(n.nrw_pct||0)<=IWA.nrw?'GOOD':(n.nrw_pct||0)<=IWA.nrw_warn?'WATCH':'HIGH', bm:`SRWB <${IWA.nrw}% · IWA <${IWA.nrw_iwa}%`, bmPct:bmPct(n.nrw_pct,IWA.nrw,false), bmOk:n.nrw_pct!=null&&(n.nrw_pct<=IWA.nrw)},
+      {l:'NRW Rate', v:n.nrw_pct!=null?`${Number(n.nrw_pct).toFixed(1)}%`:'—', s:(n.nrw_pct||0)<=IWA.nrw?'Within corporate threshold':'Above corporate threshold', cls:(n.nrw_pct||0)<=IWA.nrw?'kc-up':(n.nrw_pct||0)<=IWA.nrw_warn?'kc-nt':'kc-dn', icon:ICON.nrw, badgeLabel:(n.nrw_pct||0)<=IWA.nrw?'GOOD':(n.nrw_pct||0)<=IWA.nrw_warn?'WATCH':'HIGH', bm:`__ORG_SHORT__ <${IWA.nrw}% · IWA <${IWA.nrw_iwa}%`, bmPct:bmPct(n.nrw_pct,IWA.nrw,false), bmOk:n.nrw_pct!=null&&(n.nrw_pct<=IWA.nrw)},
       {l:'Collection Rate', v:f.collection_rate!=null?`${Number(f.collection_rate).toFixed(1)}%`:'—', s:(f.collection_rate||0)>=IWA.coll_rate?'Collections are at benchmark':'Collections are below benchmark', cls:(f.collection_rate||0)>=IWA.coll_rate?'kc-up':(f.collection_rate||0)>=80?'kc-nt':'kc-dn', icon:ICON.cash, badgeLabel:(f.collection_rate||0)>=IWA.coll_rate?'GOOD':(f.collection_rate||0)>=80?'WATCH':'HIGH', bm:`IBNET >${IWA.coll_rate}%`, bmPct:bmPct(f.collection_rate,IWA.coll_rate,true), bmOk:f.collection_rate!=null&&(f.collection_rate>=IWA.coll_rate)},
       {l:'Active Customers', v:F.num(p.active_customers||0), s:'Latest active customer base in scope', icon:ICON.people, badgeLabel:'INFO'},
       {l:'Supply Hours / Day', v:p.supply_hours_avg!=null?Number(p.supply_hours_avg).toFixed(1):'—', s:(p.supply_hours_avg||0)>=20?'Continuity is relatively strong':'Continuity needs closer monitoring', cls:(p.supply_hours_avg||0)>=20?'kc-up':(p.supply_hours_avg||0)>=16?'kc-nt':'kc-dn', icon:ICON.clock, badgeLabel:(p.supply_hours_avg||0)>=20?'GOOD':(p.supply_hours_avg||0)>=16?'WATCH':'HIGH'},
@@ -2801,7 +2818,7 @@ async function loadOverview(){
     });
 
     const actions=[];
-    if((n.nrw_pct||0) > IWA.nrw) actions.push({title:'Tighten NRW follow-up', text:`NRW is ${Number(n.nrw_pct||0).toFixed(1)}%, above the SRWB threshold of ${IWA.nrw}%. Review high-loss zones first.`});
+    if((n.nrw_pct||0) > IWA.nrw) actions.push({title:'Tighten NRW follow-up', text:`NRW is ${Number(n.nrw_pct||0).toFixed(1)}%, above the __ORG_SHORT__ threshold of ${IWA.nrw}%. Review high-loss zones first.`});
     if((f.collection_rate||0) < IWA.coll_rate) actions.push({title:'Escalate collections focus', text:`Collection rate is ${Number(f.collection_rate||0).toFixed(1)}%, below the ${IWA.coll_rate}% benchmark.`});
     if((f.dso||0) > IWA.dso) actions.push({title:'Review debtor ageing', text:`Days sales outstanding are ${Math.round(Number(f.dso||0))} days, above the ${IWA.dso}-day reference.`});
     if((s.meter_read_rate||0) < IWA.meter_read) actions.push({title:'Inspect meter-read discipline', text:`Meter read rate is ${Number(s.meter_read_rate||0).toFixed(1)}%, below the ${IWA.meter_read}% expectation.`});
@@ -2875,21 +2892,21 @@ async function loadProduction(){
       {l:'Revenue Water',v:F.m3(k.revenue_water),s:'Billed consumption (m³)',icon:ICON.drop},
       {l:'NRW Volume',v:F.m3(k.nrw),s:'Physical + commercial losses',icon:ICON.nrw,cls:'kc-dn'},
       {l:'NRW Rate',v:F.pct(k.nrw_pct),
-       s:nOk?'Within SRWB 27% target':nWarn?'Above target — action needed':'Critical — exceeds 35%',
+       s:nOk?'Within __ORG_SHORT__ __NRW_TARGET__% target':nWarn?'Above target — action needed':'Critical — exceeds 35%',
        cls:nOk?'kc-up':nWarn?'kc-nt':'kc-dn',icon:ICON.gauge,
        badgeLabel:nOk?'GOOD':nWarn?'WATCH':'HIGH',
-       bm:'SRWB <'+IWA.nrw+'%  ·  IWA <'+IWA.nrw_iwa+'%  ·  Action >'+IWA.nrw_warn+'%',
+       bm:'__ORG_SHORT__ <'+IWA.nrw+'%  ·  IWA <'+IWA.nrw_iwa+'%  ·  Action >'+IWA.nrw_warn+'%',
        bmPct:bmPct(k.nrw_pct,IWA.nrw,false),bmOk:nOk},
       {l:'Specific Consumption',v:k.specific_consumption!=null?F.dec(k.specific_consumption)+' L/cap/day':'—',s:'IWA Op18 — litres per capita per day',icon:ICON.drop,badgeLabel:'IWA Op18'},
       {l:'Rev. Water / Connection',v:k.rev_water_per_conn!=null?F.dec(k.rev_water_per_conn)+' m³/conn/mo':'—',s:'Average billed volume per active connection per month',icon:ICON.gauge},
     ]);
     document.getElementById('pr-kpis').className='kpi-row kpi-g3';
     const dm=d.monthly.filter(m=>m.has_data),lb=dm.map(m=>MONTHS_SHORT[m.month]||m.month);
-    document.getElementById('pr-leg').innerHTML= DOMPurify.sanitize('<span class="legend-item"><span class="legend-sq" style="background:#1A8FD1"></span>Vol. Produced (M m³)</span><span class="legend-item"><span class="legend-sq" style="background:#d97706"></span>NRW %</span><span class="legend-item"><span class="legend-sq" style="background:#d97706;height:2px;border-top:2px dashed #d97706"></span>SRWB Target (27%)</span><span class="legend-item"><span class="legend-sq" style="background:#1A8FD1;height:2px;border-top:2px dotted #1A8FD1"></span>IWA Benchmark (20%)</span>');
+    document.getElementById('pr-leg').innerHTML= DOMPurify.sanitize('<span class="legend-item"><span class="legend-sq" style="background:#1A8FD1"></span>Vol. Produced (M m³)</span><span class="legend-item"><span class="legend-sq" style="background:#d97706"></span>NRW %</span><span class="legend-item"><span class="legend-sq" style="background:#d97706;height:2px;border-top:2px dashed #d97706"></span>__ORG_SHORT__ Target (__NRW_TARGET__%)</span><span class="legend-item"><span class="legend-sq" style="background:#1A8FD1;height:2px;border-top:2px dotted #1A8FD1"></span>IWA Benchmark (20%)</span>');
     mkChart('ch-pr-main',{type:'bar',data:{labels:lb,datasets:[
       {label:'Vol. Produced',data:dm.map(m=>+(m.vol_produced/1e6).toFixed(2)),backgroundColor:'rgba(26,143,209,.65)',borderRadius:3,yAxisID:'y'},
       {type:'line',label:'NRW %',data:dm.map(m=>m.pct_nrw||0),borderColor:'#d97706',tension:.3,pointRadius:3,yAxisID:'y1',borderWidth:2},
-      {type:'line',label:'SRWB Target (27%)',data:dm.map(()=>IWA.nrw),borderColor:'#d97706',borderDash:[6,4],borderWidth:2,pointRadius:0,yAxisID:'y1',fill:false},
+      {type:'line',label:'__ORG_SHORT__ Target (__NRW_TARGET__%)',data:dm.map(()=>IWA.nrw),borderColor:'#d97706',borderDash:[6,4],borderWidth:2,pointRadius:0,yAxisID:'y1',fill:false},
       {type:'line',label:'IWA Benchmark (20%)',data:dm.map(()=>IWA.nrw_iwa),borderColor:'#1A8FD1',borderDash:[3,3],borderWidth:1.5,pointRadius:0,yAxisID:'y1',fill:false},
     ]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:400},
       scales:{x:{ticks:{color:LC,font:{size:10},maxRotation:0},grid:{color:GC,drawBorder:false}},
@@ -2899,7 +2916,7 @@ async function loadProduction(){
     const bz=d.by_zone;
     mkChart('ch-pr-zone',{type:'bar',data:{labels:bz.map(z=>z.zone),datasets:[
       {label:'NRW %',data:bz.map(z=>z.nrw_pct),backgroundColor:bz.map(z=>z.nrw_pct>IWA.nrw_warn?'rgba(220,38,38,.7)':z.nrw_pct>IWA.nrw?'rgba(217,119,6,.7)':'rgba(22,163,74,.7)'),borderRadius:4},
-      {type:'line',label:'SRWB Target (27%)',data:bz.map(()=>IWA.nrw),borderColor:'#d97706',borderDash:[5,3],borderWidth:2,pointRadius:0},
+      {type:'line',label:'__ORG_SHORT__ Target (__NRW_TARGET__%)',data:bz.map(()=>IWA.nrw),borderColor:'#d97706',borderDash:[5,3],borderWidth:2,pointRadius:0},
       {type:'line',label:'IWA Benchmark (20%)',data:bz.map(()=>IWA.nrw_iwa),borderColor:'#1A8FD1',borderDash:[3,3],borderWidth:1.5,pointRadius:0},
     ]},options:{...baseOpts(v=>v+'%'),plugins:{...legendOpts()}}});
     mkChart('ch-pr-vol',{type:'bar',data:{labels:bz.map(z=>z.zone),datasets:[{label:'Vol. Produced (M m³)',data:bz.map(z=>+(z.vol_produced/1e6).toFixed(2)),backgroundColor:bz.map(z=>z.color||'#64748b'),borderRadius:4}]},options:{...baseOptsH(v=>v+'M'),plugins:{...legendOpts()}}});
@@ -2916,20 +2933,20 @@ async function loadWtEi(){
     const eiOk=eiValue>0 ? eiValue<IWA.energy : null;
     kpis('wt-kpis',[
       {l:'Chemical Cost',v:F.mwk(k.chem_cost),s:'Total treatment chemicals',icon:ICON.chem},
-      {l:'Chemical Cost / m3',v:'MWK '+F.dec(k.chem_per_m3),s:'Unit chemical cost',icon:ICON.chem},
+      {l:'Chemical Cost / m3',v:'__CURRENCY__ '+F.dec(k.chem_per_m3),s:'Unit chemical cost',icon:ICON.chem},
       {l:'Power Consumed',v:F.num(k.power_kwh)+' kWh',s:'Total electricity consumed',icon:ICON.bolt},
       {l:'Energy Intensity',v:F.dec(eiValue)+' kWh/m3',s:eiOk===true?'Within target':'Above target',cls:eiOk===true?'kc-up':eiOk===false?'kc-nt':'',icon:ICON.gauge,badgeLabel:eiOk===true?'GOOD':eiOk===false?'WATCH':null,bm:'IWA target <'+IWA.energy+' kWh/m3',bmPct:eiValue?bmPct(eiValue,IWA.energy,false):null,bmOk:eiOk},
       {l:'Chlorine Intensity',v:F.dec(k.chlorine_kg_per_m3)+' kg/m3',s:'Dose per cubic metre produced',icon:ICON.chem},
       {l:'Alum Intensity',v:F.dec(k.alum_kg_per_m3)+' kg/m3',s:'Coagulant dose per cubic metre',icon:ICON.chem},
       {l:'KMnO4 Intensity',v:F.dec(k.kmno4_per_m3)+' kg/m3',s:'Permanganate dose per cubic metre',icon:ICON.chem},
-      {l:'Power Cost / m³',v:'MWK '+F.dec(k.power_per_m3||k.power_cost_per_m3),s:'Unit electricity cost',icon:ICON.bolt},
-      {l:'Treatment Cost / m³',v:'MWK '+F.dec((k.chem_per_m3||0)+(k.power_per_m3||0)),s:'Combined chemical + power cost per m³',icon:ICON.gauge,badgeLabel:'IWA Op39'},
+      {l:'Power Cost / m³',v:'__CURRENCY__ '+F.dec(k.power_per_m3||k.power_cost_per_m3),s:'Unit electricity cost',icon:ICON.bolt},
+      {l:'Treatment Cost / m³',v:'__CURRENCY__ '+F.dec((k.chem_per_m3||0)+(k.power_per_m3||0)),s:'Combined chemical + power cost per m³',icon:ICON.gauge,badgeLabel:'IWA Op39'},
       {l:'Supply Hours / Day',v:F.dec(k.supply_hours_avg)+' h',s:'Average daily supply across schemes',icon:ICON.clock},
       {l:'Power Failure Hours',v:F.num(k.power_fail_hours)+' h',s:'Outage impact YTD',icon:ICON.clock,cls:k.power_fail_hours>100?'kc-dn':''},
     ]);
     document.getElementById('wt-kpis').className='kpi-row kpi-g4';
     const dm=d.monthly.filter(m=>m.has_data),lb=dm.map(m=>MONTHS_SHORT[m.month]||m.month);
-    mkChart('ch-wt-chem',{type:'bar',data:{labels:lb,datasets:[{label:'Chemical Cost (MWK M)',data:dm.map(m=>+(m.chem_cost/1e6).toFixed(2)),backgroundColor:'rgba(124,58,237,.65)',borderRadius:3}]},options:{...baseOpts(v=>v+'M'),plugins:{...legendOpts()}}});
+    mkChart('ch-wt-chem',{type:'bar',data:{labels:lb,datasets:[{label:'Chemical Cost (__CURRENCY__ M)',data:dm.map(m=>+(m.chem_cost/1e6).toFixed(2)),backgroundColor:'rgba(124,58,237,.65)',borderRadius:3}]},options:{...baseOpts(v=>v+'M'),plugins:{...legendOpts()}}});
     mkChart('ch-wt-power',{type:'bar',data:{labels:lb,datasets:[
       {label:'Power (K kWh)',data:dm.map(m=>+(m.power_kwh/1000).toFixed(1)),backgroundColor:'rgba(217,119,6,.65)',borderRadius:3,yAxisID:'y'},
       {type:'line',label:'kWh / m3',data:dm.map(m=>+(m.power_kwh_per_m3||0).toFixed(3)),borderColor:'#0f766e',tension:.3,pointRadius:3,borderWidth:2,yAxisID:'y1'}
@@ -3240,7 +3257,7 @@ function _spFmt(v,unit){
   if(v==null) return '—';
   if(unit==='m³/year') return F.num(v);
   if(unit==='%') return (Math.round(v*10)/10)+'%';
-  if(unit==='MK bn') return (Math.round(v*100)/100)+' bn';
+  if(unit==='__CUR_SYM__ bn') return (Math.round(v*100)/100)+' bn';
   if(unit==='ratio') return (Math.round(v*100)/100)+':1';
   if(unit==='Days'||unit==='Hours'||unit==='No.'||unit==='No./year') return F.num(Math.round(v*10)/10);
   return F.num(v);
@@ -3332,7 +3349,7 @@ async function loadNrw(){
       {l:'Water Sold',v:F.m3(k.water_sold),s:'Revenue (billed) water',icon:ICON.revenue,cls:'kc-up'},
       {l:'Non-Revenue Water',v:F.m3(k.nrw_volume),s:'Volume lost / unbilled',icon:ICON.nrw,cls:'kc-dn'},
       {l:'NRW Rate',v:F.pct(k.pct_nrw),s:ok?'Within 25% target':`${k.gap_to_target>0?'+':''}${k.gap_to_target}pp vs 25% target`,cls:ok?'kc-up':'kc-dn',icon:ICON.gauge,badgeLabel:ok?'GOOD':'WATCH'},
-      {l:'Economic NRW',v:k.economic_nrw!=null?F.mwk(k.economic_nrw):'—',s:k.avg_tariff_per_m3?`MWK ${F.dec(k.avg_tariff_per_m3)}/m³ avg tariff`:'Revenue value of water losses',icon:ICON.cash,cls:'kc-dn'},
+      {l:'Economic NRW',v:k.economic_nrw!=null?F.mwk(k.economic_nrw):'—',s:k.avg_tariff_per_m3?`__CURRENCY__ ${F.dec(k.avg_tariff_per_m3)}/m³ avg tariff`:'Revenue value of water losses',icon:ICON.cash,cls:'kc-dn'},
     ]);
     document.getElementById('nrw-kpis').className='kpi-row kpi-g3';
     const {dm,lb}=_spMonths(d);
@@ -3679,10 +3696,10 @@ async function loadBilled(){
     document.getElementById('bi-kpis').className='kpi-row kpi-g4';
     const dm=d.monthly.filter(m=>m.has_data),lb=dm.map(m=>MONTHS_SHORT[m.month]||m.month);
     mkChart('ch-bi-main',{type:'bar',data:{labels:lb,datasets:[
-      {label:'Postpaid (MWK M)',data:dm.map(m=>+(m.amt_billed_pp/1e6).toFixed(1)),backgroundColor:'rgba(26,143,209,.7)',borderRadius:3,stack:'s'},
-      {label:'Prepaid (MWK M)',data:dm.map(m=>+(m.amt_billed_prepaid/1e6).toFixed(1)),backgroundColor:'rgba(124,58,237,.7)',borderRadius:3,stack:'s'},
+      {label:'Postpaid (__CURRENCY__ M)',data:dm.map(m=>+(m.amt_billed_pp/1e6).toFixed(1)),backgroundColor:'rgba(26,143,209,.7)',borderRadius:3,stack:'s'},
+      {label:'Prepaid (__CURRENCY__ M)',data:dm.map(m=>+(m.amt_billed_prepaid/1e6).toFixed(1)),backgroundColor:'rgba(124,58,237,.7)',borderRadius:3,stack:'s'},
     ]},options:{...baseOpts(v=>v+'M'),plugins:{...legendOpts()}}});
-    mkChart('ch-bi-zone',{type:'bar',data:{labels:d.by_zone.map(z=>z.zone),datasets:[{label:'Total Billed (MWK M)',data:d.by_zone.map(z=>+(z.amt_billed/1e6).toFixed(1)),backgroundColor:d.by_zone.map(z=>z.color||'#64748b'),borderRadius:4}]},options:{...baseOptsH(v=>v+'M'),plugins:{...legendOpts()}}});
+    mkChart('ch-bi-zone',{type:'bar',data:{labels:d.by_zone.map(z=>z.zone),datasets:[{label:'Total Billed (__CURRENCY__ M)',data:d.by_zone.map(z=>+(z.amt_billed/1e6).toFixed(1)),backgroundColor:d.by_zone.map(z=>z.color||'#64748b'),borderRadius:4}]},options:{...baseOptsH(v=>v+'M'),plugins:{...legendOpts()}}});
     mkChart('ch-bi-split',{type:'doughnut',data:{labels:['Postpaid','Prepaid'],datasets:[{data:[k.amt_billed_pp,k.amt_billed_prepaid],backgroundColor:['#1A8FD1','#7c3aed'],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,cutout:'55%',...tooltipPlugin,plugins:{...tooltipPlugin.plugins,legend:{display:true,position:'right',labels:{font:{size:11},color:LC,padding:10}}}}});
     renderTable('tbl-billed','BILLED AMOUNTS REPORT',ROWS.billed,d.monthly,'billed');
 mountExportBar('billed');
@@ -3712,14 +3729,14 @@ async function loadCollections(){
     const collectionRates=dm.map(m=>m.amt_billed>0?+((m.cash_collected/m.amt_billed)*100).toFixed(1):0);
     const collectionAxisMax=Math.max(110, Math.ceil((Math.max(...collectionRates, IWA.coll_rate)+5)/5)*5);
     mkChart('ch-cl-main',{type:'bar',data:{labels:lb,datasets:[
-      {label:'Billed (MWK B)',data:dm.map(m=>+(m.amt_billed/1e9).toFixed(2)),backgroundColor:'rgba(26,143,209,.62)',borderRadius:3,yAxisID:'y'},
-      {label:'Collected (MWK B)',data:dm.map(m=>+(m.cash_collected/1e9).toFixed(2)),backgroundColor:'rgba(22,163,74,.72)',borderRadius:3,yAxisID:'y'},
+      {label:'Billed (__CURRENCY__ B)',data:dm.map(m=>+(m.amt_billed/1e9).toFixed(2)),backgroundColor:'rgba(26,143,209,.62)',borderRadius:3,yAxisID:'y'},
+      {label:'Collected (__CURRENCY__ B)',data:dm.map(m=>+(m.cash_collected/1e9).toFixed(2)),backgroundColor:'rgba(22,163,74,.72)',borderRadius:3,yAxisID:'y'},
       {type:'line',label:'Collection Rate %',data:collectionRates,borderColor:'#0f766e',backgroundColor:'transparent',tension:.3,pointRadius:3,pointHoverRadius:5,borderWidth:2,yAxisID:'y1',fill:false,clip:false},
       {type:'line',label:'IBNET '+IWA.coll_rate+'% benchmark',data:dm.map(()=>IWA.coll_rate),borderColor:'#dc2626',borderDash:[5,3],borderWidth:1.5,pointRadius:0,yAxisID:'y1',fill:false},
     ]},options:{responsive:true,maintainAspectRatio:false,animation:chartAnim,
       scales:{
         x:{ticks:{color:LC,font:{size:10,family:'Inter,system-ui,sans-serif'},maxRotation:0,autoSkip:false},grid:{color:GC,drawBorder:false}},
-        y:{ticks:{color:LC,font:{size:10,family:'Inter,system-ui,sans-serif'},callback:v=>'MK '+Number(v).toFixed(1)+'B'},grid:{color:GC},border:{display:false},grace:'12%'},
+        y:{ticks:{color:LC,font:{size:10,family:'Inter,system-ui,sans-serif'},callback:v=>'__CUR_SYM__ '+Number(v).toFixed(1)+'B'},grid:{color:GC},border:{display:false},grace:'12%'},
         y1:{position:'right',min:0,max:collectionAxisMax,ticks:{color:'#0f766e',font:{size:10,family:'Inter,system-ui,sans-serif'},callback:v=>v+'%'},grid:{display:false},border:{display:false}},
       },
       ...tooltipPlugin,plugins:{...legendOptsCompact()}}});
@@ -3748,10 +3765,10 @@ async function loadCharges(){
     document.getElementById('ch-kpis').className='kpi-row kpi-g3';
     const dm=d.monthly.filter(m=>m.has_data),lb=dm.map(m=>MONTHS_SHORT[m.month]||m.month);
     mkChart('ch-ch-main',{type:'bar',data:{labels:lb,datasets:[
-      {label:'Service Charge (MWK M)',data:dm.map(m=>+(m.service_charge/1e6).toFixed(2)),backgroundColor:'rgba(22,163,74,.7)',borderRadius:3,stack:'s'},
-      {label:'Meter Rental (MWK M)',data:dm.map(m=>+(m.meter_rental/1e6).toFixed(2)),backgroundColor:'rgba(26,143,209,.7)',borderRadius:3,stack:'s'},
+      {label:'Service Charge (__CURRENCY__ M)',data:dm.map(m=>+(m.service_charge/1e6).toFixed(2)),backgroundColor:'rgba(22,163,74,.7)',borderRadius:3,stack:'s'},
+      {label:'Meter Rental (__CURRENCY__ M)',data:dm.map(m=>+(m.meter_rental/1e6).toFixed(2)),backgroundColor:'rgba(26,143,209,.7)',borderRadius:3,stack:'s'},
     ]},options:{...baseOpts(v=>v+'M'),plugins:{...legendOpts()}}});
-    mkChart('ch-ch-zone',{type:'bar',data:{labels:d.by_zone.map(z=>z.zone),datasets:[{label:'Total Sales (MWK M)',data:d.by_zone.map(z=>+(z.total_sales/1e6).toFixed(1)),backgroundColor:d.by_zone.map(z=>z.color||'#64748b'),borderRadius:4}]},options:{...baseOptsH(v=>v+'M'),plugins:{...legendOpts()}}});
+    mkChart('ch-ch-zone',{type:'bar',data:{labels:d.by_zone.map(z=>z.zone),datasets:[{label:'Total Sales (__CURRENCY__ M)',data:d.by_zone.map(z=>+(z.total_sales/1e6).toFixed(1)),backgroundColor:d.by_zone.map(z=>z.color||'#64748b'),borderRadius:4}]},options:{...baseOptsH(v=>v+'M'),plugins:{...legendOpts()}}});
     mkChart('ch-ch-split',{type:'doughnut',data:{labels:['Service Charge','Meter Rental'],datasets:[{data:[k.service_charge,k.meter_rental],backgroundColor:['#16a34a','#1A8FD1'],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,cutout:'55%',...tooltipPlugin,plugins:{...tooltipPlugin.plugins,legend:{display:true,position:'right',labels:{font:{size:11},color:LC,padding:10}}}}});
     renderTable('tbl-charges','SERVICE CHARGES & METER RENTAL REPORT',ROWS.charges,d.monthly,'charges');
 mountExportBar('charges');
@@ -3779,7 +3796,7 @@ async function loadExpenses(){
     document.getElementById('ex-kpis').className='kpi-row kpi-g4';
     const sp=d.cost_split.filter(s=>s.value>0);
     mkChart('ch-ex-split',{type:'doughnut',data:{labels:sp.map(s=>s.label),datasets:[{data:sp.map(s=>+(s.value/1e6).toFixed(1)),backgroundColor:sp.map(s=>s.color),borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',...tooltipPlugin,plugins:{...tooltipPlugin.plugins,legend:{display:true,position:'right',labels:{font:{size:11},color:LC,padding:8}}}}});
-    mkChart('ch-ex-zone',{type:'bar',data:{labels:d.by_zone.map(z=>z.zone),datasets:[{label:'Total OPEX (MWK M)',data:d.by_zone.map(z=>+(z.op_cost/1e6).toFixed(1)),backgroundColor:d.by_zone.map(z=>z.color||'#64748b'),borderRadius:4}]},options:{...baseOptsH(v=>v+'M'),plugins:{...legendOpts()}}});
+    mkChart('ch-ex-zone',{type:'bar',data:{labels:d.by_zone.map(z=>z.zone),datasets:[{label:'Total OPEX (__CURRENCY__ M)',data:d.by_zone.map(z=>+(z.op_cost/1e6).toFixed(1)),backgroundColor:d.by_zone.map(z=>z.color||'#64748b'),borderRadius:4}]},options:{...baseOptsH(v=>v+'M'),plugins:{...legendOpts()}}});
     renderTable('tbl-expenses','OPERATING EXPENSES REPORT',ROWS.expenses,d.monthly,'expenses');
     mountExportBar('expenses');
   }catch(e){errMsg('ex-kpis','Expenses failed');}
@@ -3863,7 +3880,7 @@ async function loadSegmentRevenue(){
     document.getElementById('sr-kpis').className='kpi-row kpi-g3';
     mkChart('ch-sr-main',{type:'bar',data:{labels:lb,datasets:classes.map(([key,label,color])=>({label,data:dm.map(m=>+(billedByClass(m,key)/1e6).toFixed(2)),backgroundColor:color,borderRadius:3,stack:'s'}))},options:{...baseOpts(v=>v+'M'),plugins:{...legendOpts()}}});
     mkChart('ch-sr-cash',{type:'line',data:{labels:lb,datasets:classes.map(([key,label,color])=>({label,data:dm.map(m=>+(cashByClass(m,key)/1e6).toFixed(2)),borderColor:color,backgroundColor:'transparent',tension:.3,pointRadius:3,borderWidth:2}))},options:{...baseOpts(v=>v+'M'),plugins:{...legendOpts()}}});
-    mkChart('ch-sr-zone',{type:'bar',data:{labels:d.by_zone.map(z=>z.zone),datasets:[{label:'Billed (MWK M)',data:d.by_zone.map(z=>+(z.amt_billed/1e6).toFixed(1)),backgroundColor:d.by_zone.map(z=>z.color||'#64748b'),borderRadius:4},{label:'Collected (MWK M)',data:d.by_zone.map(z=>+(z.cash_collected/1e6).toFixed(1)),backgroundColor:'rgba(22,163,74,.7)',borderRadius:4}]},options:{...baseOptsH(v=>v+'M'),plugins:{...legendOpts()}}});
+    mkChart('ch-sr-zone',{type:'bar',data:{labels:d.by_zone.map(z=>z.zone),datasets:[{label:'Billed (__CURRENCY__ M)',data:d.by_zone.map(z=>+(z.amt_billed/1e6).toFixed(1)),backgroundColor:d.by_zone.map(z=>z.color||'#64748b'),borderRadius:4},{label:'Collected (__CURRENCY__ M)',data:d.by_zone.map(z=>+(z.cash_collected/1e6).toFixed(1)),backgroundColor:'rgba(22,163,74,.7)',borderRadius:4}]},options:{...baseOptsH(v=>v+'M'),plugins:{...legendOpts()}}});
     renderTable('tbl-segment-revenue','CUSTOMER SEGMENT REVENUE REPORT',ROWS.segment_revenue,d.monthly,'segment-revenue');
     mountExportBar('segment-revenue');
   }catch(e){errMsg('sr-kpis','Customer Segment Revenue failed');}
@@ -3883,8 +3900,8 @@ async function loadWorkforce(){
       {l:'Fuel Cost',v:F.mwk(k.fuel_cost),s:'Transport and generator fuel spend',icon:ICON.bolt},
       {l:'Distance Covered',v:F.num(k.distances_km)+' km',s:'Fleet movement captured in the source return',icon:ICON.pipe},
       {l:'Fuel Efficiency',v:fuelEff!=null?F.dec(fuelEff)+' km/L':'—',s:'Average fleet fuel economy',icon:ICON.gauge},
-      {l:'OpEx / m³ Produced',v:'MWK '+F.dec(k.op_cost_per_m3_produced),s:'Operating cost per cubic metre produced',icon:ICON.chart},
-      {l:'OpEx / m³ Billed',v:'MWK '+F.dec(k.op_cost_per_m3_billed),s:'Operating cost per cubic metre billed',icon:ICON.chart},
+      {l:'OpEx / m³ Produced',v:'__CURRENCY__ '+F.dec(k.op_cost_per_m3_produced),s:'Operating cost per cubic metre produced',icon:ICON.chart},
+      {l:'OpEx / m³ Billed',v:'__CURRENCY__ '+F.dec(k.op_cost_per_m3_billed),s:'Operating cost per cubic metre billed',icon:ICON.chart},
       {l:'OpEx / Revenue',v:F.pct(k.op_cost_per_sales*100),s:'Operating cost as % of sales revenue',icon:ICON.chart},
     ]);
     document.getElementById('wf-kpis').className='kpi-row kpi-g3';
@@ -3906,7 +3923,7 @@ async function loadWorkforce(){
     document.getElementById('wf-productivity-kpis').className='kpi-row kpi-g4';
     mkChart('ch-wf-main',{type:'line',data:{labels:lb,datasets:[
       {label:'Fuel Used (000 L)',data:dm.map(m=>+((m.fuel_used_litres||0)/1000).toFixed(2)),borderColor:'#dc2626',tension:.3,pointRadius:3,borderWidth:2,yAxisID:'y'},
-      {label:'Fuel Cost (MWK M)',data:dm.map(m=>+((m.fuel_cost||0)/1e6).toFixed(2)),borderColor:'#1A8FD1',tension:.3,pointRadius:3,borderWidth:2,yAxisID:'y1'}
+      {label:'Fuel Cost (__CURRENCY__ M)',data:dm.map(m=>+((m.fuel_cost||0)/1e6).toFixed(2)),borderColor:'#1A8FD1',tension:.3,pointRadius:3,borderWidth:2,yAxisID:'y1'}
     ]},options:{responsive:true,maintainAspectRatio:false,animation:chartAnim,scales:{x:{ticks:{color:LC,font:{size:10}},grid:{color:GC,drawBorder:false}},y:{ticks:{color:'#dc2626',font:{size:10},callback:v=>v+'k'},grid:{color:GC},border:{display:false}},y1:{position:'right',ticks:{color:'#1A8FD1',font:{size:10},callback:v=>v+'M'},grid:{display:false},border:{display:false}}},...tooltipPlugin,plugins:{...legendOpts()}}});
     mkChart('ch-wf-zone',{type:'bar',data:{labels:d.by_zone.map(z=>z.zone),datasets:[
       {label:'Distance (km)',data:d.by_zone.map(z=>+(z.distances_km||0).toFixed(0)),backgroundColor:d.by_zone.map(z=>z.color||'#64748b'),borderRadius:4},
@@ -4901,7 +4918,7 @@ async function admFyRefresh(){
       <thead><tr style="border-bottom:2px solid var(--border)">
         <th style="text-align:left;padding:.5rem .75rem">FY</th>
         <th style="text-align:left;padding:.5rem .75rem">Status</th>
-        <th style="text-align:left;padding:.5rem .75rem">Tariff (MK/m³)</th>
+        <th style="text-align:left;padding:.5rem .75rem">Tariff (__CUR_SYM__/m³)</th>
         <th style="text-align:center;padding:.5rem .75rem">Has Data</th>
         <th style="text-align:center;padding:.5rem .75rem">Budget Lines</th>
         <th style="text-align:center;padding:.5rem .75rem">Zone Shares</th>
@@ -4919,7 +4936,7 @@ async function admFyRefresh(){
       html+=`<tr style="border-bottom:1px solid var(--border);${rowBg}">
         <td style="padding:.5rem .75rem;font-weight:600">${fy.label}</td>
         <td style="padding:.5rem .75rem">${badge(fy.status)}</td>
-        <td style="padding:.5rem .75rem">${fy.tariff_per_m3!=null?'MK '+fy.tariff_per_m3.toLocaleString():'<span style="color:var(--text-muted)">TBD</span>'}</td>
+        <td style="padding:.5rem .75rem">${fy.tariff_per_m3!=null?'__CUR_SYM__ '+fy.tariff_per_m3.toLocaleString():'<span style="color:var(--text-muted)">TBD</span>'}</td>
         <td style="text-align:center;padding:.5rem .75rem">${tick(fy.has_data)}</td>
         <td style="text-align:center;padding:.5rem .75rem">${fy.has_budget?`<span style="color:#059669">${fy.budget_line_count}</span>`:tick(false)}</td>
         <td style="text-align:center;padding:.5rem .75rem">${tick(fy.has_zone_shares)}</td>
@@ -4955,7 +4972,7 @@ async function admDoCopyBudget(){
     );
     const data = await resp.json();
     if(!resp.ok) throw new Error(data.detail||resp.statusText);
-    const infl = pct>0?` (+${pct}% inflation on MWK values)`:'';
+    const infl = pct>0?` (+${pct}% inflation on __CURRENCY__ values)`:'';
     res.innerHTML= DOMPurify.sanitize(`<span style="color:#059669">✓ Copied from FY${src-1}/${String(src).slice(-2)} → FY${dst-1}/${String(dst).slice(-2)}${infl}: `+
       `${data.copied.budget_lines} budget lines, ${data.copied.zone_shares} zone shares, ${data.copied.spc_limits} SPC limits`+
       `${data.skipped_budget_lines?' ('+data.skipped_budget_lines+' skipped — already existed)':''}</span>`);
@@ -5249,7 +5266,7 @@ async function admLoadSystem(){
     try{
       const org = await fetchJsonSafe(`${API}/api/admin/org-profile`,{token,fallback:null,label:'/api/admin/org-profile'});
       if(org){
-        if(orgName)      orgName.textContent      = org.short_name || org.org_name || 'SRWB';
+        if(orgName)      orgName.textContent      = org.short_name || org.org_name || '__ORG_SHORT__';
         if(orgCountry)   orgCountry.textContent   = org.country || '—';
         if(orgCurrency)  orgCurrency.textContent  = org.reporting_currency || '—';
         if(orgRegulator) orgRegulator.textContent = org.regulator || '—';
@@ -5694,19 +5711,16 @@ document.addEventListener('click', e=>{
 // BUDGET vs ACTUALS — FY2025/26
 // ═══════════════════════════════════════════════════════════════════════════
 
-const ZONE_CLR = {
-  Zomba:'#7c3aed', Mangochi:'#0d9488',
-  Liwonde:'#1A8FD1', Mulanje:'#16a34a', Ngabu:'#d97706',
-};
+const ZONE_CLR = __ZONE_COLORS__;  // tenant hierarchy.zones
 const fmt1 = v => Number.isFinite(Number(v)) ? Number(v).toFixed(1) : '—';
 const fmtPct1 = v => `${fmt1(v)}%`;
 const fmtCompactMwk = v => {
   const n = Number(v) || 0;
   const a = Math.abs(n);
-  if (a >= 1e9) return `MK ${(n/1e9).toFixed(1)}B`;
-  if (a >= 1e6) return `MK ${(n/1e6).toFixed(1)}M`;
-  if (a >= 1e3) return `MK ${(n/1e3).toFixed(1)}K`;
-  return `MK ${n.toFixed(1)}`;
+  if (a >= 1e9) return `__CUR_SYM__ ${(n/1e9).toFixed(1)}B`;
+  if (a >= 1e6) return `__CUR_SYM__ ${(n/1e6).toFixed(1)}M`;
+  if (a >= 1e3) return `__CUR_SYM__ ${(n/1e3).toFixed(1)}K`;
+  return `__CUR_SYM__ ${n.toFixed(1)}`;
 };
 
 async function loadBudget() {
@@ -5818,7 +5832,7 @@ function _bgtApplyPlainLanguage(d) {
 
   setText('.pg-sub', 'A plain-language view of budget progress, the main gaps, and how each zone is performing.');
   setText('.bgt-framework-title', 'How to read this page');
-  setText('.bgt-framework-copy', `This page compares results with the approved board budget dated 22 Feb 2025. ${scopeNote} Costs cover operating-site data in the database, not head-office overheads, depreciation, or finance costs. Revenue uses a fixed tariff of MK 1,450 per m3. The budget score is Actual / Budget; above 1.0 means ahead of budget.`);
+  setText('.bgt-framework-copy', `This page compares results with the approved board budget dated 22 Feb 2025. ${scopeNote} Costs cover operating-site data in the database, not head-office overheads, depreciation, or finance costs. Revenue uses the fiscal-year tariff per m³ (Admin → Fiscal Years). The budget score is Actual / Budget; above 1.0 means ahead of budget.`);
 
   const chips = document.querySelectorAll('.bgt-chip-row .bgt-chip');
   if (chips[0]) chips[0].textContent = 'Approved budget reference | 22 Feb 2025';
@@ -5834,7 +5848,7 @@ function _bgtApplyPlainLanguage(d) {
   if (exTitles[7]) exTitles[7].textContent = 'Reference performance indicators';
 
   const exSubs = document.querySelectorAll('.ex-hdr .ex-sub');
-  if (exSubs[0]) exSubs[0].textContent = 'Revenue compared with budget using a fixed tariff of MK 1,450 per m3.';
+  if (exSubs[0]) exSubs[0].textContent = 'Revenue compared with budget using the fiscal-year tariff per m³.';
   if (exSubs[1]) exSubs[1].textContent = 'Key operating measures: water produced, water loss, new connections, and hours of supply.';
   if (exSubs[2]) exSubs[2].textContent = 'Shows whether water-loss levels are staying within the recent normal range or moving into warning levels.';
   if (exSubs[3]) exSubs[3].textContent = 'Chemical and electricity costs compared with budget for the operating sites captured in the database.';
@@ -5880,10 +5894,10 @@ function _bgtApplyPlainLanguage(d) {
 
   const source = document.querySelector('.bgt-source');
   if (source) {
-    const schemeText = hasSchemeScope ? `${scope.schemes.length} selected scheme${scope.schemes.length !== 1 ? 's' : ''}` : '33 schemes';
+    const schemeText = hasSchemeScope ? `${scope.schemes.length} selected scheme${scope.schemes.length !== 1 ? 's' : ''}` : 'all schemes';
     source.innerHTML = DOMPurify.sanitize(`<strong style="color:var(--ds-text-primary)">Data and reference points:</strong>
-        Budget - <em>SRWB Draft Revenue &amp; Capital Expenditure Budget FY2025/26</em>, MoF, 22 Feb 2025.
-        Actuals - operational DB (${schemeText}, ${meta.period || 'April 2025 - February 2026'}).
+        Budget - approved budget lines for the selected fiscal year.
+        Actuals - operational DB (${schemeText}${meta.period ? ', ' + meta.period : ''}).
         External reference points from recognised water-sector and financial reporting guidance were used where relevant.
         &nbsp;&nbsp);
         <span style="color:var(--ds-green)">Favourable</span> &nbsp;
@@ -5893,8 +5907,8 @@ function _bgtApplyPlainLanguage(d) {
 }
 function _bgtHeadline(d) {
   const h = d.headline, ek = d.efficiency_kpis;
-  const mkB  = v => (v >= 0 ? '+' : '') + 'MK ' + (Math.abs(v)/1e9).toFixed(2) + 'B';
-  const mkM  = v => (v >= 0 ? '+' : '') + 'MK ' + (Math.abs(v)/1e6).toFixed(0) + 'M';
+  const mkB  = v => (v >= 0 ? '+' : '') + '__CUR_SYM__ ' + (Math.abs(v)/1e9).toFixed(2) + 'B';
+  const mkM  = v => (v >= 0 ? '+' : '') + '__CUR_SYM__ ' + (Math.abs(v)/1e6).toFixed(0) + 'M';
   const row=document.getElementById('bgt-headline'); if(row) row.className='kpi-row kpi-g4';
   kpis('bgt-headline', [
     { l:'Revenue gap vs budget (YTD)',
@@ -5905,10 +5919,10 @@ function _bgtHeadline(d) {
       bm: `${Math.round(ek.bpi_revenue*100)}% of the water revenue budget achieved` },
     { l:'Water loss vs target',
       v: (h.nrw_pp_variance >= 0 ? '+' : '') + h.nrw_pp_variance.toFixed(1) + ' pp',
-      s: `Actual ${(27 + h.nrw_pp_variance).toFixed(1)}% vs 27% target`,
+      s: `Actual ${(IWA.nrw + h.nrw_pp_variance).toFixed(1)}% vs __NRW_TARGET__% target`,
       cls: h.nrw_pp_variance > 0 ? 'kc-dn' : 'kc-up', icon: ICON.gauge,
       badgeLabel: h.nrw_pp_variance > 0 ? 'ADV' : 'FAV',
-      bm: `Estimated cost of water loss: MK ${(h.nrw_financial_cost/1e9).toFixed(2)}B` },
+      bm: `Estimated cost of water loss: __CUR_SYM__ ${(h.nrw_financial_cost/1e9).toFixed(2)}B` },
     { l:'Connection gap (YTD)',
       v: Math.round(h.conn_variance).toLocaleString(),
       s: h.conn_variance < 0 ? `${Math.abs(Math.round(h.conn_variance))} below YTD target` : 'Ahead of target',
@@ -5921,7 +5935,7 @@ function _bgtHeadline(d) {
       s: h.chem_overrun_mk > 0 ? 'Above full-year budget with 1 month remaining' : 'Under budget',
       cls: h.chem_overrun_mk > 0 ? 'kc-dn' : 'kc-up', icon: ICON.chart,
       badgeLabel: h.chem_overrun_mk > 0 ? 'OVERRUN' : 'OK',
-      bm: 'IWA Op34 · Annual budget: MK 1.057B' },
+      bm: 'IWA Op34 · vs annual chemicals budget' },
   ]);
 }
 
@@ -5941,7 +5955,7 @@ function _bgtExecSummary(d){
   const statusTone = Number(spc.months_above_2sigma||0) > 0 ? 'watch' : Number(h.nrw_pp_variance||0) > 0 ? 'high' : 'good';
   const items = [
     {k:'Revenue gap', v:fmtCompactMwk(h.revenue_variance_mk||0), tone:(h.revenue_variance_mk||0)>=0?'good':'high', n:`Revenue is currently at ${ek.bpi_revenue||'—'} times budget.`},
-    {k:'Water loss level', v:`${fmt1(27 + Number(h.nrw_pp_variance||0))}%`, tone:Number(h.nrw_pp_variance||0)<=0?'good':'high', n:`This is ${(Number(h.nrw_pp_variance||0)>=0?'+':'') + fmt1(h.nrw_pp_variance||0)} percentage points against the 27% target.`},
+    {k:'Water loss level', v:`${fmt1(IWA.nrw + Number(h.nrw_pp_variance||0))}%`, tone:Number(h.nrw_pp_variance||0)<=0?'good':'high', n:`This is ${(Number(h.nrw_pp_variance||0)>=0?'+':'') + fmt1(h.nrw_pp_variance||0)} percentage points against the __NRW_TARGET__% target.`},
     {k:'Chemical overspend', v:fmtCompactMwk(h.chem_overrun_mk||0), tone:(h.chem_overrun_mk||0)>0?'high':'good', n:`Field chemical spending ${Number(h.chem_overrun_mk||0)>0?'is above':'is within'} the annual budget path.`},
     {k:'Weakest revenue zone', v:worstRevenueZone.zone, tone:worstRevenueZone.ratio>=1?'good':worstRevenueZone.ratio>=0.9?'watch':'high', n:`Current budget score: ${Number.isFinite(worstRevenueZone.ratio)?fmt1(worstRevenueZone.ratio):'—'}.`},
     {k:'Priority zone', v:highestNrwZone.zone, tone:statusTone, n:`Highest water loss is in ${highestNrwZone.zone} at ${fmtPct1(highestNrwZone.val)}.`},
@@ -5960,7 +5974,7 @@ function _bgtVarTable(hostId, rows) {
   if (!host || !rows || !rows.length) return;
 
   const fa = (v, u) => {
-    if (u === 'MWK') {
+    if (u === '__CURRENCY__') {
       const a = Math.abs(v);
       return a >= 1e9 ? (v/1e9).toFixed(2)+'B' : a >= 1e6 ? (v/1e6).toFixed(1)+'M' : (v/1e3).toFixed(0)+'K';
     }
@@ -5971,9 +5985,9 @@ function _bgtVarTable(hostId, rows) {
   };
   const fv = (v, u) => {
     const sign = v >= 0 ? '+' : '';
-    if (u === 'MWK') {
+    if (u === '__CURRENCY__') {
       const a = Math.abs(v);
-      return sign + (a >= 1e9 ? 'MK '+(v/1e9).toFixed(2)+'B' : a >= 1e6 ? 'MK '+(v/1e6).toFixed(1)+'M' : 'MK '+(v/1e3).toFixed(0)+'K');
+      return sign + (a >= 1e9 ? '__CUR_SYM__ '+(v/1e9).toFixed(2)+'B' : a >= 1e6 ? '__CUR_SYM__ '+(v/1e6).toFixed(1)+'M' : '__CUR_SYM__ '+(v/1e3).toFixed(0)+'K');
     }
     if (u === 'm³')  return sign+(v/1e6).toFixed(3)+'M m³';
     if (u === '%')   return sign+v.toFixed(2)+'pp';
@@ -6022,7 +6036,7 @@ function _bgtDecomp(d) {
   const sub = document.getElementById('bgt-decomp-subtitle');
   if (sub) sub.textContent = 'This chart compares budget with actual revenue and highlights the biggest reasons for the gap. Longer bars mean a bigger effect.';
   const title = document.getElementById('bgt-decomp-title');
-  if (title) title.textContent = 'Budget Pressure Snapshot (MWK, YTD)';
+  if (title) title.textContent = 'Budget Pressure Snapshot (__CURRENCY__, YTD)';
 
   const bud = d.budget_ref.water_sales * d.meta.budget_factor;
   const act = d.revenue.find(r => r.metric.includes('Water Sales'))?.actual || 0;
@@ -6062,14 +6076,14 @@ function _bgtDecomp(d) {
         tooltip:{
           callbacks:{
             title:(ctx)=>ctx?.[0]?.label || '',
-            label:(ctx)=>'MK ' + (ctx.raw/1e9).toFixed(2) + 'B',
+            label:(ctx)=>'__CUR_SYM__ ' + (ctx.raw/1e9).toFixed(2) + 'B',
           }
         }
       },
       scales:{
         x:{
           beginAtZero:true,
-          ticks:{color:LC,font:{size:9},callback:v=>'MK '+(v/1e9).toFixed(1)+'B'},
+          ticks:{color:LC,font:{size:9},callback:v=>'__CUR_SYM__ '+(v/1e9).toFixed(1)+'B'},
           grid:{color:'rgba(148,163,184,0.18)',drawBorder:false}
         },
         y:{
@@ -6090,9 +6104,9 @@ function _bgtRevTrend(m) {
       {label:'Cash Collected', data:m.actual_collected,borderColor:'#16a34a', borderDash:[3,2], borderWidth:1.5, pointRadius:3, fill:false, tension:0.3},
     ]},
     options:{
-      ...baseOpts(v=>'MK '+(v/1e9).toFixed(1)+'B'),
+      ...baseOpts(v=>'__CUR_SYM__ '+(v/1e9).toFixed(1)+'B'),
       plugins:{...legendOptsCompact()},
-      scales:{...baseScales(v=>'MK '+(v/1e9).toFixed(1)+'B'),y:{...baseScales().y,ticks:{color:LC,font:{size:9},callback:v=>'MK '+(v/1e9).toFixed(1)+'B'},grace:'12%'}},
+      scales:{...baseScales(v=>'__CUR_SYM__ '+(v/1e9).toFixed(1)+'B'),y:{...baseScales().y,ticks:{color:LC,font:{size:9},callback:v=>'__CUR_SYM__ '+(v/1e9).toFixed(1)+'B'},grace:'12%'}},
     },
   });
 }
@@ -6185,7 +6199,7 @@ function _bgtNrwSpc(d) {
        borderColor:'rgba(100,116,139,0.6)',borderDash:[3,3],borderWidth:1,pointRadius:0,fill:false},
       {label:`2σ LCL (${s.lcl2}%)`, data:m.spc_nrw_lcl2,
        borderColor:'rgba(22,163,74,0.45)',borderDash:[6,3],borderWidth:1,pointRadius:0,fill:false},
-      {label:'Board target (27%)', data:m.budget_nrw_pct,
+      {label:'Board target (__NRW_TARGET__%)', data:m.budget_nrw_pct,
        borderColor:'#1A8FD1',borderDash:[8,4],borderWidth:2,pointRadius:0,fill:false},
     ]},
     options:{
@@ -6202,9 +6216,9 @@ function _bgtNrwZone(zones) {
   mkChart('ch-bgt-nrw-zone', {
     type:'bar', data:{labels:zones.map(z=>z.zone), datasets:[
       {label:'Actual water loss %', data:nrws,
-       backgroundColor:nrws.map(v=>v>30?'rgba(220,38,38,0.78)':v>27?'rgba(217,119,6,0.78)':'rgba(22,163,74,0.75)'),
+       backgroundColor:nrws.map(v=>v>30?'rgba(220,38,38,0.78)':v>IWA.nrw?'rgba(217,119,6,0.78)':'rgba(22,163,74,0.75)'),
        borderWidth:0, borderRadius:5},
-      {label:'Target 27%', data:zones.map(()=>27),type:'line',borderColor:'#1A8FD1',borderDash:[6,3],borderWidth:1.5,pointRadius:0,fill:false},
+      {label:'Target __NRW_TARGET__%', data:zones.map(()=>IWA.nrw),type:'line',borderColor:'#1A8FD1',borderDash:[6,3],borderWidth:1.5,pointRadius:0,fill:false},
       {label:'IWA 20%', data:zones.map(()=>20),type:'line',borderColor:'rgba(22,163,74,0.45)',borderDash:[3,3],borderWidth:1,pointRadius:0,fill:false},
     ]},
     options:{
@@ -6224,9 +6238,9 @@ function _bgtNrwZoneTrend(zm) {
     borderColor:ZONE_CLR[zone]||'#64748b',
     backgroundColor:'transparent', tension:0.3, pointRadius:3, borderWidth:2, fill:false,
   }));
-  datasets.push({label:'Target 27%',data:Array(12).fill(27),borderColor:'#64748b',borderDash:[6,3],borderWidth:1.5,pointRadius:0,fill:false});
+  datasets.push({label:'Target __NRW_TARGET__%',data:Array(12).fill(IWA.nrw),borderColor:'#64748b',borderDash:[6,3],borderWidth:1.5,pointRadius:0,fill:false});
   mkChart('ch-bgt-nrw-zone-trend', {
-    type:'line', data:{labels:['Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar'],datasets},
+    type:'line', data:{labels:__FY_MONTHS__.map(m=>m.slice(0,3)),datasets},
     options:{
       ...baseOpts(v=>v+'%'),
       plugins:{...tooltipPlugin.plugins,legend:{display:true,position:'top',labels:{font:{size:9.5},color:LC,usePointStyle:true,boxWidth:16}}},
@@ -6259,11 +6273,11 @@ function _bgtNrwCards(d) {
   const ek = d.efficiency_kpis;
   const excess = ek.nrw_financial_cost_mk - ek.budget_nrw_cost_mk;
   const items = [
-    {label:'Actual NRW Cost (FY)',    value:'MK '+(ek.nrw_financial_cost_mk/1e9).toFixed(3)+'B', sub:'Total NRW volume × MK 1,450/m³', color:'#dc2626'},
-    {label:'Budgeted NRW Cost (YTD)', value:'MK '+(ek.budget_nrw_cost_mk/1e9).toFixed(3)+'B',   sub:'Budget NRW volume × MK 1,450/m³', color:'#d97706'},
-    {label:'Excess NRW Cost',         value:'MK '+(excess/1e6).toFixed(0)+'M',                   sub:'Cost above what was budgeted for water loss', color:'#dc2626'},
-    {label:'Revenue Recovery Potential',value:'MK '+((d.spc_limits.nrw_pct.mean-27)/100*d.budget_ref.vol_produced_target*d.meta.budget_factor*d.meta.tariff_mk_m3/1e6).toFixed(0)+'M',
-     sub:'If NRW reduced to 27% target (annualised estimate)', color:'#16a34a'},
+    {label:'Actual NRW Cost (FY)',    value:'__CUR_SYM__ '+(ek.nrw_financial_cost_mk/1e9).toFixed(3)+'B', sub:'Total NRW volume × FY tariff per m³', color:'#dc2626'},
+    {label:'Budgeted NRW Cost (YTD)', value:'__CUR_SYM__ '+(ek.budget_nrw_cost_mk/1e9).toFixed(3)+'B',   sub:'Budget NRW volume × FY tariff per m³', color:'#d97706'},
+    {label:'Excess NRW Cost',         value:'__CUR_SYM__ '+(excess/1e6).toFixed(0)+'M',                   sub:'Cost above what was budgeted for water loss', color:'#dc2626'},
+    {label:'Revenue Recovery Potential',value:'__CUR_SYM__ '+((d.spc_limits.nrw_pct.mean-IWA.nrw)/100*d.budget_ref.vol_produced_target*d.meta.budget_factor*d.meta.tariff_mk_m3/1e6).toFixed(0)+'M',
+     sub:'If NRW reduced to __NRW_TARGET__% target (annualised estimate)', color:'#16a34a'},
   ];
   host.innerHTML = DOMPurify.sanitize(items.map(it =>
     `<div class="bgt-impact-card" style="border-left-color:${it.color}">
@@ -6288,7 +6302,7 @@ function _bgtChemTrend(m) {
       plugins:{...tooltipPlugin.plugins,legend:{display:true,position:'top',labels:{font:{size:10},color:LC,usePointStyle:true}}},
       scales:{
         x:{ticks:{color:LC,font:{size:9}},grid:{display:false}},
-        y:{ticks:{color:LC,font:{size:9},callback:v=>'MK '+(v/1e6).toFixed(0)+'M'},grid:{color:'rgba(0,0,0,0.05)'}},
+        y:{ticks:{color:LC,font:{size:9},callback:v=>'__CUR_SYM__ '+(v/1e6).toFixed(0)+'M'},grid:{color:'rgba(0,0,0,0.05)'}},
       },
     },
   });
@@ -6308,7 +6322,7 @@ function _bgtPwrTrend(m) {
       plugins:{...tooltipPlugin.plugins,legend:{display:true,position:'top',labels:{font:{size:10},color:LC,usePointStyle:true}}},
       scales:{
         x:{ticks:{color:LC,font:{size:9}},grid:{display:false}},
-        y:{ticks:{color:LC,font:{size:9},callback:v=>'MK '+(v/1e6).toFixed(0)+'M'},grid:{color:'rgba(0,0,0,0.05)'}},
+        y:{ticks:{color:LC,font:{size:9},callback:v=>'__CUR_SYM__ '+(v/1e6).toFixed(0)+'M'},grid:{color:'rgba(0,0,0,0.05)'}},
       },
     },
   });
@@ -6321,9 +6335,9 @@ function _bgtCostZone(zones) {
   mkChart('ch-bgt-cost-zone', {
     type:'bar',
     data:{labels:zones.map(z=>z.zone), datasets:[
-      {label:'Chemical/m³ (MWK)', data:chem,
+      {label:'Chemical/m³ (__CURRENCY__)', data:chem,
        backgroundColor:'rgba(214,106,120,0.72)', borderRadius:5, categoryPercentage:0.7, barPercentage:0.78},
-      {label:'Power/m³ (MWK)', data:pwr,
+      {label:'Power/m³ (__CURRENCY__)', data:pwr,
        backgroundColor:'rgba(102,163,219,0.72)', borderRadius:5, categoryPercentage:0.7, barPercentage:0.78},
     ]},
     options:{
@@ -6333,13 +6347,13 @@ function _bgtCostZone(zones) {
         legend:{display:true,position:'top',labels:{font:{size:10},color:LC,usePointStyle:true,padding:14}},
         tooltip:{
           callbacks:{
-            label:(ctx)=>`${ctx.dataset.label}: MK ${Number(ctx.raw||0).toFixed(1)}/m³`
+            label:(ctx)=>`${ctx.dataset.label}: __CUR_SYM__ ${Number(ctx.raw||0).toFixed(1)}/m³`
           }
         }
       },
       scales:{
         y:{ticks:{color:LC,font:{size:10}},grid:{display:false}},
-        x:{beginAtZero:true,ticks:{color:LC,font:{size:9},callback:v=>'MK '+Number(v).toFixed(0)},grid:{color:'rgba(0,0,0,0.05)'}},
+        x:{beginAtZero:true,ticks:{color:LC,font:{size:9},callback:v=>'__CUR_SYM__ '+Number(v).toFixed(0)},grid:{color:'rgba(0,0,0,0.05)'}},
       },
     },
   });
@@ -6352,7 +6366,7 @@ function _bgtZoneTable(zones) {
   const fmt1 = v => Number.isFinite(Number(v)) ? Number(v).toFixed(1) : '—';
   const fB = v => { const a=Math.abs(v); return a>=1e9?(v/1e9).toFixed(2)+'B':a>=1e6?(v/1e6).toFixed(0)+'M':(v/1e3).toFixed(0)+'K'; };
   const fV = v => (v>=0?'+':'')+fB(v);
-  const nrwCls = n => n>30?'zs-bad':n>27?'zs-warn':'zs-good';
+  const nrwCls = n => n>30?'zs-bad':n>IWA.nrw?'zs-warn':'zs-good';
   const varCls = v => v>=0?'zs-good':'zs-bad';
   const bpi = z => z.budget_sales_ytd>0 ? (z.actual_sales/z.budget_sales_ytd).toFixed(2) : '—';
   const bpiCls = z => { const b = z.budget_sales_ytd>0?(z.actual_sales/z.budget_sales_ytd):1; return b>=1?'zs-good':b>=0.9?'zs-warn':'zs-bad'; };
@@ -6379,9 +6393,9 @@ function _bgtZoneTable(zones) {
     h += `<tr>
       <td style="font-weight:600"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${dot};margin-right:7px;vertical-align:middle"></span>${z.zone}</td>
       <td style="text-align:center">${z.schemes}</td>
-      <td class="zs-mono">MK ${fB(z.actual_sales)}</td>
-      <td class="zs-mono" style="color:var(--ds-text-secondary)">MK ${fB(z.budget_sales_ytd)}</td>
-      <td class="${varCls(z.sales_variance)} zs-mono">MK ${fV(z.sales_variance)}</td>
+      <td class="zs-mono">__CUR_SYM__ ${fB(z.actual_sales)}</td>
+      <td class="zs-mono" style="color:var(--ds-text-secondary)">__CUR_SYM__ ${fB(z.budget_sales_ytd)}</td>
+      <td class="${varCls(z.sales_variance)} zs-mono">__CUR_SYM__ ${fV(z.sales_variance)}</td>
       <td class="${bpiCls(z)}" style="font-weight:700">${bpi(z)}</td>
       <td class="${nrwCls(z.actual_nrw_pct)}" style="font-weight:700">${fmt1(z.actual_nrw_pct)}%</td>
       <td class="${z.nrw_variance_pp>0?'zs-bad':z.nrw_variance_pp<-2?'zs-good':'zs-warn'}">${Number(z.nrw_variance_pp)>0?'+':''}${fmt1(z.nrw_variance_pp)}pp</td>
@@ -6527,7 +6541,7 @@ function _bgtZoneVar(zones) {
       },
       scales:{
         x:{
-          ticks:{color:LC,font:{size:9},callback:v=>'MK '+(v/1e9).toFixed(1)+'B'},
+          ticks:{color:LC,font:{size:9},callback:v=>'__CUR_SYM__ '+(v/1e9).toFixed(1)+'B'},
           grid:{color:'rgba(148,163,184,0.18)',drawBorder:false}
         },
         y:{ticks:{color:LC,font:{size:10}},grid:{display:false}},
@@ -6541,7 +6555,7 @@ function _bgtSchemeTable(schemes) {
   const host = document.getElementById('bgt-scheme-table');
   if (!host) return;
   const ragDot = r => `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${r==='green'?'#16a34a':r==='amber'?'#d97706':'#dc2626'};margin-right:5px;vertical-align:middle;flex-shrink:0"></span>`;
-  const nrwCls = n => n>35?'zs-bad':n>27?'zs-warn':'zs-good';
+  const nrwCls = n => n>35?'zs-bad':n>IWA.nrw?'zs-warn':'zs-good';
   const crCls  = r => r>=90?'zs-good':r>=75?'zs-warn':'zs-bad';
   const rvCls  = r => r>=1450?'zs-good':r>=1100?'zs-warn':'zs-bad';
   const dot    = z => ZONE_CLR[z]||'#64748b';
@@ -6556,7 +6570,7 @@ function _bgtSchemeTable(schemes) {
       <th>Gap to target</th>
       <th>Collection %</th>
       <th>Revenue</th>
-      <th>MK/m³</th>
+      <th>__CUR_SYM__/m³</th>
       <th>Vol (m³)</th>
       <th>Connections</th>
       <th>Chem/m³</th>
@@ -6605,33 +6619,33 @@ function _bgtEffKpis(ek, br) {
      cls:ek.operating_ratio<1?'kc-up':'kc-dn', icon:ICON.gauge,
      badgeLabel:ek.operating_ratio<0.9?'GOOD':ek.operating_ratio<1?'WATCH':'ADV',
      bm:'World Bank target <1.0'},
-    {l:'Operating cost per m³ produced', v:'MK '+ek.opex_per_m3_produced,
+    {l:'Operating cost per m³ produced', v:'__CUR_SYM__ '+ek.opex_per_m3_produced,
      s:'Field total cost per m³ produced',
      cls:'kc-nt', icon:ICON.chart, badgeLabel:'RATE',
      bm:'Lower = more efficient field operations'},
-    {l:'Revenue per connection', v:'MK '+F.num(ek.revenue_per_connection),
+    {l:'Revenue per connection', v:'__CUR_SYM__ '+F.num(ek.revenue_per_connection),
      s:'YTD water sales ÷ active customers',
      cls:'kc-up', icon:ICON.revenue, badgeLabel:'RATE',
-     bm:`~MK ${F.num(ek.revenue_per_connection*12/1e3)}K annualised per customer`},
-    {l:'Chemical cost per m³', v:'MK '+ek.chemical_cost_per_m3,
+     bm:`~__CUR_SYM__ ${F.num(ek.revenue_per_connection*12/1e3)}K annualised per customer`},
+    {l:'Chemical cost per m³', v:'__CUR_SYM__ '+ek.chemical_cost_per_m3,
      s:'Field chemical spend per m³ produced',
      cls:ek.chemical_cost_per_m3>100?'kc-dn':'kc-nt', icon:ICON.gauge,
      badgeLabel:ek.chemical_cost_per_m3>100?'HIGH':'OK',
-     bm:`Budget estimate: ~MK ${Math.round(br.chemicals_budget/br.vol_produced_target)}/m³`},
-    {l:'Power Cost per m³ [Ee1]', v:'MK '+ek.power_cost_per_m3,
+     bm:`Budget estimate: ~__CUR_SYM__ ${Math.round(br.chemicals_budget/br.vol_produced_target)}/m³`},
+    {l:'Power Cost per m³ [Ee1]', v:'__CUR_SYM__ '+ek.power_cost_per_m3,
      s:'Field electricity per m³ produced',
      cls:'kc-nt', icon:ICON.chart, badgeLabel:'RATE',
-     bm:`Budget estimate: ~MK ${Math.round(br.electricity_budget/br.vol_produced_target)}/m³`},
+     bm:`Budget estimate: ~__CUR_SYM__ ${Math.round(br.electricity_budget/br.vol_produced_target)}/m³`},
     {l:'Collection rate', v:ek.collection_rate_pct+'%',
      s:'Cash collected ÷ amount billed × 100',
      cls:ek.collection_rate_pct>=90?'kc-up':ek.collection_rate_pct>=80?'kc-nt':'kc-dn',
      icon:ICON.revenue,
      badgeLabel:ek.collection_rate_pct>=90?'GOOD':ek.collection_rate_pct>=80?'WATCH':'ADV',
      bm:'IBNET benchmark >90%'},
-    {l:'Estimated cost of water loss', v:'MK '+(ek.nrw_financial_cost_mk/1e9).toFixed(3)+'B',
-     s:'Total NRW volume × MK 1,450/m³ tariff',
+    {l:'Estimated cost of water loss', v:'__CUR_SYM__ '+(ek.nrw_financial_cost_mk/1e9).toFixed(3)+'B',
+     s:'Total NRW volume × FY tariff per m³ tariff',
      cls:'kc-dn', icon:ICON.gauge, badgeLabel:'COST',
-     bm:`Budget NRW cost: MK ${(ek.budget_nrw_cost_mk/1e9).toFixed(3)}B`},
+     bm:`Budget NRW cost: __CUR_SYM__ ${(ek.budget_nrw_cost_mk/1e9).toFixed(3)}B`},
     {l:'Production budget score', v:ek.bpi_volume!=null?ek.bpi_volume.toFixed(3):'—',
      s:'Actual volume ÷ budget volume',
      cls:ek.bpi_volume>=1?'kc-up':ek.bpi_volume>=0.9?'kc-nt':'kc-dn',
@@ -6672,7 +6686,7 @@ function _bgtZoneLeague(zones) {
   const ragColor = s => s >= 70 ? '#16a34a' : s >= 50 ? '#d97706' : '#dc2626';
   const ragBg    = s => s >= 70 ? 'rgba(22,163,74,0.08)' : s >= 50 ? 'rgba(217,119,6,0.08)' : 'rgba(220,38,38,0.08)';
   const ragCls   = s => s >= 70 ? 'zs-good' : s >= 50 ? 'zs-warn' : 'zs-bad';
-  const nrwCls   = n => n > 30 ? 'zs-bad' : n > 27 ? 'zs-warn' : 'zs-good';
+  const nrwCls   = n => n > 30 ? 'zs-bad' : n > IWA.nrw ? 'zs-warn' : 'zs-good';
   const crCls    = r => r >= 90 ? 'zs-good' : r >= 80 ? 'zs-warn' : 'zs-bad';
   const fB       = v => { const a = Math.abs(v); return a >= 1e9 ? (v/1e9).toFixed(2)+'B' : a >= 1e6 ? (v/1e6).toFixed(0)+'M' : (v/1e3).toFixed(0)+'K'; };
   const bpiVal   = z => z.budget_sales_ytd > 0 ? (z.actual_sales/z.budget_sales_ytd).toFixed(2) : '—';
@@ -6751,7 +6765,7 @@ function _bgtZoneLeague(zones) {
       <td class="${connVarCls}">${connVar}</td>
       <td style="color:var(--ds-text-secondary)">${chemM3}</td>
       <td style="color:var(--ds-text-secondary)">${pwrM3}</td>
-      <td class="zs-mono">MK ${fB(z.actual_sales)}</td>
+      <td class="zs-mono">__CUR_SYM__ ${fB(z.actual_sales)}</td>
       <td style="color:var(--ds-text-muted)">${fmt1(z.budget_share_pct)}%</td>
     </tr>`;
   });
@@ -6831,7 +6845,7 @@ async function loadBenchmarking(){
       {l:'Months with Data',v:F.num(dataMonths)+' / 12',s:d.fiscal_year||'Selected fiscal year',icon:ICON.drop},
     ]);
     document.getElementById('bm-kpis').className='kpi-row kpi-g4';
-    renderTable('tbl-benchmarking','SRWB BENCHMARKING TOOL — WUP PERFORMANCE INDICATORS',bmBuildRows(meta),d.monthly,'benchmarking');
+    renderTable('tbl-benchmarking','__ORG_SHORT__ BENCHMARKING TOOL — WUP PERFORMANCE INDICATORS',bmBuildRows(meta),d.monthly,'benchmarking');
     updatePageMeta();
   }catch(e){console.error('benchmarking',e);errMsg('bm-kpis','Benchmarking failed to load');}
 }
@@ -7071,7 +7085,7 @@ async function buildBoardPack(){
     }
 
     const cover=`<section class="bp-cover">
-      <div class="bp-cover-org">Southern Region Water Board · Malawi</div>
+      <div class="bp-cover-org">__ORG_NAME_COUNTRY__</div>
       <div class="bp-cover-title">Board Pack</div>
       <div class="bp-cover-scope">${scope}</div>
       <div class="bp-cover-gen">Generated ${generated}</div>
@@ -7303,12 +7317,12 @@ function _rcInsight(text){
 
 /* ── Helpers ─────────────────────────────────────────────────────────────── */
 function _rcFmt(n,d=0){if(n==null||isNaN(n))return'—';return Number(n).toLocaleString('en-GB',{minimumFractionDigits:d,maximumFractionDigits:d});}
-function _rcMK(n){if(n==null||isNaN(n))return'—';const a=Math.abs(n);if(a>=1e9)return'MK '+(n/1e9).toFixed(2)+'B';if(a>=1e6)return'MK '+(n/1e6).toFixed(1)+'M';if(a>=1e3)return'MK '+(n/1e3).toFixed(0)+'K';return'MK '+_rcFmt(n);}
+function _rcMK(n){if(n==null||isNaN(n))return'—';const a=Math.abs(n);if(a>=1e9)return'__CUR_SYM__ '+(n/1e9).toFixed(2)+'B';if(a>=1e6)return'__CUR_SYM__ '+(n/1e6).toFixed(1)+'M';if(a>=1e3)return'__CUR_SYM__ '+(n/1e3).toFixed(0)+'K';return'__CUR_SYM__ '+_rcFmt(n);}
 function _rcPct(n,d=1){return n==null?'—':Number(n).toFixed(d)+'%';}
 function _rcTone(v,good,warn,rev=false){if(v==null)return'';if(rev){if(v<=good)return'rc-good';if(v<=warn)return'rc-warn';return'rc-bad';}if(v>=good)return'rc-good';if(v>=warn)return'rc-warn';return'rc-bad';}
 function _rcHeader(title,scope,generated){
   return `<div class="rc-rpt-header">
-    <div class="rc-rpt-org">Southern Region Water Board · Malawi</div>
+    <div class="rc-rpt-org">__ORG_NAME_COUNTRY__</div>
     <div class="rc-rpt-title">${title}</div>
     <div class="rc-rpt-meta">${scope} &nbsp;·&nbsp; Generated ${generated}</div>
     <div class="rc-rpt-rule"></div>
@@ -7426,7 +7440,7 @@ function _rcBoardPack(d,narrative,alerts){
   h+=_rcKpiRow([
     {val:_rcMK(fs.total_revenue),      lbl:'Total Revenue',   sub:'YTD'},
     {val:_rcPct(ek.collection_rate),   lbl:'Collection Rate', sub:'IBNET >90%', tone:_rcTone(ek.collection_rate,90,75)},
-    {val:_rcPct(ek.nrw_pct),           lbl:'NRW Rate',        sub:'SRWB <27%',  tone:_rcTone(ek.nrw_pct,27,35,true)},
+    {val:_rcPct(ek.nrw_pct),           lbl:'NRW Rate',        sub:'__ORG_SHORT__ <__NRW_TARGET__%',  tone:_rcTone(ek.nrw_pct,IWA.nrw,35,true)},
     {val:_rcFmt(ek.op_ratio,2),        lbl:'Operating Ratio', sub:'W.Bank <1.0',tone:_rcTone(ek.op_ratio,1.0,1.2,true)},
     {val:_rcFmt(ek.dso),               lbl:'DSO (days)',       sub:'IBNET <90d', tone:_rcTone(ek.dso,90,120,true)},
     {val:_rcFmt((ek.vol_produced||0)/1e6,2)+'M m³',lbl:'Vol Produced',sub:'YTD'},
@@ -7450,9 +7464,9 @@ function _rcBoardPack(d,narrative,alerts){
     h+=_rcSectionHdr('Zone Risk Ranking');
     h+=_rcTable(['Zone','NRW %','Collection Rate','DSO (days)','Risk Score'],
       z.map(r=>[r.zone,_rcPct(r.nrw_pct),_rcPct(r.collection_rate),_rcFmt(r.dso),_rcFmt(r.risk_score,1)]),'Zone Risks');
-    h+=_rcInsight(`${worst.zone} carries the highest risk score (${_rcFmt(worst.risk_score,1)}), with NRW at ${_rcPct(worst.nrw_pct)} and collection rate at ${_rcPct(worst.collection_rate)}. ${z.filter(r=>(r.nrw_pct||0)>27).length} of ${z.length} zones exceed the 27% NRW target; ${z.filter(r=>(r.collection_rate||0)<90).length} are below the IBNET 90% collection benchmark.`);
+    h+=_rcInsight(`${worst.zone} carries the highest risk score (${_rcFmt(worst.risk_score,1)}), with NRW at ${_rcPct(worst.nrw_pct)} and collection rate at ${_rcPct(worst.collection_rate)}. ${z.filter(r=>(r.nrw_pct||0)>IWA.nrw).length} of ${z.length} zones exceed the __NRW_TARGET__% NRW target; ${z.filter(r=>(r.collection_rate||0)<90).length} are below the IBNET 90% collection benchmark.`);
     h+=_rcChart('bar',z.map(r=>r.zone),[
-      {label:'NRW %',data:z.map(r=>r.nrw_pct||0),backgroundColor:z.map(r=>(r.nrw_pct||0)>27?RC_C[3]:RC_C[1]),borderRadius:4},
+      {label:'NRW %',data:z.map(r=>r.nrw_pct||0),backgroundColor:z.map(r=>(r.nrw_pct||0)>IWA.nrw?RC_C[3]:RC_C[1]),borderRadius:4},
       {label:'Collection %',type:'line',data:z.map(r=>r.collection_rate||0),borderColor:RC_C[0],backgroundColor:'transparent',tension:.3,yAxisID:'y1',clip:false,pointRadius:3},
     ],{height:200,chartOptions:{scales:{y:{title:{display:true,text:'NRW %',font:{size:10}},suggestedMax:50},y1:{position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'Collection %',font:{size:10}},min:0,suggestedMax:Math.max(110,Math.ceil(Math.max(...z.map(r=>r.collection_rate||0))/10)*10+10)}}}});
   }
@@ -7471,13 +7485,13 @@ function _rcBoardPack(d,narrative,alerts){
   const trend=d.nrw_trend||[];
   if(trend.length){
     const first=trend[0], last=trend[trend.length-1];
-    const above=trend.filter(t=>(t.value||0)>27).length;
+    const above=trend.filter(t=>(t.value||0)>IWA.nrw).length;
     h+=_rcSectionHdr('NRW Rate — 12-Month Trend');
     h+=_rcTable(['Month','NRW %'],trend.map(t=>[t.month,_rcPct(t.value)]),'NRW Trend');
-    h+=_rcInsight(`NRW has ${(last.value||0)<(first.value||0)?'improved':'worsened'} from ${_rcPct(first.value)} in ${first.month} to ${_rcPct(last.value)} in ${last.month}. ${above} of ${trend.length} months recorded losses above the 27% SRWB target — sustained intervention is required to reach the 25% five-year objective.`);
+    h+=_rcInsight(`NRW has ${(last.value||0)<(first.value||0)?'improved':'worsened'} from ${_rcPct(first.value)} in ${first.month} to ${_rcPct(last.value)} in ${last.month}. ${above} of ${trend.length} months recorded losses above the __NRW_TARGET__% __ORG_SHORT__ target — sustained intervention is required to reach the 25% five-year objective.`);
     h+=_rcChart('line',trend.map(t=>t.month),[
       {label:'NRW %',data:trend.map(t=>t.value||0),borderColor:RC_C[3],backgroundColor:'rgba(220,38,38,.08)',tension:.4,fill:true},
-      {label:'27% Target',data:trend.map(()=>27),borderColor:'#94a3b8',borderDash:[5,5],pointRadius:0,fill:false},
+      {label:'__NRW_TARGET__% Target',data:trend.map(()=>IWA.nrw),borderColor:'#94a3b8',borderDash:[5,5],pointRadius:0,fill:false},
     ],{height:190,chartOptions:{scales:{y:{beginAtZero:false,suggestedMin:20,suggestedMax:40,title:{display:true,text:'NRW %',font:{size:10}}}}}});
   }
   const bz=d.by_zone||[];
@@ -7487,7 +7501,7 @@ function _rcBoardPack(d,narrative,alerts){
     h+=_rcSectionHdr('Zone Summary');
     h+=_rcTable(['Zone','Vol (m³)','NRW %','Collection Rate','Active Customers','Op Ratio'],
       bz.map(z=>[z.zone,_rcFmt(z.vol_produced),_rcPct(z.nrw_pct),_rcPct(z.collection_rate),_rcFmt(z.active_customers),_rcFmt(z.op_ratio,2)]),'Zone Summary');
-    h+=_rcInsight(`${bestColl.zone} leads revenue collection at ${_rcPct(bestColl.collection_rate)}, while ${worstNrw.zone} records the highest water losses at ${_rcPct(worstNrw.nrw_pct)}. The NRW spread across zones is ${((Math.max(...bz.map(z=>z.nrw_pct||0)))-(Math.min(...bz.map(z=>z.nrw_pct||0)))).toFixed(1)}pp — narrowing this gap is essential to meeting the system-wide 27% target.`);
+    h+=_rcInsight(`${bestColl.zone} leads revenue collection at ${_rcPct(bestColl.collection_rate)}, while ${worstNrw.zone} records the highest water losses at ${_rcPct(worstNrw.nrw_pct)}. The NRW spread across zones is ${((Math.max(...bz.map(z=>z.nrw_pct||0)))-(Math.min(...bz.map(z=>z.nrw_pct||0)))).toFixed(1)}pp — narrowing this gap is essential to meeting the system-wide __NRW_TARGET__% target.`);
     h+=_rcChart('bar',bz.map(z=>z.zone),[
       {label:'Collection Rate %',data:bz.map(z=>z.collection_rate||0),backgroundColor:bz.map(z=>(z.collection_rate||0)>=90?RC_C[1]:(z.collection_rate||0)>=75?RC_C[2]:RC_C[3]),borderRadius:4},
       {label:'NRW %',type:'line',data:bz.map(z=>z.nrw_pct||0),borderColor:RC_C[3],backgroundColor:'transparent',tension:.3,yAxisID:'y1'},
@@ -7510,10 +7524,10 @@ function _rcZoneComparison(d,narrative,alerts){
     const bestNrw=zones.reduce((a,b)=>(b.nrw_pct||99)<(a.nrw_pct||99)?b:a,zones[0]);
     const worstNrw=zones.reduce((a,b)=>(b.nrw_pct||0)>(a.nrw_pct||0)?b:a,zones[0]);
     const bestColl=zones.reduce((a,b)=>(b.collection_rate||0)>(a.collection_rate||0)?b:a,zones[0]);
-    h+=_rcInsight(`${bestNrw.zone} has the lowest water losses at ${_rcPct(bestNrw.nrw_pct)}, while ${worstNrw.zone} has the highest at ${_rcPct(worstNrw.nrw_pct)}. ${bestColl.zone} leads revenue collection at ${_rcPct(bestColl.collection_rate)}. ${zones.filter(z=>(z.nrw_pct||0)>27).length} of ${zones.length} zones exceed the 27% NRW target.`);
+    h+=_rcInsight(`${bestNrw.zone} has the lowest water losses at ${_rcPct(bestNrw.nrw_pct)}, while ${worstNrw.zone} has the highest at ${_rcPct(worstNrw.nrw_pct)}. ${bestColl.zone} leads revenue collection at ${_rcPct(bestColl.collection_rate)}. ${zones.filter(z=>(z.nrw_pct||0)>IWA.nrw).length} of ${zones.length} zones exceed the __NRW_TARGET__% NRW target.`);
     h+=_rcChart('bar',zones.map(z=>z.zone),[
-      {label:'NRW %',data:zones.map(z=>z.nrw_pct||0),backgroundColor:zones.map(z=>(z.nrw_pct||0)>27?RC_C[3]:RC_C[1]),borderRadius:4},
-      {label:'27% Target',type:'line',data:zones.map(()=>27),borderColor:'#94a3b8',borderDash:[5,5],pointRadius:0,fill:false},
+      {label:'NRW %',data:zones.map(z=>z.nrw_pct||0),backgroundColor:zones.map(z=>(z.nrw_pct||0)>IWA.nrw?RC_C[3]:RC_C[1]),borderRadius:4},
+      {label:'__NRW_TARGET__% Target',type:'line',data:zones.map(()=>IWA.nrw),borderColor:'#94a3b8',borderDash:[5,5],pointRadius:0,fill:false},
       {label:'Collection %',type:'line',data:zones.map(z=>z.collection_rate||0),borderColor:RC_C[0],tension:.3,yAxisID:'y1'},
     ],{height:210,chartOptions:{scales:{y:{title:{display:true,text:'NRW %',font:{size:10}},suggestedMax:50},y1:{position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'Collection %',font:{size:10}},min:0,max:100}}}});
     h+=_rcSectionHdr('Revenue & Collections by Zone');
@@ -7523,9 +7537,9 @@ function _rcZoneComparison(d,narrative,alerts){
     const totalBilled=zones.reduce((s,z)=>s+(z.amt_billed||0),0);
     if(totalBilled>0) h+=_rcInsight(`Total outstanding debtors across all zones amount to ${_rcMK(totalDebtors)}, equivalent to ${_rcPct(totalDebtors/totalBilled*100)} of annual billings. Reducing debtor days is critical to improving operating cash flow and limiting reliance on working capital borrowing.`);
     h+=_rcChart('bar',zones.map(z=>z.zone),[
-      {label:'Billed (MK M)',data:zones.map(z=>(z.amt_billed||0)/1e6),backgroundColor:RC_C[0]+'99',borderRadius:4},
-      {label:'Collected (MK M)',data:zones.map(z=>(z.cash_collected||0)/1e6),backgroundColor:RC_C[1],borderRadius:4},
-    ],{height:200,chartOptions:{scales:{y:{title:{display:true,text:'MK Millions',font:{size:10}}}}}});
+      {label:'Billed (__CUR_SYM__ M)',data:zones.map(z=>(z.amt_billed||0)/1e6),backgroundColor:RC_C[0]+'99',borderRadius:4},
+      {label:'Collected (__CUR_SYM__ M)',data:zones.map(z=>(z.cash_collected||0)/1e6),backgroundColor:RC_C[1],borderRadius:4},
+    ],{height:200,chartOptions:{scales:{y:{title:{display:true,text:'__CUR_SYM__ Millions',font:{size:10}}}}}});
   }
   h+=_rcAlertsPanel(alerts);
   h+=_rcNarrative(narrative);
@@ -7539,23 +7553,23 @@ function _rcOperations(d,narrative,alerts){
   h+=_rcKpiRow([
     {val:_rcFmt((prod.total_vol_produced||0)/1e6,2)+'M m³',  lbl:'Total Produced', sub:'YTD'},
     {val:_rcFmt((prod.revenue_water||0)/1e6,2)+'M m³',        lbl:'Revenue Water',  sub:'YTD'},
-    {val:_rcPct(prod.nrw_pct),                                 lbl:'NRW Rate',       sub:'SRWB <27%', tone:_rcTone(prod.nrw_pct,27,35,true)},
+    {val:_rcPct(prod.nrw_pct),                                 lbl:'NRW Rate',       sub:'__ORG_SHORT__ <__NRW_TARGET__%', tone:_rcTone(prod.nrw_pct,IWA.nrw,35,true)},
     {val:_rcFmt(prod.energy_intensity_kwh_m3,2)+' kWh/m³',    lbl:'Energy Intensity',sub:'Lower = better'},
     {val:_rcFmt(prod.supply_hours_avg_daily,1)+'h/day',        lbl:'Supply Hours',   sub:'Avg daily'},
     {val:_rcFmt(prod.pipe_breakdowns)+' pipe / '+_rcFmt(prod.pump_breakdowns)+' pump',lbl:'Breakdowns'},
   ]);
-  if(prod.nrw_pct!=null) h+=_rcInsight(`Of ${_rcFmt((prod.total_vol_produced||0)/1e6,2)}M m³ produced YTD, ${_rcPct(prod.nrw_pct)} (${_rcFmt((prod.total_vol_produced||0)*(prod.nrw_pct||0)/100/1e6,2)}M m³) is classified as Non-Revenue Water. Supply is averaging ${_rcFmt(prod.supply_hours_avg_daily,1)} hours/day across the network; the SRWB target is ≥20h/day. Total breakdown incidents stand at ${_rcFmt((prod.pipe_breakdowns||0)+(prod.pump_breakdowns||0))}.`);
+  if(prod.nrw_pct!=null) h+=_rcInsight(`Of ${_rcFmt((prod.total_vol_produced||0)/1e6,2)}M m³ produced YTD, ${_rcPct(prod.nrw_pct)} (${_rcFmt((prod.total_vol_produced||0)*(prod.nrw_pct||0)/100/1e6,2)}M m³) is classified as Non-Revenue Water. Supply is averaging ${_rcFmt(prod.supply_hours_avg_daily,1)} hours/day across the network; the __ORG_SHORT__ target is ≥20h/day. Total breakdown incidents stand at ${_rcFmt((prod.pipe_breakdowns||0)+(prod.pump_breakdowns||0))}.`);
   const bz=d.nrw_by_zone||[];
   if(bz.length){
     const worstZ=bz.reduce((a,b)=>(b.nrw_pct||0)>(a.nrw_pct||0)?b:a,bz[0]);
-    const above=bz.filter(z=>(z.nrw_pct||0)>27).length;
+    const above=bz.filter(z=>(z.nrw_pct||0)>IWA.nrw).length;
     h+=_rcSectionHdr('NRW by Zone');
-    h+=_rcTable(['Zone','Vol Produced (m³)','NRW Volume (m³)','NRW %','vs 27% Target'],
-      bz.map(z=>[z.zone,_rcFmt(z.vol_produced),_rcFmt(z.nrw_vol),_rcPct(z.nrw_pct),z.nrw_pct>27?`▲ +${(z.nrw_pct-27).toFixed(1)}pp`:'✓ On target']),'NRW by Zone');
-    h+=_rcInsight(`${above} of ${bz.length} zones exceed the 27% loss threshold. ${worstZ.zone} is the highest-loss zone at ${_rcPct(worstZ.nrw_pct)}, contributing ${_rcFmt(worstZ.nrw_vol)} m³ in unaccounted water. Targeted leak detection and meter audit programmes in above-target zones should be prioritised.`);
+    h+=_rcTable(['Zone','Vol Produced (m³)','NRW Volume (m³)','NRW %','vs __NRW_TARGET__% Target'],
+      bz.map(z=>[z.zone,_rcFmt(z.vol_produced),_rcFmt(z.nrw_vol),_rcPct(z.nrw_pct),z.nrw_pct>IWA.nrw?`▲ +${(z.nrw_pct-IWA.nrw).toFixed(1)}pp`:'✓ On target']),'NRW by Zone');
+    h+=_rcInsight(`${above} of ${bz.length} zones exceed the __NRW_TARGET__% loss threshold. ${worstZ.zone} is the highest-loss zone at ${_rcPct(worstZ.nrw_pct)}, contributing ${_rcFmt(worstZ.nrw_vol)} m³ in unaccounted water. Targeted leak detection and meter audit programmes in above-target zones should be prioritised.`);
     h+=_rcChart('bar',bz.map(z=>z.zone),[
-      {label:'NRW %',data:bz.map(z=>z.nrw_pct||0),backgroundColor:bz.map(z=>(z.nrw_pct||0)>27?RC_C[3]:RC_C[1]),borderRadius:4},
-      {label:'27% Target',type:'line',data:bz.map(()=>27),borderColor:'#94a3b8',borderDash:[5,5],pointRadius:0,fill:false},
+      {label:'NRW %',data:bz.map(z=>z.nrw_pct||0),backgroundColor:bz.map(z=>(z.nrw_pct||0)>IWA.nrw?RC_C[3]:RC_C[1]),borderRadius:4},
+      {label:'__NRW_TARGET__% Target',type:'line',data:bz.map(()=>IWA.nrw),borderColor:'#94a3b8',borderDash:[5,5],pointRadius:0,fill:false},
     ],{height:200,chartOptions:{scales:{y:{title:{display:true,text:'NRW %',font:{size:10}},suggestedMax:45}}}});
   }
   const trend=d.production_trend||[];
@@ -7659,9 +7673,9 @@ function _rcFinancial(d,narrative,alerts){
       trend.map(t=>[t.month,_rcMK(t.amt_billed),_rcMK(t.cash_collected),_rcPct(t.collection_rate)]),'Billed vs Collected');
     h+=_rcInsight(`The average monthly collection rate over ${trend.length} months is ${_rcPct(avgRate)}, ${avgRate>=90?'meeting':'below'} the IBNET 90% benchmark. The gap between billings and collections has ${((last.amt_billed||0)-(last.cash_collected||0))<((first.amt_billed||0)-(first.cash_collected||0))?'narrowed':'widened'} compared to the start of the period — debt ageing remains a cash-flow risk.`);
     h+=_rcChart('line',trend.map(t=>t.month),[
-      {label:'Billed (MK M)',data:trend.map(t=>(t.amt_billed||0)/1e6),borderColor:RC_C[0],backgroundColor:'rgba(59,130,246,.08)',tension:.4,fill:true},
-      {label:'Collected (MK M)',data:trend.map(t=>(t.cash_collected||0)/1e6),borderColor:RC_C[1],backgroundColor:'rgba(22,163,74,.08)',tension:.4,fill:true},
-    ],{height:200,chartOptions:{scales:{y:{title:{display:true,text:'MK Millions',font:{size:10}}}}}});
+      {label:'Billed (__CUR_SYM__ M)',data:trend.map(t=>(t.amt_billed||0)/1e6),borderColor:RC_C[0],backgroundColor:'rgba(59,130,246,.08)',tension:.4,fill:true},
+      {label:'Collected (__CUR_SYM__ M)',data:trend.map(t=>(t.cash_collected||0)/1e6),borderColor:RC_C[1],backgroundColor:'rgba(22,163,74,.08)',tension:.4,fill:true},
+    ],{height:200,chartOptions:{scales:{y:{title:{display:true,text:'__CUR_SYM__ Millions',font:{size:10}}}}}});
   }
   const bvObj=d.budget_variance||{};
   const bvRows=Object.entries(bvObj).filter(([,v])=>v&&v.budget!=null).map(([k,v])=>[
@@ -7697,7 +7711,7 @@ function _rcHRA(d,narrative,alerts){
     {val:_rcMK(s.wages),                    lbl:'Total Wages'},
   ]);
   if(s.perm_staff){
-    h+=_rcInsight(`SRWB employs ${_rcFmt(s.total_staff)} staff (${_rcFmt(s.perm_staff)} permanent, ${_rcFmt(s.temp_staff)} temporary). The staff-to-connections ratio of ${_rcFmt(s.staff_per_1000_conn,1)} per 1,000 connections is ${(s.staff_per_1000_conn||0)<=5?'within':'above'} the IBNET <5 benchmark. Each staff member accounts for ${_rcFmt(s.m3_per_staff,0)} m³ of production — higher values indicate greater operational efficiency.`);
+    h+=_rcInsight(`__ORG_SHORT__ employs ${_rcFmt(s.total_staff)} staff (${_rcFmt(s.perm_staff)} permanent, ${_rcFmt(s.temp_staff)} temporary). The staff-to-connections ratio of ${_rcFmt(s.staff_per_1000_conn,1)} per 1,000 connections is ${(s.staff_per_1000_conn||0)<=5?'within':'above'} the IBNET <5 benchmark. Each staff member accounts for ${_rcFmt(s.m3_per_staff,0)} m³ of production — higher values indicate greater operational efficiency.`);
     h+=_rcSectionHdr('HRA Summary');
     h+=_rcTable(['Indicator','Value','Benchmark'],[
       ['Permanent Staff',          _rcFmt(s.perm_staff),           '—'],
@@ -7818,10 +7832,10 @@ function _rcTreatmentEnergy(d,narrative,alerts){
     {val:_rcFmt(prod.power_kwh,0)+' kWh',lbl:'Total Power Used',sub:'YTD'},
     {val:_rcMK(prod.power_cost),lbl:'Power Cost',sub:'YTD'},
     {val:_rcMK(prod.chem_cost),lbl:'Chemical Cost',sub:'YTD'},
-    {val:_rcFmt(prod.chem_cost_per_m3,3)+' MWK/m³',lbl:'Chemical Cost/m³'},
+    {val:_rcFmt(prod.chem_cost_per_m3,3)+' __CURRENCY__/m³',lbl:'Chemical Cost/m³'},
     {val:_rcFmt(prod.power_fail_hours,0)+' hrs',lbl:'Power Failure Hours',sub:'YTD total'},
   ]);
-  if(prod.power_kwh) h+=_rcInsight(`Total power consumption of ${_rcFmt(prod.power_kwh,0)} kWh YTD translates to an energy intensity of ${_rcFmt(prod.energy_intensity_kwh_m3,3)} kWh/m³ (IWA benchmark ≤0.5 kWh/m³ for surface water). Power failures totalled ${_rcFmt(prod.power_fail_hours,0)} hours YTD. Chemical dosing cost ${_rcMK(prod.chem_cost)} YTD at ${_rcFmt(prod.chem_cost_per_m3,3)} MWK/m³ produced.`);
+  if(prod.power_kwh) h+=_rcInsight(`Total power consumption of ${_rcFmt(prod.power_kwh,0)} kWh YTD translates to an energy intensity of ${_rcFmt(prod.energy_intensity_kwh_m3,3)} kWh/m³ (IWA benchmark ≤0.5 kWh/m³ for surface water). Power failures totalled ${_rcFmt(prod.power_fail_hours,0)} hours YTD. Chemical dosing cost ${_rcMK(prod.chem_cost)} YTD at ${_rcFmt(prod.chem_cost_per_m3,3)} __CURRENCY__/m³ produced.`);
   const ei=d.energy_intensity_by_zone||[];
   if(ei.length){
     const worstEi=ei.reduce((a,b)=>(b.energy_intensity_kwh_m3||0)>(a.energy_intensity_kwh_m3||0)?b:a,ei[0]);
@@ -7857,7 +7871,7 @@ function _rcWaterQuality(d,narrative,alerts){
   let h=_rcSectionHdr('Water Treatment Quality Overview');
   h+=_rcKpiRow([
     {val:_rcMK(prod.chem_cost),lbl:'Chemical Spend',sub:'YTD'},
-    {val:_rcFmt(prod.chem_cost_per_m3,3)+' MWK/m³',lbl:'Chemical Cost/m³',sub:'Treatment efficiency'},
+    {val:_rcFmt(prod.chem_cost_per_m3,3)+' __CURRENCY__/m³',lbl:'Chemical Cost/m³',sub:'Treatment efficiency'},
     {val:_rcFmt((prod.total_vol_produced||0)/1e6,2)+'M m³',lbl:'Volume Treated',sub:'YTD'},
     {val:_rcFmt(prod.supply_hours_avg_daily,1)+'h/day',lbl:'Avg Supply Hours',sub:'≥20h target',tone:_rcTone(prod.supply_hours_avg_daily,20,16)},
     {val:_rcFmt(prod.pipe_breakdowns),lbl:'Pipe Breakdowns',sub:'YTD — contamination risk'},
@@ -7963,7 +7977,7 @@ function _rcStaffProductivity(d,narrative,alerts){
     {val:_rcFmt(s.total_staff),lbl:'Total Staff',sub:`${_rcFmt(s.perm_staff)} perm + ${_rcFmt(s.temp_staff)} temp`},
     {val:_rcMK(s.total_payroll),lbl:'Total Payroll',sub:'Staff costs + wages YTD'},
   ]);
-  if(s.m3_per_staff) h+=_rcInsight(`Each SRWB staff member is responsible for ${_rcFmt(s.m3_per_staff,0)} m³ of production YTD. The staff-to-connections ratio of ${_rcFmt(s.staff_per_1000_conn,1)} per 1,000 connections is ${(s.staff_per_1000_conn||0)<=5?'within':'above'} the IBNET benchmark of <5. Payroll (${_rcMK(s.total_payroll)}) represents ${_rcPct(s.payroll_cost_ratio)} of operating revenue.`);
+  if(s.m3_per_staff) h+=_rcInsight(`Each __ORG_SHORT__ staff member is responsible for ${_rcFmt(s.m3_per_staff,0)} m³ of production YTD. The staff-to-connections ratio of ${_rcFmt(s.staff_per_1000_conn,1)} per 1,000 connections is ${(s.staff_per_1000_conn||0)<=5?'within':'above'} the IBNET benchmark of <5. Payroll (${_rcMK(s.total_payroll)}) represents ${_rcPct(s.payroll_cost_ratio)} of operating revenue.`);
   const bz=d.staff_by_zone||[];
   if(bz.length){
     const mostP=bz.reduce((a,b)=>(b.m3_per_staff||0)>(a.m3_per_staff||0)?b:a,bz[0]);
@@ -8041,7 +8055,7 @@ function _rcProfitability(d,narrative,alerts){
     {val:_rcPct(s.collection_rate),lbl:'Collection Rate',sub:'IBNET >90%',tone:_rcTone(s.collection_rate,90,75)},
     {val:_rcFmt(s.dso)+'d',lbl:'DSO',sub:'IBNET <90d',tone:_rcTone(s.dso,90,120,true)},
   ]);
-  h+=_rcInsight(`${netSurplus>=0?'SRWB generated a net surplus':'SRWB recorded a net deficit'} of ${_rcMK(Math.abs(netSurplus))} YTD (operating ratio: ${_rcFmt(s.op_ratio,2)}). The World Bank benchmark for a financially sustainable utility is an operating ratio <1.0 — ${(s.op_ratio||0)<1?'SRWB meets this standard':'cost reduction or revenue growth is required'}. Collection rate of ${_rcPct(s.collection_rate)} ${(s.collection_rate||0)>=90?'meets':'is below'} the IBNET 90% standard.`);
+  h+=_rcInsight(`${netSurplus>=0?'__ORG_SHORT__ generated a net surplus':'__ORG_SHORT__ recorded a net deficit'} of ${_rcMK(Math.abs(netSurplus))} YTD (operating ratio: ${_rcFmt(s.op_ratio,2)}). The World Bank benchmark for a financially sustainable utility is an operating ratio <1.0 — ${(s.op_ratio||0)<1?'__ORG_SHORT__ meets this standard':'cost reduction or revenue growth is required'}. Collection rate of ${_rcPct(s.collection_rate)} ${(s.collection_rate||0)>=90?'meets':'is below'} the IBNET 90% standard.`);
   const bz=d.by_zone||[];
   if(bz.length){
     const zp=bz.map(z=>({...z,net_surplus:(z.amt_billed||0)-(z.op_cost||0),op_ratio:z.amt_billed?(z.op_cost||0)/z.amt_billed:0}));
@@ -8058,7 +8072,7 @@ function _rcProfitability(d,narrative,alerts){
     h+=_rcChart('bar',zp.map(z=>z.zone),[
       {label:'Revenue',data:zp.map(z=>(z.amt_billed||0)/1e6),backgroundColor:RC_C[0],borderRadius:4},
       {label:'Op Cost',data:zp.map(z=>(z.op_cost||0)/1e6),backgroundColor:RC_C[3],borderRadius:4},
-    ],{height:200,chartOptions:{scales:{y:{title:{display:true,text:'MK Millions',font:{size:10}}}}}});
+    ],{height:200,chartOptions:{scales:{y:{title:{display:true,text:'__CUR_SYM__ Millions',font:{size:10}}}}}});
   }
   const cb=d.cost_breakdown||{};
   if(cb.op_cost){
@@ -8076,9 +8090,9 @@ function _rcProfitability(d,narrative,alerts){
     h+=_rcTable(['Month','Billed','Collected','Collection Rate'],
       trend.map(t=>[t.month,_rcMK(t.amt_billed),_rcMK(t.cash_collected),_rcPct(t.collection_rate)]),'Revenue Trend');
     h+=_rcChart('line',trend.map(t=>t.month),[
-      {label:'Billed (MK M)',data:trend.map(t=>(t.amt_billed||0)/1e6),borderColor:RC_C[0],backgroundColor:'rgba(59,130,246,.08)',tension:.4,fill:true},
-      {label:'Collected (MK M)',data:trend.map(t=>(t.cash_collected||0)/1e6),borderColor:RC_C[1],backgroundColor:'rgba(22,163,74,.08)',tension:.4,fill:true},
-    ],{height:200,chartOptions:{scales:{y:{title:{display:true,text:'MK Millions',font:{size:10}}}}}});
+      {label:'Billed (__CUR_SYM__ M)',data:trend.map(t=>(t.amt_billed||0)/1e6),borderColor:RC_C[0],backgroundColor:'rgba(59,130,246,.08)',tension:.4,fill:true},
+      {label:'Collected (__CUR_SYM__ M)',data:trend.map(t=>(t.cash_collected||0)/1e6),borderColor:RC_C[1],backgroundColor:'rgba(22,163,74,.08)',tension:.4,fill:true},
+    ],{height:200,chartOptions:{scales:{y:{title:{display:true,text:'__CUR_SYM__ Millions',font:{size:10}}}}}});
   }
   h+=_rcAlertsPanel(alerts);h+=_rcNarrative(narrative);return h;
 }
@@ -8124,9 +8138,9 @@ function _rcSegmentRevenue(arr,narrative,alerts){
   h+=_rcTable(['Month','Active Customers','Billed','Collected','Coll. Rate'],
     withData.map(m=>[m.month,_rcFmt(m.active_customers),_rcMK(m.amt_billed),_rcMK(m.cash_collected),_rcPct(m.amt_billed?m.cash_collected/m.amt_billed*100:0)]),'Billing Trend');
   h+=_rcChart('line',withData.map(m=>m.month),[
-    {label:'Billed (MK M)',data:withData.map(m=>(m.amt_billed||0)/1e6),borderColor:RC_C[0],backgroundColor:'rgba(59,130,246,.08)',tension:.4,fill:true},
-    {label:'Collected (MK M)',data:withData.map(m=>(m.cash_collected||0)/1e6),borderColor:RC_C[1],backgroundColor:'rgba(22,163,74,.08)',tension:.4,fill:true},
-  ],{height:200,chartOptions:{scales:{y:{title:{display:true,text:'MK Millions',font:{size:10}}}}}});
+    {label:'Billed (__CUR_SYM__ M)',data:withData.map(m=>(m.amt_billed||0)/1e6),borderColor:RC_C[0],backgroundColor:'rgba(59,130,246,.08)',tension:.4,fill:true},
+    {label:'Collected (__CUR_SYM__ M)',data:withData.map(m=>(m.cash_collected||0)/1e6),borderColor:RC_C[1],backgroundColor:'rgba(22,163,74,.08)',tension:.4,fill:true},
+  ],{height:200,chartOptions:{scales:{y:{title:{display:true,text:'__CUR_SYM__ Millions',font:{size:10}}}}}});
   h+=_rcAlertsPanel(alerts);h+=_rcNarrative(narrative);return h;
 }
 
@@ -8137,23 +8151,23 @@ function _rcNRWAnalysis(d,narrative,alerts){
   h+=_rcKpiRow([
     {val:_rcFmt((s.vol_produced||0)/1e6,2)+'M m³',   lbl:'Total Produced'},
     {val:_rcFmt((s.nrw_vol||0)/1e6,2)+'M m³',         lbl:'Total NRW Volume'},
-    {val:_rcPct(s.nrw_pct),  lbl:'NRW Rate', sub:'SRWB <27%', tone:_rcTone(s.nrw_pct,27,35,true)},
-    {val:(d.zones_above_target||[]).length+' zones',   lbl:'Above 27% Target'},
+    {val:_rcPct(s.nrw_pct),  lbl:'NRW Rate', sub:'__ORG_SHORT__ <__NRW_TARGET__%', tone:_rcTone(s.nrw_pct,IWA.nrw,35,true)},
+    {val:(d.zones_above_target||[]).length+' zones',   lbl:'Above __NRW_TARGET__% Target'},
     {val:_rcMK(s.nrw_cost_estimate),                   lbl:'NRW Cost Estimate'},
   ]);
-  if(s.nrw_pct!=null) h+=_rcInsight(`The system-wide NRW rate is ${_rcPct(s.nrw_pct)}, representing ${_rcFmt((s.nrw_vol||0)/1e6,2)}M m³ of water unaccounted for in the network. At the prevailing tariff, this translates to an estimated financial loss of ${_rcMK(s.nrw_cost_estimate)} per annum. The SRWB five-year target requires reducing losses to 25% by FY2027/28.`);
+  if(s.nrw_pct!=null) h+=_rcInsight(`The system-wide NRW rate is ${_rcPct(s.nrw_pct)}, representing ${_rcFmt((s.nrw_vol||0)/1e6,2)}M m³ of water unaccounted for in the network. At the prevailing tariff, this translates to an estimated financial loss of ${_rcMK(s.nrw_cost_estimate)} per annum. Sustained reduction toward the strategic-plan NRW target is required.`);
   const bz=d.nrw_by_zone||[];
   if(bz.length){
-    const above=bz.filter(z=>(z.nrw_pct||0)>27).length;
+    const above=bz.filter(z=>(z.nrw_pct||0)>IWA.nrw).length;
     const worst=bz.reduce((a,b)=>(b.nrw_pct||0)>(a.nrw_pct||0)?b:a,bz[0]);
-    h+=_rcSectionHdr('NRW by Zone vs 27% Target');
+    h+=_rcSectionHdr('NRW by Zone vs __NRW_TARGET__% Target');
     h+=_rcTable(['Zone','Vol Produced (m³)','NRW Volume (m³)','NRW %','Gap to Target','Status'],
       bz.map(z=>[z.zone,_rcFmt(z.vol_produced),_rcFmt(z.nrw_vol),_rcPct(z.nrw_pct),
-        Math.abs(z.nrw_pct-27).toFixed(1)+'pp',z.nrw_pct>27?'⚠ Above':'✓ On target']),'NRW by Zone');
-    h+=_rcInsight(`${above} of ${bz.length} zones exceed the 27% NRW target. ${worst.zone} is the worst-performing zone at ${_rcPct(worst.nrw_pct)}, which is ${(worst.nrw_pct-27).toFixed(1)}pp above target. A structured leak detection and pressure management programme in this zone is the highest-priority intervention.`);
+        Math.abs(z.nrw_pct-IWA.nrw).toFixed(1)+'pp',z.nrw_pct>IWA.nrw?'⚠ Above':'✓ On target']),'NRW by Zone');
+    h+=_rcInsight(`${above} of ${bz.length} zones exceed the __NRW_TARGET__% NRW target. ${worst.zone} is the worst-performing zone at ${_rcPct(worst.nrw_pct)}, which is ${(worst.nrw_pct-IWA.nrw).toFixed(1)}pp above target. A structured leak detection and pressure management programme in this zone is the highest-priority intervention.`);
     h+=_rcChart('bar',bz.map(z=>z.zone),[
-      {label:'NRW %',data:bz.map(z=>z.nrw_pct||0),backgroundColor:bz.map(z=>(z.nrw_pct||0)>27?RC_C[3]:RC_C[1]),borderRadius:4},
-      {label:'27% Target',type:'line',data:bz.map(()=>27),borderColor:'#94a3b8',borderDash:[5,5],pointRadius:0,fill:false},
+      {label:'NRW %',data:bz.map(z=>z.nrw_pct||0),backgroundColor:bz.map(z=>(z.nrw_pct||0)>IWA.nrw?RC_C[3]:RC_C[1]),borderRadius:4},
+      {label:'__NRW_TARGET__% Target',type:'line',data:bz.map(()=>IWA.nrw),borderColor:'#94a3b8',borderDash:[5,5],pointRadius:0,fill:false},
     ],{height:200,chartOptions:{scales:{y:{title:{display:true,text:'NRW %',font:{size:10}},suggestedMax:45}}}});
   }
   const comp=d.nrw_components||{};
@@ -8179,10 +8193,10 @@ function _rcNRWAnalysis(d,narrative,alerts){
     h+=_rcSectionHdr('NRW Rate Monthly Trend');
     h+=_rcTable(['Month','NRW %','NRW Volume (m³)','Vol Produced (m³)'],
       trend.map(t=>[t.month,_rcPct(t.nrw_pct),_rcFmt(t.nrw_vol),_rcFmt(t.vol_produced)]),'NRW Trend');
-    h+=_rcInsight(`NRW has ${(last.nrw_pct||0)<=(first.nrw_pct||0)?'trended downward (improving)':'trended upward (worsening)'} from ${_rcPct(first.nrw_pct)} in ${first.month} to ${_rcPct(last.nrw_pct)} in ${last.month}. ${trend.filter(t=>(t.nrw_pct||0)>27).length} of ${trend.length} months were above the 27% target.`);
+    h+=_rcInsight(`NRW has ${(last.nrw_pct||0)<=(first.nrw_pct||0)?'trended downward (improving)':'trended upward (worsening)'} from ${_rcPct(first.nrw_pct)} in ${first.month} to ${_rcPct(last.nrw_pct)} in ${last.month}. ${trend.filter(t=>(t.nrw_pct||0)>IWA.nrw).length} of ${trend.length} months were above the __NRW_TARGET__% target.`);
     h+=_rcChart('line',trend.map(t=>t.month),[
       {label:'NRW %',data:trend.map(t=>t.nrw_pct||0),borderColor:RC_C[3],backgroundColor:'rgba(220,38,38,.08)',tension:.4,fill:true},
-      {label:'27% Target',data:trend.map(()=>27),borderColor:'#94a3b8',borderDash:[5,5],pointRadius:0,fill:false},
+      {label:'__NRW_TARGET__% Target',data:trend.map(()=>IWA.nrw),borderColor:'#94a3b8',borderDash:[5,5],pointRadius:0,fill:false},
       {label:'25% 5-yr Target',data:trend.map(()=>25),borderColor:RC_C[1],borderDash:[3,3],pointRadius:0,fill:false},
     ],{height:200,chartOptions:{scales:{y:{beginAtZero:false,suggestedMin:18,suggestedMax:42,title:{display:true,text:'NRW %',font:{size:10}}}}}});
   }
@@ -8194,7 +8208,7 @@ function _rcNRWAnalysis(d,narrative,alerts){
 /* ── Scheme Performance ──────────────────────────────────────────────────── */
 function _rcSchemePerf(d,narrative,alerts){
   const schemes=d.schemes||[], tot=d.totals||{};
-  const NRW_TARGET=d.nrw_target||27;
+  const NRW_TARGET=d.nrw_target||IWA.nrw;
 
   /* ── 1. Overview KPI tiles ── */
   let h=_rcSectionHdr(`Scheme Performance Overview — ${tot.scheme_count||schemes.length} Schemes`);
@@ -8232,7 +8246,7 @@ function _rcSchemePerf(d,narrative,alerts){
       _rcMK(s.total_debtors),
       `${_rcFmt(s.dso)} d`,
       _rcFmt(s.total_breakdowns),
-      s.op_cost_per_m3?`MWK ${_rcFmt(s.op_cost_per_m3,2)}`:'—',
+      s.op_cost_per_m3?`__CURRENCY__ ${_rcFmt(s.op_cost_per_m3,2)}`:'—',
     ]);
     h+=_rcTable(['Scheme','NRW','Vol (m³)','Customers','Billed','Collected','Coll.%','Debtors','DSO','Breakdowns','Op/m³'],tRows,`${zone} Schemes`);
   }
@@ -8444,7 +8458,7 @@ function _rcRecommendations(d,narrative){
       ['Active Customers',  _rcFmt(kpi.active_customers)],
       ['Stuck Meters',      _rcFmt(kpi.stuck_meters)+' ('+_rcPct(kpi.stuck_pct)+')'],
       ['Days to Connect',   kpi.days_to_connect?_rcFmt(kpi.days_to_connect,1)+'d':'N/A'],
-      ['Total Debtors',     'MK '+_rcFmt(kpi.total_debtors_M,1)+'M'],
+      ['Total Debtors',     '__CUR_SYM__ '+_rcFmt(kpi.total_debtors_M,1)+'M'],
       ['Latest Month',      kpi.latest_month],
       ['Months Analysed',   _rcFmt(kpi.months_analysed)],
     ].filter(r=>r[1]&&r[1]!=='—'),'KPI Snapshot');
@@ -8475,24 +8489,24 @@ function _rcMonthlyDigest(d,narrative,alerts){
   h+=_rcKpiRow([
     {val:_rcMK(fs.total_revenue),                              lbl:'Revenue',        sub:'YTD'},
     {val:_rcPct(ek.collection_rate), lbl:'Collection Rate',   sub:'>90%',   tone:_rcTone(ek.collection_rate,90,75)},
-    {val:_rcPct(ek.nrw_pct),         lbl:'NRW Rate',          sub:'<27%',   tone:_rcTone(ek.nrw_pct,27,35,true)},
+    {val:_rcPct(ek.nrw_pct),         lbl:'NRW Rate',          sub:'<__NRW_TARGET__%',   tone:_rcTone(ek.nrw_pct,IWA.nrw,35,true)},
     {val:_rcFmt(ek.op_ratio,2),      lbl:'Operating Ratio',   sub:'<1.0',   tone:_rcTone(ek.op_ratio,1.0,1.2,true)},
     {val:_rcFmt(ek.dso)+'d',         lbl:'DSO',               sub:'<90d',   tone:_rcTone(ek.dso,90,120,true)},
     {val:_rcFmt((ek.vol_produced||0)/1e6,2)+'M m³',           lbl:'Production'},
   ]);
   const issues=[];
   if((ek.collection_rate||0)<90) issues.push(`collection rate below 90% (${_rcPct(ek.collection_rate)})`);
-  if((ek.nrw_pct||0)>27) issues.push(`NRW above 27% target (${_rcPct(ek.nrw_pct)})`);
+  if((ek.nrw_pct||0)>IWA.nrw) issues.push(`NRW above __NRW_TARGET__% target (${_rcPct(ek.nrw_pct)})`);
   if((ek.op_ratio||0)>1.0) issues.push(`operating ratio above 1.0 (${_rcFmt(ek.op_ratio,2)})`);
   if((ek.dso||0)>90) issues.push(`DSO above 90 days (${_rcFmt(ek.dso)}d)`);
-  h+=_rcInsight(issues.length?`This period highlights ${issues.length} key performance concern${issues.length>1?'s':''}: ${issues.join('; ')}. Immediate management attention is required to address these gaps against IBNET and SRWB benchmarks.`:`All headline KPIs are within benchmark ranges for this period — ${_rcMK(fs.net_surplus||0)} net surplus, ${_rcPct(fs.collection_rate)} collection rate, and ${_rcPct(ek.nrw_pct)} NRW. Maintain operational discipline to sustain this trajectory.`);
+  h+=_rcInsight(issues.length?`This period highlights ${issues.length} key performance concern${issues.length>1?'s':''}: ${issues.join('; ')}. Immediate management attention is required to address these gaps against IBNET and __ORG_SHORT__ benchmarks.`:`All headline KPIs are within benchmark ranges for this period — ${_rcMK(fs.net_surplus||0)} net surplus, ${_rcPct(fs.collection_rate)} collection rate, and ${_rcPct(ek.nrw_pct)} NRW. Maintain operational discipline to sustain this trajectory.`);
   h+=_rcSectionHdr('Performance Highlights');
   h+=_rcTable(['Indicator','Value','Benchmark'],[
     ['Total Revenue',       _rcMK(fs.total_revenue),    '—'],
     ['Cash Collected',      _rcMK(fs.cash_collected),   '—'],
     ['Net Surplus',         _rcMK(fs.net_surplus),      '—'],
     ['Collection Rate',     _rcPct(fs.collection_rate), '>90% (IBNET)'],
-    ['NRW Rate',            _rcPct(ek.nrw_pct),         '<27% (SRWB)'],
+    ['NRW Rate',            _rcPct(ek.nrw_pct),         '<__NRW_TARGET__% (__ORG_SHORT__)'],
     ['Operating Ratio',     _rcFmt(ek.op_ratio,2),      '<1.0 (World Bank)'],
     ['Total Breakdowns',    _rcFmt(ek.total_breakdowns),'—'],
     ['Active Customers',    _rcFmt(ek.active_customers),'—'],
@@ -8502,9 +8516,9 @@ function _rcMonthlyDigest(d,narrative,alerts){
     h+=_rcSectionHdr('Zone Snapshot');
     h+=_rcTable(['Zone','NRW %','Collection Rate','Op Ratio'],
       bz.map(z=>[z.zone,_rcPct(z.nrw_pct),_rcPct(z.collection_rate),_rcFmt(z.op_ratio,2)]),'Zone Snapshot');
-    h+=_rcInsight(`${bz.filter(z=>(z.nrw_pct||0)>27).length} zone(s) exceed the NRW target and ${bz.filter(z=>(z.collection_rate||0)<90).length} are below the collection benchmark. Zone-level attention is needed to lift system-wide performance.`);
+    h+=_rcInsight(`${bz.filter(z=>(z.nrw_pct||0)>IWA.nrw).length} zone(s) exceed the NRW target and ${bz.filter(z=>(z.collection_rate||0)<90).length} are below the collection benchmark. Zone-level attention is needed to lift system-wide performance.`);
     h+=_rcChart('bar',bz.map(z=>z.zone),[
-      {label:'NRW %',data:bz.map(z=>z.nrw_pct||0),backgroundColor:bz.map(z=>(z.nrw_pct||0)>27?RC_C[3]:RC_C[1]),borderRadius:4},
+      {label:'NRW %',data:bz.map(z=>z.nrw_pct||0),backgroundColor:bz.map(z=>(z.nrw_pct||0)>IWA.nrw?RC_C[3]:RC_C[1]),borderRadius:4},
       {label:'Collection %',type:'line',data:bz.map(z=>z.collection_rate||0),borderColor:RC_C[0],tension:.3,yAxisID:'y1'},
     ],{height:195,chartOptions:{scales:{y:{suggestedMax:50,title:{display:true,text:'NRW %',font:{size:10}}},y1:{position:'right',grid:{drawOnChartArea:false},min:0,max:100,title:{display:true,text:'Collection %',font:{size:10}}}}}});
   }
@@ -8519,13 +8533,13 @@ function _rcManagementDashboard(d,narrative,alerts){
   let h=_rcSectionHdr('Operations Overview');
   h+=_rcKpiRow([
     {val:_rcFmt((prod.total_vol_produced||0)/1e6,2)+'M m³', lbl:'Vol Produced',    sub:'YTD'},
-    {val:_rcPct(prod.nrw_pct),                               lbl:'NRW Rate',        sub:'<27%',     tone:_rcTone(prod.nrw_pct,27,35,true)},
+    {val:_rcPct(prod.nrw_pct),                               lbl:'NRW Rate',        sub:'<__NRW_TARGET__%',     tone:_rcTone(prod.nrw_pct,IWA.nrw,35,true)},
     {val:_rcFmt(prod.supply_hours_avg_daily,1)+'h/day',      lbl:'Supply Hours',    sub:'≥20h/day', tone:_rcTone(prod.supply_hours_avg_daily,20,16)},
     {val:_rcFmt(prod.pipe_breakdowns)+' / '+_rcFmt(prod.pump_breakdowns),lbl:'Breakdowns',sub:'Pipe / Pump'},
     {val:_rcFmt(prod.energy_intensity_kwh_m3,2)+' kWh/m³',  lbl:'Energy Intensity'},
     {val:_rcFmt(prod.power_fail_hours),                      lbl:'Power Fail Hours'},
   ]);
-  if(prod.nrw_pct!=null) h+=_rcInsight(`Operations are running at ${_rcFmt(prod.supply_hours_avg_daily,1)}h/day supply (${(prod.supply_hours_avg_daily||0)>=20?'meeting':'below'} the ≥20h target) with ${_rcPct(prod.nrw_pct)} NRW — ${(prod.nrw_pct||0)>27?'above':'within'} the 27% threshold. A total of ${_rcFmt((prod.pipe_breakdowns||0)+(prod.pump_breakdowns||0))} breakdown incidents have been recorded YTD, causing ${_rcFmt(prod.power_fail_hours)} power-failure hours. Energy intensity of ${_rcFmt(prod.energy_intensity_kwh_m3,2)} kWh/m³ reflects treatment efficiency.`);
+  if(prod.nrw_pct!=null) h+=_rcInsight(`Operations are running at ${_rcFmt(prod.supply_hours_avg_daily,1)}h/day supply (${(prod.supply_hours_avg_daily||0)>=20?'meeting':'below'} the ≥20h target) with ${_rcPct(prod.nrw_pct)} NRW — ${(prod.nrw_pct||0)>IWA.nrw?'above':'within'} the __NRW_TARGET__% threshold. A total of ${_rcFmt((prod.pipe_breakdowns||0)+(prod.pump_breakdowns||0))} breakdown incidents have been recorded YTD, causing ${_rcFmt(prod.power_fail_hours)} power-failure hours. Energy intensity of ${_rcFmt(prod.energy_intensity_kwh_m3,2)} kWh/m³ reflects treatment efficiency.`);
   const bz=d.production_by_zone||[];
   if(bz.length){
     const topZone=bz.reduce((a,b)=>(b.vol_produced||0)>(a.vol_produced||0)?b:a,bz[0]);
@@ -8569,9 +8583,9 @@ function _rcServiceDelivery(d,narrative,alerts){
     {val:_rcFmt(prod.pipe_breakdowns),                   lbl:'Pipe Breakdowns',  tone:_rcTone(prod.pipe_breakdowns,30,60,true)},
     {val:_rcFmt(prod.pump_breakdowns),                   lbl:'Pump Breakdowns'},
     {val:_rcFmt((prod.total_vol_produced||0)/1e6,2)+'M m³',lbl:'Vol Produced'},
-    {val:_rcPct(prod.nrw_pct),                           lbl:'NRW Rate',         sub:'<27%',tone:_rcTone(prod.nrw_pct,27,35,true)},
+    {val:_rcPct(prod.nrw_pct),                           lbl:'NRW Rate',         sub:'<__NRW_TARGET__%',tone:_rcTone(prod.nrw_pct,IWA.nrw,35,true)},
   ]);
-  if(prod.supply_hours_avg_daily!=null) h+=_rcInsight(`Network supply continuity averages ${_rcFmt(prod.supply_hours_avg_daily,1)} hours/day — ${(prod.supply_hours_avg_daily||0)>=20?'achieving':'falling short of'} the SRWB ≥20h/day target. ${_rcFmt(prod.dev_lines_total)} metres of new pipeline have been extended YTD, expanding access. The combined pipe and pump breakdown count of ${_rcFmt((prod.pipe_breakdowns||0)+(prod.pump_breakdowns||0))} directly impacts service continuity and should be tracked against the previous year.`);
+  if(prod.supply_hours_avg_daily!=null) h+=_rcInsight(`Network supply continuity averages ${_rcFmt(prod.supply_hours_avg_daily,1)} hours/day — ${(prod.supply_hours_avg_daily||0)>=20?'achieving':'falling short of'} the __ORG_SHORT__ ≥20h/day target. ${_rcFmt(prod.dev_lines_total)} metres of new pipeline have been extended YTD, expanding access. The combined pipe and pump breakdown count of ${_rcFmt((prod.pipe_breakdowns||0)+(prod.pump_breakdowns||0))} directly impacts service continuity and should be tracked against the previous year.`);
   const ext=d.pipe_extensions||{};
   const extRows=Object.entries(ext).filter(([k,v])=>k!=='dev_lines_total'&&v>0)
     .map(([k,v])=>[k.replace('dev_lines_','').replace('mm',' mm').toUpperCase(),_rcFmt(v)+' m']);
@@ -8662,23 +8676,23 @@ function _rcCostAnalysis(d,narrative,alerts){
     h+=_rcTable(['Month','Revenue Billed','Cash Collected','Collection Rate'],
       trend.map(t=>[t.month,_rcMK(t.amt_billed),_rcMK(t.cash_collected),_rcPct(t.collection_rate)]),'Revenue Trend');
     h+=_rcChart('line',trend.map(t=>t.month),[
-      {label:'Billed (MK M)',data:trend.map(t=>(t.amt_billed||0)/1e6),borderColor:RC_C[0],backgroundColor:'rgba(59,130,246,.08)',tension:.4,fill:true},
-      {label:'Collected (MK M)',data:trend.map(t=>(t.cash_collected||0)/1e6),borderColor:RC_C[1],backgroundColor:'rgba(22,163,74,.08)',tension:.4,fill:true},
-    ],{height:195,chartOptions:{scales:{y:{title:{display:true,text:'MK Millions',font:{size:10}}}}}});
+      {label:'Billed (__CUR_SYM__ M)',data:trend.map(t=>(t.amt_billed||0)/1e6),borderColor:RC_C[0],backgroundColor:'rgba(59,130,246,.08)',tension:.4,fill:true},
+      {label:'Collected (__CUR_SYM__ M)',data:trend.map(t=>(t.cash_collected||0)/1e6),borderColor:RC_C[1],backgroundColor:'rgba(22,163,74,.08)',tension:.4,fill:true},
+    ],{height:195,chartOptions:{scales:{y:{title:{display:true,text:'__CUR_SYM__ Millions',font:{size:10}}}}}});
   }
   h+=_rcAlertsPanel(alerts);
   h+=_rcNarrative(narrative);
   return h;
 }
 
-/* ── Strategic Plan Progress (SRWB 2023-2028) ───────────────────────────── */
+/* ── Strategic Plan Progress (__ORG_SHORT__ 2023-2028) ───────────────────────────── */
 function _rcStrategicPlan(d,narrative,alerts){
   const sum=d.summary||{}, items=d.items||[];
   const stColor={on_track:'#16a34a',watch:'#ca8a04',behind:'#dc2626',no_data:'#94a3b8'};
   const stLabel={on_track:'✓ On Track',watch:'⚠ Watch',behind:'✗ Behind',no_data:'— No Data'};
   let h=_rcSectionHdr('Strategic Plan Summary');
   h+=_rcKpiRow([
-    {val:_rcFmt(sum.total),    lbl:'Total KPIs',   sub:d.plan||'SRWB 2023-2028'},
+    {val:_rcFmt(sum.total),    lbl:'Total KPIs',   sub:d.plan||'__ORG_SHORT__ 2023-2028'},
     {val:_rcFmt(sum.on_track), lbl:'On Track',     tone:'up'},
     {val:_rcFmt(sum.watch),    lbl:'Watch',        tone:'nt'},
     {val:_rcFmt(sum.behind),   lbl:'Behind',       tone:'dn'},
@@ -8773,8 +8787,8 @@ function _rcBudgetVariance(d,narrative,alerts){
     h+=_rcSectionHdr('Operational Metrics vs Target');
     h+=_rcTable(['Metric','Budget/Target','Actual','Variance','Unit','IWA PI'],
       opRows.map(r=>[r.metric,
-        _rcFmt(r.budget_ytd,0)+(r.unit&&r.unit!=='MWK'?' '+r.unit:''),
-        _rcFmt(r.actual,0)+(r.unit&&r.unit!=='MWK'?' '+r.unit:''),
+        _rcFmt(r.budget_ytd,0)+(r.unit&&r.unit!=='__CURRENCY__'?' '+r.unit:''),
+        _rcFmt(r.actual,0)+(r.unit&&r.unit!=='__CURRENCY__'?' '+r.unit:''),
         r.variance!=null?(r.variance>=0?'+'+_rcFmt(r.variance,0):_rcFmt(r.variance,0)):'—',
         r.unit||'—',r.iwa_pi||'—']),'Operational Variance');
   }
@@ -8793,9 +8807,9 @@ function _rcBudgetVariance(d,narrative,alerts){
     h+=_rcTable(['Zone','Actual Sales','Budget Sales','Variance','NRW %','Collection Rate'],
       zr.map(z=>[z.zone,_rcMK(z.actual_sales),_rcMK(z.budget_sales_ytd),_rcMK(z.sales_variance),_rcPct(z.actual_nrw_pct),_rcPct(z.collection_rate)]),'Zone Variance');
     h+=_rcChart('bar',zr.map(z=>z.zone),[
-      {label:'Budget Sales (MK M)',data:zr.map(z=>(z.budget_sales_ytd||0)/1e6),backgroundColor:RC_C[0]+'88',borderRadius:4},
-      {label:'Actual Sales (MK M)',data:zr.map(z=>(z.actual_sales||0)/1e6),backgroundColor:RC_C[1],borderRadius:4},
-    ],{height:195,chartOptions:{scales:{y:{title:{display:true,text:'MK Millions',font:{size:10}}}}}});
+      {label:'Budget Sales (__CUR_SYM__ M)',data:zr.map(z=>(z.budget_sales_ytd||0)/1e6),backgroundColor:RC_C[0]+'88',borderRadius:4},
+      {label:'Actual Sales (__CUR_SYM__ M)',data:zr.map(z=>(z.actual_sales||0)/1e6),backgroundColor:RC_C[1],borderRadius:4},
+    ],{height:195,chartOptions:{scales:{y:{title:{display:true,text:'__CUR_SYM__ Millions',font:{size:10}}}}}});
   }
   const dec=d.decomposition||{};
   if(dec.interpretation) h+=`<div class="rc-tbl-note" style="margin-top:12px;padding:10px 14px">${dec.interpretation}</div>`;
@@ -8822,7 +8836,7 @@ function _rcCustomerConnections(arr,narrative,alerts){
     {val:_rcFmt(latest.pop_supplied),     lbl:'Population Served', sub:'Latest snapshot'},
     {val:_rcFmt(withData.length),         lbl:'Months with Data'},
   ]);
-  h+=_rcInsight(`The customer base ${growth>=0?'grew':'shrank'} by ${_rcFmt(Math.abs(growth))} connections from ${_rcFmt(first.active_customers)} in ${first.month} to ${_rcFmt(latest.active_customers)} in ${latest.month}. Postpaid customers account for ${_rcPct(latest.postpaid_pct)} of the total base, with ${_rcFmt(totalNew)} new connections added YTD. Growing the connected base is central to the Business Growth focus area of the SRWB 2023-2028 Strategic Plan.`);
+  h+=_rcInsight(`The customer base ${growth>=0?'grew':'shrank'} by ${_rcFmt(Math.abs(growth))} connections from ${_rcFmt(first.active_customers)} in ${first.month} to ${_rcFmt(latest.active_customers)} in ${latest.month}. Postpaid customers account for ${_rcPct(latest.postpaid_pct)} of the total base, with ${_rcFmt(totalNew)} new connections added YTD. Growing the connected base is central to the Business Growth focus area of the __ORG_SHORT__ 2023-2028 Strategic Plan.`);
   h+=_rcChart('line',withData.map(m=>m.month),[
     {label:'Active Customers',data:withData.map(m=>m.active_customers||0),borderColor:RC_C[0],backgroundColor:'rgba(59,130,246,.08)',tension:.4,fill:true},
     {label:'New Connections',type:'bar',data:withData.map(m=>m.new_connections||0),backgroundColor:RC_C[1]+'88',yAxisID:'y1'},

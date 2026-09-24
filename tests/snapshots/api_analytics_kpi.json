@@ -1,0 +1,25 @@
+{
+ "json": {
+  "active_customers": 16341,
+  "amt_billed": 0,
+  "cash_collected": 0,
+  "chem_cost": 0,
+  "collection_rate": 0,
+  "meter_rental": 0,
+  "new_connections": 573281,
+  "nrw_m3": 93778.3,
+  "nrw_pct": 30.65,
+  "op_cost": 0,
+  "pop_supplied": 19998,
+  "power_cost": 0,
+  "revenue_water": 212177.7,
+  "service_charge": 0,
+  "stuck_meters": 22436,
+  "supply_hours_avg": 1181.5,
+  "total_debtors": 0,
+  "total_records": 325,
+  "total_sales": 0,
+  "vol_produced": 305956.0
+ },
+ "status": 200
+}

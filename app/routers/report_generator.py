@@ -1,7 +1,7 @@
 """
 routers/report_generator.py — Report Centre
 ============================================
-Eight structured report endpoints for the SRWB Report Centre feature.
+Eight structured report endpoints for the Report Centre feature.
 Each endpoint accepts query params: year (int), zones (str CSV), months (str CSV).
 
 All endpoints query the actual database via the Record model and reuse the
@@ -26,6 +26,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
+from app.core.tenant import tenant as _tenant
 from app.database import BudgetLine, get_db
 from app.routers.panels import (
     ZONE_COLORS,
@@ -45,8 +46,8 @@ from app.utils import MONTHS_ORDER as FY_MONTHS, csv_list
 
 router = APIRouter(prefix="/api/reports", tags=["Report Centre"])
 
-# SRWB NRW target percentage
-NRW_TARGET_PCT = 27.0
+# NRW target percentage (tenant configuration: targets.nrw_pct)
+NRW_TARGET_PCT = _tenant.target("nrw_pct", 25.0)
 
 
 # ── Internal helpers ───────────────────────────────────────────────────────────
@@ -822,7 +823,7 @@ def report_nrw_analysis(
 ):
     """
     NRW Analysis — NRW volume and % by zone, monthly NRW trend,
-    NRW components, zones above/below SRWB 27% target.
+    NRW components, zones above/below the tenant NRW target.
     """
     rows, bz, mo = _base(zones, None, months, year, db)
 
@@ -1120,7 +1121,7 @@ def report_scorecard(
             "score": ops_score,
             "grade": _grade(ops_score),
             "metrics": [
-                {"name": "NRW Rate",           "value": f"{nrw_pct}%",           "benchmark": "<27% (SRWB target)", "flag": "GOOD" if nrw_pct <= 27 else ("WATCH" if nrw_pct <= 35 else "HIGH")},
+                {"name": "NRW Rate",           "value": f"{nrw_pct}%",           "benchmark": f"<{NRW_TARGET_PCT:g}% ({_tenant.identity.short_name} target)", "flag": "GOOD" if nrw_pct <= NRW_TARGET_PCT else ("WATCH" if nrw_pct <= 35 else "HIGH")},
                 {"name": "Supply Hours/Day",   "value": f"{supply_daily:.1f}h",  "benchmark": "≥20h/day",           "flag": "GOOD" if supply_daily >= 20 else ("WATCH" if supply_daily >= 16 else "HIGH")},
                 {"name": "Vol Produced (m³)",  "value": f"{vol_prod:,.0f}",      "benchmark": "YTD total",          "flag": ""},
             ],
@@ -1181,7 +1182,7 @@ def report_recommendations(
     """
     AI Recommendations — rule-based prioritised action items derived from
     KPI analysis. Groups findings into Critical / Warning / Monitoring tiers
-    with specific, measurable recommendations for SRWB operational context.
+    with specific, measurable recommendations for the utility's operational context.
     """
     from app.services.insights_engine import generate_alerts
     alerts_data = generate_alerts(db=db, year=year)
@@ -1207,7 +1208,7 @@ def report_recommendations(
             "metric":   alert.get("metric"),
             "value":    alert.get("value"),
         }
-        # Enrich with SRWB-specific action guidance
+        # Enrich with utility-context action guidance
         if cat == "nrw":
             base["actions"] = [
                 "Deploy district metered area (DMA) monitoring to identify leakage hotspots",

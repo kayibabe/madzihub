@@ -1,0 +1,10 @@
+{
+ "json": {
+  "fiscal_year": "FY2025/26",
+  "months": 12,
+  "schemes": 13,
+  "total_records": 325,
+  "zones": 5
+ },
+ "status": 200
+}

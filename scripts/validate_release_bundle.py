@@ -6,7 +6,7 @@ from pathlib import Path
 
 FORBIDDEN_PARTS = [
     '.git/', '.vs/', '__pycache__/', '.pytest_cache/', 'uploads/', 'data/',
-    'srwb.secret', 'groq.key', '.pyc', ' - Copy',
+    'dataupdater/', '.secret', 'groq.key', '.pyc', ' - Copy', '.xlsx', '.xls', '.db',
 ]
 
 ALLOWED_DOC_ONLY = {'.md', '.txt', '.example', '.yml', '.yaml', '.json', '.toml', '.ini', '.cfg', '.bat', '.sh', '.py', '.html', '.css', '.js', '.png', '.svg', '.ico'}
@@ -42,5 +42,5 @@ def validate_bundle(zip_path: Path) -> int:
 
 
 if __name__ == '__main__':
-    target = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('dist/opswebmobile-release.zip')
+    target = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('dist/madzihub-release.zip')
     raise SystemExit(validate_bundle(target))

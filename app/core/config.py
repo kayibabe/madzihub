@@ -7,22 +7,48 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 DATA_DIR = BASE_DIR / "data"
-DEFAULT_SQLITE_URL = f"sqlite:///{(DATA_DIR / 'srwb.db').as_posix()}"
+
+
+def _env(name: str, default: str = "") -> str:
+    """Read MADZI_<name>, falling back to the legacy SRWB_<name> variable."""
+    return os.getenv(f"MADZI_{name}", os.getenv(f"SRWB_{name}", default))
+
+
+def _default_sqlite_url() -> str:
+    # Existing SRWB installs keep their srwb.db; new installs get madzihub.db.
+    legacy = DATA_DIR / "srwb.db"
+    db_file = legacy if legacy.exists() else DATA_DIR / "madzihub.db"
+    return f"sqlite:///{db_file.as_posix()}"
+
+
+def _default_secret_file() -> str:
+    legacy = DATA_DIR / "srwb.secret"
+    return str(legacy if legacy.exists() else DATA_DIR / "madzihub.secret")
+
+
+DEFAULT_SQLITE_URL = _default_sqlite_url()
 
 
 @dataclass
 class Settings:
-    env: str = os.getenv("SRWB_ENV", os.getenv("ENV", "development")).strip().lower()
+    env: str = _env("ENV", os.getenv("ENV", "development")).strip().lower()
     database_url: str = os.getenv("DATABASE_URL", DEFAULT_SQLITE_URL).strip()
-    secret_key: str = os.getenv("SRWB_SECRET_KEY", os.getenv("SECRET_KEY", "")).strip()
+    secret_key: str = _env("SECRET_KEY", os.getenv("SECRET_KEY", "")).strip()
     upload_limit_mb: int = int(os.getenv("UPLOAD_LIMIT_MB", "50"))
-    allowed_origins_raw: str = os.getenv("SRWB_ALLOWED_ORIGINS", "http://localhost,http://127.0.0.1,http://localhost:8000,http://127.0.0.1:8000").strip()
-    allow_local_secret_file: bool = os.getenv("SRWB_ALLOW_LOCAL_SECRET_FILE", "true").strip().lower() in {"1", "true", "yes"}
-    secret_file_path: Path = Path(os.getenv("SRWB_SECRET_FILE", str(DATA_DIR / "srwb.secret")))
+    allowed_origins_raw: str = _env("ALLOWED_ORIGINS", "http://localhost,http://127.0.0.1,http://localhost:8000,http://127.0.0.1:8000").strip()
+    allow_local_secret_file: bool = _env("ALLOW_LOCAL_SECRET_FILE", "true").strip().lower() in {"1", "true", "yes"}
+    secret_file_path: Path = Path(_env("SECRET_FILE", _default_secret_file()))
+    # Passwordless local preview login. Off unless explicitly enabled AND env=development.
+    dev_preview_enabled: bool = _env("DEV_PREVIEW", "false").strip().lower() in {"1", "true", "yes"}
+    tenant: str = _env("TENANT", "srwb").strip() or "srwb"
 
     @property
     def is_production(self) -> bool:
         return self.env in {"prod", "production"}
+
+    @property
+    def dev_preview_allowed(self) -> bool:
+        return self.dev_preview_enabled and self.env == "development"
 
     @property
     def allowed_origins(self) -> list[str]:
@@ -34,12 +60,12 @@ class Settings:
         if self.is_production:
             if self.secret_key in insecure_defaults and not (self.allow_local_secret_file and self.secret_file_path.exists()):
                 raise RuntimeError(
-                    "Production startup blocked: set SRWB_SECRET_KEY or provide a secure secret file via SRWB_SECRET_FILE."
+                    "Production startup blocked: set MADZI_SECRET_KEY or provide a secure secret file via MADZI_SECRET_FILE."
                 )
 
             if not self.allowed_origins:
                 raise RuntimeError(
-                    "Production startup blocked: SRWB_ALLOWED_ORIGINS must contain at least one trusted origin."
+                    "Production startup blocked: MADZI_ALLOWED_ORIGINS must contain at least one trusted origin."
                 )
 
             if "*" in self.allowed_origins:

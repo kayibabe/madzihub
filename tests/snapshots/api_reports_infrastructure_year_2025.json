@@ -1,0 +1,250 @@
+{
+ "json": {
+  "breakdowns_by_zone": [
+   {
+    "color": "#0077b6",
+    "pipe_breakdowns": 42350,
+    "pipe_di": 38680,
+    "pipe_gi": 36845,
+    "pipe_hdpe_ac": 40515,
+    "pipe_pvc": 35011,
+    "pump_breakdowns": 20977,
+    "pump_hours_lost": 22811,
+    "total_breakdowns": 63327,
+    "zone": "Liwonde"
+   },
+   {
+    "color": "#0d9488",
+    "pipe_breakdowns": 34939,
+    "pipe_di": 31911,
+    "pipe_gi": 30397,
+    "pipe_hdpe_ac": 33425,
+    "pipe_pvc": 28884,
+    "pump_breakdowns": 17306,
+    "pump_hours_lost": 18819,
+    "total_breakdowns": 52245,
+    "zone": "Mangochi"
+   },
+   {
+    "color": "#16a34a",
+    "pipe_breakdowns": 71995,
+    "pipe_di": 65756,
+    "pipe_gi": 62637,
+    "pipe_hdpe_ac": 68876,
+    "pipe_pvc": 59518,
+    "pump_breakdowns": 35660,
+    "pump_hours_lost": 38779,
+    "total_breakdowns": 107655,
+    "zone": "Mulanje"
+   },
+   {
+    "color": "#d97706",
+    "pipe_breakdowns": 53055,
+    "pipe_di": 48458,
+    "pipe_gi": 46159,
+    "pipe_hdpe_ac": 50756,
+    "pipe_pvc": 43860,
+    "pump_breakdowns": 26279,
+    "pump_hours_lost": 28578,
+    "total_breakdowns": 79334,
+    "zone": "Ngabu"
+   },
+   {
+    "color": "#7c3aed",
+    "pipe_breakdowns": 101640,
+    "pipe_di": 92832,
+    "pipe_gi": 88429,
+    "pipe_hdpe_ac": 97236,
+    "pipe_pvc": 84025,
+    "pump_breakdowns": 50344,
+    "pump_hours_lost": 54747,
+    "total_breakdowns": 151984,
+    "zone": "Zomba"
+   }
+  ],
+  "infrastructure_trend": [
+   {
+    "month": "April",
+    "pipe_breakdowns": 30894,
+    "power_fail_hours": 19318,
+    "pump_breakdowns": 15302,
+    "stuck_meters": 24636,
+    "supply_hours": 23.9
+   },
+   {
+    "month": "May",
+    "pipe_breakdowns": 22067,
+    "power_fail_hours": 13799,
+    "pump_breakdowns": 10930,
+    "stuck_meters": 17597,
+    "supply_hours": 22.8
+   },
+   {
+    "month": "June",
+    "pipe_breakdowns": 22619,
+    "power_fail_hours": 14144,
+    "pump_breakdowns": 11204,
+    "stuck_meters": 18037,
+    "supply_hours": 23.0
+   },
+   {
+    "month": "July",
+    "pipe_breakdowns": 23171,
+    "power_fail_hours": 14488,
+    "pump_breakdowns": 11477,
+    "stuck_meters": 18477,
+    "supply_hours": 23.1
+   },
+   {
+    "month": "August",
+    "pipe_breakdowns": 23722,
+    "power_fail_hours": 14833,
+    "pump_breakdowns": 11750,
+    "stuck_meters": 18917,
+    "supply_hours": 23.3
+   },
+   {
+    "month": "September",
+    "pipe_breakdowns": 24274,
+    "power_fail_hours": 15178,
+    "pump_breakdowns": 12023,
+    "stuck_meters": 19357,
+    "supply_hours": 23.3
+   },
+   {
+    "month": "October",
+    "pipe_breakdowns": 24826,
+    "power_fail_hours": 15523,
+    "pump_breakdowns": 12297,
+    "stuck_meters": 19797,
+    "supply_hours": 23.4
+   },
+   {
+    "month": "November",
+    "pipe_breakdowns": 25377,
+    "power_fail_hours": 15868,
+    "pump_breakdowns": 12570,
+    "stuck_meters": 20237,
+    "supply_hours": 23.5
+   },
+   {
+    "month": "December",
+    "pipe_breakdowns": 25929,
+    "power_fail_hours": 16213,
+    "pump_breakdowns": 12843,
+    "stuck_meters": 20677,
+    "supply_hours": 23.6
+   },
+   {
+    "month": "January",
+    "pipe_breakdowns": 26481,
+    "power_fail_hours": 16558,
+    "pump_breakdowns": 13116,
+    "stuck_meters": 21116,
+    "supply_hours": 23.6
+   },
+   {
+    "month": "February",
+    "pipe_breakdowns": 27033,
+    "power_fail_hours": 16903,
+    "pump_breakdowns": 13390,
+    "stuck_meters": 21556,
+    "supply_hours": 23.7
+   },
+   {
+    "month": "March",
+    "pipe_breakdowns": 27584,
+    "power_fail_hours": 17248,
+    "pump_breakdowns": 13663,
+    "stuck_meters": 21996,
+    "supply_hours": 23.7
+   }
+  ],
+  "pipeline_extensions": [
+   {
+    "metres": 203245,
+    "size": "32mm"
+   },
+   {
+    "metres": 216415,
+    "size": "50mm"
+   },
+   {
+    "metres": 229585,
+    "size": "63mm"
+   },
+   {
+    "metres": 242755,
+    "size": "90mm"
+   },
+   {
+    "metres": 255925,
+    "size": "110mm"
+   }
+  ],
+  "pvc_breakdowns_by_size": [
+   {
+    "count": 317148,
+    "size": "20mm"
+   },
+   {
+    "count": 330318,
+    "size": "25mm"
+   },
+   {
+    "count": 343488,
+    "size": "32mm"
+   },
+   {
+    "count": 36307,
+    "size": "40mm"
+   },
+   {
+    "count": 49476,
+    "size": "50mm"
+   },
+   {
+    "count": 62646,
+    "size": "63mm"
+   },
+   {
+    "count": 75816,
+    "size": "75mm"
+   },
+   {
+    "count": 88987,
+    "size": "90mm"
+   },
+   {
+    "count": 102156,
+    "size": "110mm"
+   },
+   {
+    "count": 115326,
+    "size": "160mm"
+   },
+   {
+    "count": 128496,
+    "size": "200mm"
+   }
+  ],
+  "summary": {
+   "active_conn_ratio": 93.1,
+   "breakdowns_per_1k_customers": 28372.1,
+   "dev_lines_total": 269095,
+   "pipe_breakdowns": 303978,
+   "power_fail_hours": 190075,
+   "pump_breakdowns": 150565,
+   "pump_hours_lost": 163735,
+   "stuck_meters": 21996,
+   "stuck_new": 255569,
+   "stuck_pct": 127.8,
+   "stuck_repaired": 268739,
+   "supply_hours_avg_daily": 23.4,
+   "total_breakdowns": 454543,
+   "total_metered": 17216
+  },
+  "year": 2025
+ },
+ "status": 200
+}

@@ -1,0 +1,68 @@
+# MadziHub tenant configuration: fictional demonstration utility.
+# Every name and number here is invented. Use this tenant for demos, training and
+# screenshots; never load real utility data into a demo installation.
+identity:
+  name: Lakeside Water Utility (Demo)
+  short_name: LWU
+  product_title: Lakeside Performance Hub
+  tagline: Every drop, accounted for.
+  country: Demo Republic
+  regulator: Demo Water Services Regulator
+branding:
+  logo: null
+  primary_color: '#0f766e'
+  accent_color: '#0369a1'
+currency:
+  code: USD
+  symbol: $
+  decimals: 0
+locale: en
+timezone: UTC
+fiscal_year:
+  start_month: 7          # July - June
+hierarchy:
+  levels:
+  - {key: zone, label: Region, plural: Regions}
+  - {key: scheme, label: Service Area, plural: Service Areas}
+  zones:
+  - {name: North, color: '#0f766e'}
+  - {name: Central, color: '#0369a1'}
+  - {name: South, color: '#b45309'}
+targets:
+  nrw_pct: 25.0
+thresholds:
+  nrw_warn: 35.0
+  coll_good: 90.0
+  coll_warn: 75.0
+  dtc_warn: 30.0
+  dtc_critical: 60.0
+  stuck_pct_warn: 8.0
+  mom_bd_spike: 20.0
+  mom_nrw_rise: 5.0
+  mom_coll_drop: 15.0
+  mom_debtors_rise: 20.0
+  zone_coll_warn: 80.0
+  zone_nrw_critical: 35.0
+  debtors_pct_warn: 50.0
+strategic_plan:
+  title: Demo Corporate Plan 2025-2029
+  years: [2026, 2027, 2028, 2029]
+  default_year: 2026
+  kpis:
+  - {focus_area: Operations, name: Non-Revenue Water, unit: '%', baseline: 32,
+     targets: {2026: 30, 2027: 28, 2028: 26, 2029: 25}, actual_key: nrw_pct, direction: low, capture: live}
+  - {focus_area: Operations, name: Water Production, unit: m³/year, baseline: 4000000,
+     targets: {2026: 4200000, 2027: 4400000, 2028: 4600000, 2029: 4800000}, actual_key: production, direction: high, capture: live}
+  - {focus_area: Commercial, name: New Water Connections, unit: No./year, baseline: 1500,
+     targets: {2026: 1600, 2027: 1700, 2028: 1800, 2029: 1900}, actual_key: new_connections, direction: high, capture: live}
+  - {focus_area: Commercial, name: Debtor Days, unit: Days, baseline: 120,
+     targets: {2026: 100, 2027: 90, 2028: 75, 2029: 60}, actual_key: debtor_days, direction: low, capture: live}
+modules:
+  prepaid: false
+  water_quality: true
+  hr: false
+  strategic_plan: true
+  budget: true
+  benchmarking: true
+ai:
+  enabled: false

@@ -19,7 +19,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 import os
 import time
@@ -30,6 +30,7 @@ from app.core.config import settings
 from app.core.logging import REQUEST_ID_CTX, logger as app_logger
 from app.database import SessionLocal, create_tables
 from app.routers import analytics, benchmarking, budget, catalogue, compliance, fiscal_years, panels, records, report_generator, reports, strategic, upload, insights
+from app.routers import config as config_router
 from app.routers.users import admin_router, auth_router
 from app.core.limiter import limiter as _limiter
 from slowapi import _rate_limit_exceeded_handler
@@ -210,19 +211,19 @@ def _auto_import(db):
 
 
 app = FastAPI(
-    title="SRWB Operations Dashboard API",
+    title="MadziHub API",
     description=(
-        "Backend API for the Southern Region Water Board "
-        "Operations & Performance Dashboard.\n\n"
-        "All monetary values are in **MWK (Malawian Kwacha)**. "
-        "Volume in **m³**. Financial year runs April → March.\n\n"
+        "MadziHub — water utility performance & intelligence platform.\n\n"
+        "Monetary values are in the installation's reporting currency and the "
+        "financial year follows its configured start month (see `GET /api/config`). "
+        "Volume in **m³**.\n\n"
         "**Authentication:** `POST /api/auth/login` with username + password "
         "to obtain a Bearer token.  Include it as:\n"
         "`Authorization: Bearer <token>`\n\n"
         "**Roles:** `admin` · `user` · `viewer`"
     ),
     version="2.0.0",
-    contact={"name": "SRWB IT / Corporate Planning"},
+    contact={"name": "MadziHub"},
     license_info={"name": "Internal Use"},
     lifespan=lifespan,
 )
@@ -232,7 +233,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
 
 # ── CORS ──────────────────────────────────────────────────────
-# Set SRWB_ALLOWED_ORIGINS to a comma-separated list of origins in
+# Set MADZI_ALLOWED_ORIGINS (legacy: SRWB_ALLOWED_ORIGINS) to a comma-separated list of origins in
 # production, e.g. "https://dashboard.srwb.mw,https://ops.srwb.mw"
 # Restricted localhost defaults for development; production validation blocks '*'.
 _allowed_origins = settings.allowed_origins
@@ -247,6 +248,9 @@ app.add_middleware(
 
 # ── Auth endpoints (public — no auth dependency) ───────────────
 app.include_router(auth_router)
+
+# ── Installation config (public branding + authenticated client config) ──
+app.include_router(config_router.router)
 
 # ── Admin user-management (admin role required) ───────────────
 app.include_router(admin_router, dependencies=[Depends(require_admin)])
@@ -272,6 +276,75 @@ app.include_router(upload.router, dependencies=[Depends(require_admin)])
 # ── Static assets ─────────────────────────────────────────────
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 INDEX_PATH  = os.path.join(STATIC_DIR, "index.html")
+APP_CORE_JS = os.path.join(STATIC_DIR, "assets", "js", "app-core.js")
+
+
+def _brand_values() -> dict:
+    """Tenant identity with admin org-profile overrides applied."""
+    from app.core.tenant import tenant
+    from app.database import OrgProfile
+    ident = tenant.identity
+    db = SessionLocal()
+    try:
+        profile = db.query(OrgProfile).filter(OrgProfile.id == 1).first()
+    finally:
+        db.close()
+    return {
+        "product_title": ident.product_title,
+        "name": (profile and profile.org_name) or ident.name,
+        "short_name": (profile and profile.short_name) or ident.short_name,
+        "currency": tenant.currency.code,
+        "currency_symbol": tenant.currency.symbol,
+        "plan_title": tenant.strategic_plan.title,
+        "country": (profile and profile.country) or ident.country or "",
+        "zone_count": str(len(tenant.hierarchy.zones)),
+        "zone_plural": tenant.hierarchy.levels[0].plural if tenant.hierarchy.levels else "Zones",
+    }
+
+
+def _js_text(value: str) -> str:
+    """Make a value safe inside any JS string literal ('', "", ``) and in innerHTML."""
+    import json
+    cleaned = "".join(ch for ch in (value or "") if ch not in "<>\"'`\\$")
+    return json.dumps(cleaned)[1:-1]
+
+
+_JS_CACHE: dict = {}
+
+
+# Registered before the /static mount so it takes precedence over the static file.
+@app.get("/static/assets/js/app-core.js", include_in_schema=False)
+def serve_app_core_js(request: Request):
+    """Serve app-core.js with tenant placeholders filled (labels, currency, targets, calendar)."""
+    import hashlib
+    import json
+    from app.core.tenant import tenant
+    from app.utils import MONTHS_ORDER
+
+    brand = _brand_values()
+    subs = {
+        "__ORG_SHORT__": _js_text(brand["short_name"]),
+        "__ORG_NAME_COUNTRY__": _js_text(" · ".join(v for v in (brand["name"], brand["country"]) if v)),
+        "__ORG_NAME__": _js_text(brand["name"]),
+        "__CURRENCY__": _js_text(brand["currency"]),
+        "__CUR_SYM__": _js_text(brand["currency_symbol"]),
+        "__NRW_TARGET__": f"{tenant.target('nrw_pct', 25.0):g}",
+        "__FY_MONTHS__": json.dumps(MONTHS_ORDER),
+        "__ZONE_COLORS__": json.dumps(tenant.zone_colors),
+    }
+    key = (os.path.getmtime(APP_CORE_JS), tuple(sorted(subs.items())))
+    if key not in _JS_CACHE:
+        _JS_CACHE.clear()
+        with open(APP_CORE_JS, encoding="utf-8") as f:
+            content = f.read()
+        for placeholder, value in subs.items():
+            content = content.replace(placeholder, value)
+        _JS_CACHE[key] = (content, hashlib.sha256(content.encode()).hexdigest()[:32])
+    content, etag = _JS_CACHE[key]
+    headers = {"Cache-Control": "no-cache", "ETag": f'"{etag}"'}
+    if request.headers.get("if-none-match") == f'"{etag}"':
+        return Response(status_code=304, headers=headers)
+    return Response(content, media_type="application/javascript", headers=headers)
 if os.path.isdir(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
@@ -312,15 +385,36 @@ async def add_request_context(request: Request, call_next):
     return response
 
 
-# ── Root — inject API base URL then serve dashboard ───────────
+# ── Root — inject API base URL and tenant branding, then serve dashboard ──
+def _brand_html(content: str) -> str:
+    """Fill the tenant placeholders in index.html (HTML-escaped)."""
+    from html import escape
+    brand = _brand_values()
+    values = {
+        "__PRODUCT_TITLE__": brand["product_title"],
+        "__ORG_NAME__": brand["name"],
+        "__ORG_SHORT__": brand["short_name"],
+        "__CURRENCY__": brand["currency"],
+        "__PLAN_TITLE__": brand["plan_title"],
+        "__ORG_COUNTRY__": brand["country"],
+        "__ZONE_COUNT__": brand["zone_count"],
+        "__ZONE_PLURAL__": brand["zone_plural"],
+    }
+    for key, value in values.items():
+        content = content.replace(key, escape(value or ""))
+    return content
+
+
+
 @app.get("/", include_in_schema=False)
 async def serve_dashboard(request: Request):
     if not os.path.exists(INDEX_PATH):
-        return {"message": "SRWB API running. Place index.html in app/static/"}
+        return {"message": "MadziHub API running. Place index.html in app/static/"}
     base_url = str(request.base_url).rstrip("/")
     with open(INDEX_PATH, encoding="utf-8") as f:
         content = f.read()
     content = content.replace("__API_BASE__", base_url)
+    content = _brand_html(content)
     return HTMLResponse(
         content=content,
         headers={

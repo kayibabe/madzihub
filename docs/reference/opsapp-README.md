@@ -389,7 +389,7 @@ Authentication uses **JWT Bearer tokens** with bcrypt password hashing. A defaul
 
 > **Note:** Authentication was temporarily stripped from FastAPI endpoint dependencies during a development phase to unblock dashboard work. The login system in `main.py` and `auth.py` is fully implemented and must be re-wired to all endpoints before any network-accessible deployment.
 
-Password reset utility: `python reset_password.py` (also available at `app/reset_password.py`).
+Password reset utility: `python reset_password.py`.
 
 ---
 

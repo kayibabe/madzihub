@@ -12,35 +12,16 @@ from __future__ import annotations
 import statistics
 from typing import Any
 from sqlalchemy.orm import Session
+from app.core.tenant import tenant as _tenant
 from app.database import Record
 
 
 # ── Thresholds ─────────────────────────────────────────────────────────────
-# All derived from SRWB targets, IBNET/IWA benchmarks, and observed data.
-
-THRESHOLDS = {
-    # NRW
-    "nrw_target":        27.0,   # SRWB corporate target
-    "nrw_warn":          35.0,   # Action threshold
-    # Collection rate
-    "coll_good":         90.0,   # IBNET benchmark
-    "coll_warn":         75.0,   # Serious shortfall
-    # Days to connect
-    "dtc_warn":          30.0,   # World Bank SLA
-    "dtc_critical":      60.0,
-    # Stuck meter rate (% of active customers)
-    "stuck_pct_warn":    8.0,    # 8% unread = significant billing risk
-    # MoM change triggers (%)
-    "mom_bd_spike":      20.0,   # Pipe breakdowns rise >20%
-    "mom_nrw_rise":       5.0,   # NRW rate rises >5 percentage points
-    "mom_coll_drop":     15.0,   # Collection rate drops >15 pp
-    "mom_debtors_rise":  20.0,   # Debtors grow >20%
-    # Zone-level
-    "zone_coll_warn":    80.0,   # Zone collection rate below 80%
-    "zone_nrw_critical": 35.0,   # Zone NRW above action threshold
-    # Debtors (% of annual billing)
-    "debtors_pct_warn":  50.0,   # Debtors > 50% of annual billing = risk
-}
+# Alert thresholds and the NRW target come from the tenant configuration
+# (tenants/<name>/tenant.yaml → thresholds / targets.nrw_pct).
+THRESHOLDS = {**_tenant.thresholds, "nrw_target": _tenant.target("nrw_pct", 25.0)}
+_ORG = _tenant.identity.short_name
+_CUR = _tenant.currency.code
 
 
 def _nz_sum(rows, field):
@@ -80,15 +61,14 @@ def generate_alerts(db: Session, year: int = None) -> dict[str, Any]:
     from sqlalchemy import or_, and_
     from app.database import Record
 
+    from app.utils import fy_end_year, fy_span_expr
+
     if year is None:
         from datetime import date
         now = date.today()
-        year = now.year + 1 if now.month >= 4 else now.year
+        year = fy_end_year(now.year, now.month)
 
-    q = db.query(Record).filter(or_(
-        and_(Record.year == year - 1, Record.month_no >= 4),
-        and_(Record.year == year,     Record.month_no <= 3),
-    ))
+    q = db.query(Record).filter(fy_span_expr(year))
     rows = q.all()
 
     if not rows:
@@ -113,8 +93,7 @@ def generate_alerts(db: Session, year: int = None) -> dict[str, Any]:
     lv = _latest(rows)
 
     # ── Sort rows by month for MoM analysis ───────────────────────────────
-    FY_ORDER = ["April","May","June","July","August","September",
-                "October","November","December","January","February","March"]
+    from app.utils import MONTHS_ORDER as FY_ORDER
 
     from collections import defaultdict
     monthly_agg: dict[str, dict] = {}
@@ -186,15 +165,15 @@ def generate_alerts(db: Session, year: int = None) -> dict[str, Any]:
     if nrw_pct > T["nrw_warn"]:
         alert("critical","nrw",
               f"NRW Critical — {nrw_pct}% exceeds 35% action threshold",
-              f"YTD NRW rate of {nrw_pct}% is {nrw_pct - T['nrw_target']:.1f}pp above the SRWB "
+              f"YTD NRW rate of {nrw_pct}% is {nrw_pct - T['nrw_target']:.1f}pp above the {_ORG} "
               f"target of {T['nrw_target']}% and above the 35% action threshold. "
               f"Immediate investigation required.",
               metric="pct_nrw", value=nrw_pct)
     elif nrw_pct > T["nrw_target"]:
         alert("warning","nrw",
               f"NRW Above Target — {nrw_pct}% (target: {T['nrw_target']}%)",
-              f"YTD NRW of {nrw_pct}% is {nrw_pct - T['nrw_target']:.1f}pp above the SRWB "
-              f"27% target. Review pipe breakdown hotspots and meter reading coverage.",
+              f"YTD NRW of {nrw_pct}% is {nrw_pct - T['nrw_target']:.1f}pp above the {_ORG} "
+              f"{T['nrw_target']:g}% target. Review pipe breakdown hotspots and meter reading coverage.",
               metric="pct_nrw", value=nrw_pct)
 
     # MoM NRW rise
@@ -247,7 +226,7 @@ def generate_alerts(db: Session, year: int = None) -> dict[str, Any]:
         alert("warning","operations",
               f"Stuck Meters — {stuck_pct}% of accounts ({stuck_now:,} meters)",
               f"{stuck_now:,} meters are stuck ({stuck_pct}% of {active_now:,} active accounts). "
-              f"Estimated monthly billing at risk: approx MWK {unbilled}M.",
+              f"Estimated monthly billing at risk: approx {_CUR} {unbilled}M.",
               metric="stuck_meters", value=stuck_now)
 
     # ── 5. Days to Connect ────────────────────────────────────────────────
@@ -271,7 +250,7 @@ def generate_alerts(db: Session, year: int = None) -> dict[str, Any]:
             alert("warning","financial",
                   f"Debtors Rising — +{dbt_chg:.0f}% in {latest_month}",
                   f"Total debtors grew {dbt_chg:.0f}% month-on-month "
-                  f"(MWK {cur['total_debtors']/1e6:.0f}M vs MWK {prev['total_debtors']/1e6:.0f}M). "
+                  f"({_CUR} {cur['total_debtors']/1e6:.0f}M vs {_CUR} {prev['total_debtors']/1e6:.0f}M). "
                   f"Accelerate recovery activity.",
                   metric="total_debtors", value=round(cur["total_debtors"] / 1e6, 1))
 
@@ -303,7 +282,7 @@ def generate_alerts(db: Session, year: int = None) -> dict[str, Any]:
         elif znrw_pct > T["nrw_target"]:
             alert("warning","nrw",
                   f"{zone} Zone — NRW Above Target at {znrw_pct}%",
-                  f"{zone} zone NRW of {znrw_pct}% exceeds the SRWB 27% target.",
+                  f"{zone} zone NRW of {znrw_pct}% exceeds the {_ORG} {T['nrw_target']:g}% target.",
                   zone=zone, metric="pct_nrw", value=znrw_pct)
 
         # Zone collection rate

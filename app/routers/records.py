@@ -17,6 +17,7 @@ import io
 from datetime import datetime
 from typing import List, Optional
 
+from app.core.tenant import tenant as _tenant
 from app.utils import apply_fy_filter, csv_list
 
 from openpyxl import Workbook
@@ -56,7 +57,7 @@ def _build_export_filename(ext: str, year: Optional[int], zones: Optional[str], 
     fy_part = f"FY{year}" if year else "AllYears"
     zone_part = "AllZones" if not zones else f"{len(zones.split(','))}Zones"
     scheme_part = "AllSchemes" if not schemes else f"{len(schemes.split(','))}Schemes"
-    return f"SRWB_Records_{fy_part}_{zone_part}_{scheme_part}_{date_part}.{ext}"
+    return f"{_tenant.identity.short_name}_Records_{fy_part}_{zone_part}_{scheme_part}_{date_part}.{ext}"
 
 
 def _filtered_rows(db: Session, zones, schemes, months, quarters, year):
@@ -185,7 +186,7 @@ def export_csv(
     return StreamingResponse(
         iter([buf.getvalue()]),
         media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=SRWB_Export.csv"},
+        headers={"Content-Disposition": "attachment; filename={_tenant.identity.short_name}_Export.csv"},
     )
 
 
@@ -214,7 +215,7 @@ def export_xlsx(
 
     meta = wb.create_sheet("Export Summary")
     meta_rows = [
-        ["SRWB Records Export"],
+        [f"{_tenant.identity.name} Records Export"],
         ["Generated", datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")],
         ["Year", year or "All"],
         ["Zones", zones or "All"],

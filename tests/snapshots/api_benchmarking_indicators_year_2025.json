@@ -1,0 +1,1004 @@
+{
+ "json": [
+  {
+   "label": "1 · Water Quality & Compliance",
+   "type": "section"
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP001",
+   "derivable": false,
+   "field": "wup001",
+   "fmt": "num",
+   "label": "WUP001 · Required tests — residual chlorine (as per requirement)",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP002",
+   "derivable": false,
+   "field": "wup002",
+   "fmt": "num",
+   "label": "WUP002 · Required tests — bacteriological (as per guideline)",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP003",
+   "derivable": false,
+   "field": "wup003",
+   "fmt": "num",
+   "label": "WUP003 · Tests conducted (bacteriological)",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP004",
+   "derivable": false,
+   "field": "wup004",
+   "fmt": "num",
+   "label": "WUP004 · Tests meeting standards (bacteriological)",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP005",
+   "derivable": false,
+   "field": "wup005",
+   "fmt": "num",
+   "label": "WUP005 · Total water samples tested",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP006",
+   "derivable": false,
+   "field": "wup006",
+   "fmt": "num",
+   "label": "WUP006 · Total compliant water samples",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP007",
+   "derivable": false,
+   "field": "wup007",
+   "fmt": "num",
+   "label": "WUP007 · Samples with turbidity (≤5 NTU)",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP008",
+   "derivable": false,
+   "field": "wup008",
+   "fmt": "num",
+   "label": "WUP008 · Samples with turbidity > 5 NTU",
+   "note": null
+  },
+  {
+   "label": "2 · Customer Service",
+   "type": "section"
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP009",
+   "derivable": true,
+   "field": "wup009",
+   "fmt": "num",
+   "label": "WUP009 · Customers fully paid (new connection)",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP010",
+   "derivable": true,
+   "field": "wup010",
+   "fmt": "num",
+   "label": "WUP010 · Days to connect fully-paid customers",
+   "note": "Aggregate days across schemes"
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP011",
+   "derivable": true,
+   "field": "wup011",
+   "fmt": "num",
+   "label": "WUP011 · Customers applied for new connection",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP012",
+   "derivable": true,
+   "field": "wup012",
+   "fmt": "num",
+   "label": "WUP012 · Days taken to give a quotation",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP013",
+   "derivable": true,
+   "field": "wup013",
+   "fmt": "num",
+   "label": "WUP013 · Total time taken to resolve queries",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP014",
+   "derivable": true,
+   "field": "wup014",
+   "fmt": "num",
+   "label": "WUP014 · Total queries received",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP015",
+   "derivable": true,
+   "field": "wup015",
+   "fmt": "num",
+   "label": "WUP015 · Hours of pumping failure",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP016",
+   "derivable": false,
+   "field": "wup016",
+   "fmt": "num",
+   "label": "WUP016 · Reported water interruptions",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP017",
+   "derivable": false,
+   "field": "wup017",
+   "fmt": "num",
+   "label": "WUP017 · Customer complaints resolved",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP018",
+   "derivable": false,
+   "field": "wup018",
+   "fmt": "num",
+   "label": "WUP018 · Customer satisfaction survey report",
+   "note": null
+  },
+  {
+   "ann_type": "avg",
+   "code": "WUP019",
+   "derivable": true,
+   "field": "wup019",
+   "fmt": "dec1",
+   "label": "WUP019 · Average daily supply (hours/day)",
+   "note": "Non-zero scheme average, capped at 24h/day"
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP020",
+   "derivable": false,
+   "field": "wup020",
+   "fmt": "num",
+   "label": "WUP020 · Customers supplied 24/7",
+   "note": null
+  },
+  {
+   "label": "3 · Population, Sewerage & Sanitation",
+   "type": "section"
+  },
+  {
+   "ann_type": "last",
+   "code": "WUP021",
+   "derivable": true,
+   "field": "wup021",
+   "fmt": "num",
+   "label": "WUP021 · Population served (water)",
+   "note": null
+  },
+  {
+   "ann_type": "last",
+   "code": "WUP022",
+   "derivable": true,
+   "field": "wup022",
+   "fmt": "num",
+   "label": "WUP022 · Population in service area (water)",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP023",
+   "derivable": false,
+   "field": "wup023",
+   "fmt": "num",
+   "label": "WUP023 · Population served — sewerage",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP024",
+   "derivable": false,
+   "field": "wup024",
+   "fmt": "num",
+   "label": "WUP024 · Population in service area — sewerage",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP025",
+   "derivable": false,
+   "field": "wup025",
+   "fmt": "num",
+   "label": "WUP025 · Population served — sanitation (sewered + septic)",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP026",
+   "derivable": false,
+   "field": "wup026",
+   "fmt": "num",
+   "label": "WUP026 · Population served — sewered sanitation",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP027",
+   "derivable": false,
+   "field": "wup027",
+   "fmt": "num",
+   "label": "WUP027 · Population served — non-sewered sanitation (NSS)",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP028",
+   "derivable": false,
+   "field": "wup028",
+   "fmt": "num",
+   "label": "WUP028 · NSS — population using septic tanks",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP029",
+   "derivable": false,
+   "field": "wup029",
+   "fmt": "num",
+   "label": "WUP029 · NSS — population using VIP",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP030",
+   "derivable": false,
+   "field": "wup030",
+   "fmt": "num",
+   "label": "WUP030 · NSS — population using pit latrines",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP031",
+   "derivable": false,
+   "field": "wup031",
+   "fmt": "num",
+   "label": "WUP031 · Number of sewage treatment plants",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP032",
+   "derivable": false,
+   "field": "wup032",
+   "fmt": "num",
+   "label": "WUP032 · Sewage treatment plant utilisation",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP033",
+   "derivable": false,
+   "field": "wup033",
+   "fmt": "num",
+   "label": "WUP033 · Number of faecal sludge treatment plants",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP034",
+   "derivable": false,
+   "field": "wup034",
+   "fmt": "num",
+   "label": "WUP034 · Faecal sludge treatment plant utilisation",
+   "note": null
+  },
+  {
+   "label": "4 · Water Production & Sales",
+   "type": "section"
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP035",
+   "derivable": true,
+   "field": "wup035",
+   "fmt": "num",
+   "label": "WUP035 · Volume of water produced",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP036",
+   "derivable": true,
+   "field": "wup036",
+   "fmt": "num",
+   "label": "WUP036 · Volume of water sold",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP037",
+   "derivable": true,
+   "field": "wup037",
+   "fmt": "num",
+   "label": "WUP037 · Volume sold — residential direct connections",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP038",
+   "derivable": true,
+   "field": "wup038",
+   "fmt": "num",
+   "label": "WUP038 · Volume sold — public tap / standpipe",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP039",
+   "derivable": true,
+   "field": "wup039",
+   "fmt": "num",
+   "label": "WUP039 · Volume sold — commercial / institutional",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP040",
+   "derivable": true,
+   "field": "wup040",
+   "fmt": "num",
+   "label": "WUP040 · Total number of pipe breaks",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP041",
+   "derivable": false,
+   "field": "wup041",
+   "fmt": "num",
+   "label": "WUP041 · Total length of water distribution network",
+   "note": null
+  },
+  {
+   "label": "5 · Operating Costs",
+   "type": "section"
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP042",
+   "derivable": true,
+   "field": "wup042",
+   "fmt": "mwk",
+   "label": "WUP042 · Total operating costs",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP043",
+   "derivable": true,
+   "field": "wup043",
+   "fmt": "mwk",
+   "label": "WUP043 · Total staff cost",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP044",
+   "derivable": true,
+   "field": "wup044",
+   "fmt": "mwk",
+   "label": "WUP044 · Total energy costs",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP045",
+   "derivable": true,
+   "field": "wup045",
+   "fmt": "mwk",
+   "label": "WUP045 · Total chemical costs",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP058",
+   "derivable": true,
+   "field": "wup058",
+   "fmt": "mwk",
+   "label": "WUP058 · Total maintenance of water works",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP064",
+   "derivable": false,
+   "field": "wup064",
+   "fmt": "num",
+   "label": "WUP064 · Cash operating expenses",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP073",
+   "derivable": true,
+   "field": "wup073",
+   "fmt": "mwk",
+   "label": "WUP073 · Total costs",
+   "note": "Proxied by total operating cost"
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP085",
+   "derivable": true,
+   "field": "wup085",
+   "fmt": "mwk",
+   "label": "WUP085 · Total W&WW operational expenses",
+   "note": "Water-only; wastewater not yet tracked"
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP095",
+   "derivable": false,
+   "field": "wup095",
+   "fmt": "num",
+   "label": "WUP095 · Total training cost",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP096",
+   "derivable": true,
+   "field": "wup096",
+   "fmt": "mwk",
+   "label": "WUP096 · Total annual payroll",
+   "note": null
+  },
+  {
+   "label": "6 · Connections",
+   "type": "section"
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP046",
+   "derivable": true,
+   "field": "wup046",
+   "fmt": "num",
+   "label": "WUP046 · New connections installed",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP047",
+   "derivable": true,
+   "field": "wup047",
+   "fmt": "num",
+   "label": "WUP047 · Paid-up new water applicants",
+   "note": null
+  },
+  {
+   "ann_type": "last",
+   "code": "WUP077",
+   "derivable": true,
+   "field": "wup077",
+   "fmt": "num",
+   "label": "WUP077 · Direct household water connections",
+   "note": null
+  },
+  {
+   "ann_type": "last",
+   "code": "WUP078",
+   "derivable": true,
+   "field": "wup078",
+   "fmt": "num",
+   "label": "WUP078 · Public tap / standpipe connections",
+   "note": null
+  },
+  {
+   "ann_type": "last",
+   "code": "WUP079",
+   "derivable": true,
+   "field": "wup079",
+   "fmt": "num",
+   "label": "WUP079 · Commercial / institutional connections",
+   "note": null
+  },
+  {
+   "ann_type": "last",
+   "code": "WUP080",
+   "derivable": true,
+   "field": "wup080",
+   "fmt": "num",
+   "label": "WUP080 · Total metered connections",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP081",
+   "derivable": false,
+   "field": "wup081",
+   "fmt": "num",
+   "label": "WUP081 · Total sewerage connections",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP082",
+   "derivable": false,
+   "field": "wup082",
+   "fmt": "num",
+   "label": "WUP082 · Total water & wastewater connections",
+   "note": null
+  },
+  {
+   "label": "7 · Revenue, Billing & Debtors",
+   "type": "section"
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP048",
+   "derivable": false,
+   "field": "wup048",
+   "fmt": "num",
+   "label": "WUP048 · Cash collected from Government",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP049",
+   "derivable": false,
+   "field": "wup049",
+   "fmt": "num",
+   "label": "WUP049 · Total amount billed to Government",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP050",
+   "derivable": false,
+   "field": "wup050",
+   "fmt": "num",
+   "label": "WUP050 · Opening Government debtors",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP051",
+   "derivable": false,
+   "field": "wup051",
+   "fmt": "num",
+   "label": "WUP051 · Cash collected from Private",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP052",
+   "derivable": false,
+   "field": "wup052",
+   "fmt": "num",
+   "label": "WUP052 · Total amount billed to Private",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP053",
+   "derivable": false,
+   "field": "wup053",
+   "fmt": "num",
+   "label": "WUP053 · Opening Private debtors",
+   "note": null
+  },
+  {
+   "ann_type": "last",
+   "code": "WUP054",
+   "derivable": true,
+   "field": "wup054",
+   "fmt": "mwk",
+   "label": "WUP054 · Total Government debtors",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP055",
+   "derivable": false,
+   "field": "wup055",
+   "fmt": "num",
+   "label": "WUP055 · Total Government sales",
+   "note": null
+  },
+  {
+   "ann_type": "last",
+   "code": "WUP056",
+   "derivable": true,
+   "field": "wup056",
+   "fmt": "mwk",
+   "label": "WUP056 · Total Private debtors",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP057",
+   "derivable": false,
+   "field": "wup057",
+   "fmt": "num",
+   "label": "WUP057 · Total Private sales",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP059",
+   "derivable": true,
+   "field": "wup059",
+   "fmt": "mwk",
+   "label": "WUP059 · Total sales (year 1)",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP060",
+   "derivable": false,
+   "field": "wup060",
+   "fmt": "num",
+   "label": "WUP060 · Total sales (year 0)",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP061",
+   "derivable": true,
+   "field": "wup061",
+   "fmt": "num",
+   "label": "WUP061 · Total disconnected accounts",
+   "note": null
+  },
+  {
+   "ann_type": "last",
+   "code": "WUP062",
+   "derivable": true,
+   "field": "wup062",
+   "fmt": "num",
+   "label": "WUP062 · Total number of customers",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP063",
+   "derivable": true,
+   "field": "wup063",
+   "fmt": "mwk",
+   "label": "WUP063 · Cash collected",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP083",
+   "derivable": true,
+   "field": "wup083",
+   "fmt": "mwk",
+   "label": "WUP083 · Total W&WW cash income / collections",
+   "note": "Water-only"
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP084",
+   "derivable": true,
+   "field": "wup084",
+   "fmt": "mwk",
+   "label": "WUP084 · Total W&WW operating (billed) revenues",
+   "note": "Water-only"
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP086",
+   "derivable": true,
+   "field": "wup086",
+   "fmt": "mwk",
+   "label": "WUP086 · Cash collected (financial ratios)",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP087",
+   "derivable": false,
+   "field": "wup087",
+   "fmt": "num",
+   "label": "WUP087 · Domestic billing",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP088",
+   "derivable": false,
+   "field": "wup088",
+   "fmt": "num",
+   "label": "WUP088 · Average domestic bill ($/month)",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP089",
+   "derivable": false,
+   "field": "wup089",
+   "fmt": "num",
+   "label": "WUP089 · Average exchange rate ($)",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP090",
+   "derivable": false,
+   "field": "wup090",
+   "fmt": "num",
+   "label": "WUP090 · Domestic bill for 5 m³",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP091",
+   "derivable": false,
+   "field": "wup091",
+   "fmt": "num",
+   "label": "WUP091 · Domestic bill for 30 m³",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP092",
+   "derivable": false,
+   "field": "wup092",
+   "fmt": "num",
+   "label": "WUP092 · Earnings before interest and tax",
+   "note": null
+  },
+  {
+   "label": "8 · Balance Sheet & Financial Ratios",
+   "type": "section"
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP065",
+   "derivable": false,
+   "field": "wup065",
+   "fmt": "num",
+   "label": "WUP065 · Non-current assets",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP066",
+   "derivable": false,
+   "field": "wup066",
+   "fmt": "num",
+   "label": "WUP066 · Current assets",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP067",
+   "derivable": false,
+   "field": "wup067",
+   "fmt": "num",
+   "label": "WUP067 · Current liabilities",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP068",
+   "derivable": false,
+   "field": "wup068",
+   "fmt": "num",
+   "label": "WUP068 · Total payable",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP069",
+   "derivable": false,
+   "field": "wup069",
+   "fmt": "num",
+   "label": "WUP069 · Total purchases",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP070",
+   "derivable": false,
+   "field": "wup070",
+   "fmt": "num",
+   "label": "WUP070 · Total current assets",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP071",
+   "derivable": false,
+   "field": "wup071",
+   "fmt": "num",
+   "label": "WUP071 · Total current liabilities",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP072",
+   "derivable": false,
+   "field": "wup072",
+   "fmt": "num",
+   "label": "WUP072 · Acid test ratio",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP074",
+   "derivable": false,
+   "field": "wup074",
+   "fmt": "num",
+   "label": "WUP074 · Tariff in year 0",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP075",
+   "derivable": false,
+   "field": "wup075",
+   "fmt": "num",
+   "label": "WUP075 · Tariff in year 1",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP076",
+   "derivable": false,
+   "field": "wup076",
+   "fmt": "num",
+   "label": "WUP076 · Inventory",
+   "note": null
+  },
+  {
+   "label": "9 · Staffing & Human Resources",
+   "type": "section"
+  },
+  {
+   "ann_type": "last",
+   "code": "WUP093",
+   "derivable": true,
+   "field": "wup093",
+   "fmt": "num",
+   "label": "WUP093 · Total number of staff",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP094",
+   "derivable": false,
+   "field": "wup094",
+   "fmt": "num",
+   "label": "WUP094 · Total number of staff trained",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP097",
+   "derivable": false,
+   "field": "wup097",
+   "fmt": "num",
+   "label": "WUP097 · Full-time equivalent (FTE) employees",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP098",
+   "derivable": false,
+   "field": "wup098",
+   "fmt": "num",
+   "label": "WUP098 · Full-time employees who are women",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP099",
+   "derivable": false,
+   "field": "wup099",
+   "fmt": "num",
+   "label": "WUP099 · Full-time equivalent women employees",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP100",
+   "derivable": false,
+   "field": "wup100",
+   "fmt": "num",
+   "label": "WUP100 · Senior management (male)",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP101",
+   "derivable": false,
+   "field": "wup101",
+   "fmt": "num",
+   "label": "WUP101 · Senior management (female)",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP102",
+   "derivable": false,
+   "field": "wup102",
+   "fmt": "num",
+   "label": "WUP102 · Middle management (male)",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP103",
+   "derivable": false,
+   "field": "wup103",
+   "fmt": "num",
+   "label": "WUP103 · Middle management (female)",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP104",
+   "derivable": false,
+   "field": "wup104",
+   "fmt": "num",
+   "label": "WUP104 · Operations level (male)",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP105",
+   "derivable": false,
+   "field": "wup105",
+   "fmt": "num",
+   "label": "WUP105 · Operations level (female)",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP106",
+   "derivable": false,
+   "field": "wup106",
+   "fmt": "num",
+   "label": "WUP106 · Staff who left within the year",
+   "note": null
+  },
+  {
+   "ann_type": "sum",
+   "code": "WUP107",
+   "derivable": false,
+   "field": "wup107",
+   "fmt": "num",
+   "label": "WUP107 · Total number of staff within the year",
+   "note": null
+  }
+ ],
+ "status": 200
+}

@@ -2,7 +2,7 @@
 services/narrative_engine.py
 ==============================
 Phase 2 AI Agent — generates a plain-English executive narrative from
-live KPI data using the Groq API (Llama 3.3 70B, free tier).
+live KPI data using the Groq API. Disabled unless the tenant sets ai.enabled.
 
 Called by GET /api/insights/narrative
 """
@@ -10,6 +10,8 @@ from __future__ import annotations
 import os, json, logging
 from typing import Any
 from sqlalchemy.orm import Session
+
+from app.core.tenant import tenant as _tenant
 
 log = logging.getLogger(__name__)
 
@@ -97,7 +99,7 @@ def _build_context(db: Session, year: int) -> dict[str, Any]:
         "fiscal_year":       f"FY {year-1}/{str(year)[-2:]}",
         "months_analysed":   len(has_data),
         "nrw_pct":           nrw_pct,
-        "nrw_target":        27.0,
+        "nrw_target":        _tenant.target("nrw_pct", 25.0),
         "nrw_trend":         nrw_trend,
         "collection_rate":   coll_pct,
         "coll_benchmark":    90.0,
@@ -119,17 +121,20 @@ def _build_context(db: Session, year: int) -> dict[str, Any]:
 def _build_prompt(ctx: dict) -> str:
     zones_text = "\n".join(
         f"  • {z['zone']}: NRW {z['nrw_pct']}%, Collection {z['collection_rate']}%, "
-        f"Pipe failures {z['pipe_breakdowns']:,}, Debtors MWK {z['total_debtors_M']:.0f}M"
+        f"Pipe failures {z['pipe_breakdowns']:,}, Debtors {_tenant.currency.code} {z['total_debtors_M']:.0f}M"
         for z in ctx.get("zones", [])
     )
 
-    return f"""You are a senior performance analyst for the Southern Region Water Board (SRWB) in Malawi.
+    ident = _tenant.identity
+    where = f" in {ident.country}" if ident.country else ""
+    cur = _tenant.currency.code
+    return f"""You are a senior performance analyst for the {ident.name} ({ident.short_name}){where}.
 Write a concise, professional executive narrative (4–6 sentences) summarising this period's operational performance.
 
 FISCAL YEAR: {ctx['fiscal_year']} ({ctx['months_analysed']} months of data)
 
 KEY METRICS:
-- NRW Rate: {ctx['nrw_pct']}% (SRWB target: <{ctx['nrw_target']}%) — trend: {ctx['nrw_trend']}
+- NRW Rate: {ctx['nrw_pct']}% ({ident.short_name} target: <{ctx['nrw_target']}%) — trend: {ctx['nrw_trend']}
 - Collection Rate: {ctx['collection_rate']}% (IBNET benchmark: >{ctx['coll_benchmark']}%)
 - Operating Ratio: {ctx['operating_ratio']} (World Bank target: <0.80)
 - Active Customers: {ctx['active_customers']:,}
@@ -137,8 +142,8 @@ KEY METRICS:
 - Stuck Meters: {ctx['stuck_meters']:,} ({ctx['stuck_pct']}% of accounts)
 - Pipe Breakdowns: {ctx['pipe_breakdowns']:,}
 - Avg Days to Connect: {ctx['days_to_connect']} days (target: <30)
-- Total Debtors: MWK {ctx['total_debtors_M']:.0f}M
-- Cash Collected: MWK {ctx['cash_collected_M']:.0f}M vs Billed MWK {ctx['total_billed_M']:.0f}M
+- Total Debtors: {cur} {ctx['total_debtors_M']:.0f}M
+- Cash Collected: {cur} {ctx['cash_collected_M']:.0f}M vs Billed {cur} {ctx['total_billed_M']:.0f}M
 
 ZONE PERFORMANCE:
 {zones_text}
@@ -157,7 +162,14 @@ def generate_narrative(db: Session, year: int = None) -> dict[str, Any]:
     if year is None:
         from datetime import date
         now = date.today()
-        year = now.year + 1 if now.month >= 4 else now.year
+        from app.utils import fy_end_year
+        year = fy_end_year(now.year, now.month)
+
+    if not _tenant.ai.enabled:
+        # Off unless the installation opts in: narratives send KPI data to an external provider.
+        return {"narrative": None, "error": "AI narratives are disabled for this installation (tenant ai.enabled = false)."}
+    if _tenant.ai.provider != "groq":
+        return {"narrative": None, "error": f"AI provider '{_tenant.ai.provider}' is not supported yet."}
 
     try:
         client  = _get_client()
@@ -167,7 +179,7 @@ def generate_narrative(db: Session, year: int = None) -> dict[str, Any]:
 
         prompt  = _build_prompt(ctx)
         resp    = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model=_tenant.ai.model,
             messages=[
                 {"role": "system", "content":
                  "You are a water utility performance analyst. Write concise, accurate, professional summaries."},

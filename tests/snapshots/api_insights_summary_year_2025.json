@@ -1,0 +1,177 @@
+{
+ "json": {
+  "alerts": [
+   {
+    "category": "financial",
+    "detail": "YTD collection rate of 0% is severely below the IBNET benchmark of 90.0%. Cash flow risk is high.",
+    "metric": "collection_rate",
+    "severity": "critical",
+    "title": "Collection Rate Critical — 0% (benchmark: >90.0%)",
+    "value": 0,
+    "zone": null
+   },
+   {
+    "category": "financial",
+    "detail": "Liwonde zone collection rate of 0% is below the 80.0% minimum. Debtors in this zone require targeted follow-up.",
+    "metric": "collection_rate",
+    "severity": "critical",
+    "title": "Liwonde Zone — Collection Rate 0%",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "category": "financial",
+    "detail": "Mangochi zone collection rate of 0% is below the 80.0% minimum. Debtors in this zone require targeted follow-up.",
+    "metric": "collection_rate",
+    "severity": "critical",
+    "title": "Mangochi Zone — Collection Rate 0%",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "category": "financial",
+    "detail": "Mulanje zone collection rate of 0% is below the 80.0% minimum. Debtors in this zone require targeted follow-up.",
+    "metric": "collection_rate",
+    "severity": "critical",
+    "title": "Mulanje Zone — Collection Rate 0%",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "category": "financial",
+    "detail": "Ngabu zone collection rate of 0% is below the 80.0% minimum. Debtors in this zone require targeted follow-up.",
+    "metric": "collection_rate",
+    "severity": "critical",
+    "title": "Ngabu Zone — Collection Rate 0%",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "category": "financial",
+    "detail": "Zomba zone collection rate of 0% is below the 80.0% minimum. Debtors in this zone require targeted follow-up.",
+    "metric": "collection_rate",
+    "severity": "critical",
+    "title": "Zomba Zone — Collection Rate 0%",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "category": "nrw",
+    "detail": "Liwonde zone NRW of 38.0% exceeds the 35% action threshold. Priority zone for loss reduction intervention.",
+    "metric": "pct_nrw",
+    "severity": "critical",
+    "title": "Liwonde Zone — NRW Critical at 38.0%",
+    "value": 38.0,
+    "zone": "Liwonde"
+   },
+   {
+    "category": "nrw",
+    "detail": "YTD NRW of 30.7% is 3.7pp above the SRWB 27% target. Review pipe breakdown hotspots and meter reading coverage.",
+    "metric": "pct_nrw",
+    "severity": "warning",
+    "title": "NRW Above Target — 30.7% (target: 27.0%)",
+    "value": 30.7,
+    "zone": null
+   },
+   {
+    "category": "nrw",
+    "detail": "Mangochi zone NRW of 35.0% exceeds the SRWB 27% target.",
+    "metric": "pct_nrw",
+    "severity": "warning",
+    "title": "Mangochi Zone — NRW Above Target at 35.0%",
+    "value": 35.0,
+    "zone": "Mangochi"
+   },
+   {
+    "category": "nrw",
+    "detail": "Mulanje zone NRW of 32.0% exceeds the SRWB 27% target.",
+    "metric": "pct_nrw",
+    "severity": "warning",
+    "title": "Mulanje Zone — NRW Above Target at 32.0%",
+    "value": 32.0,
+    "zone": "Mulanje"
+   },
+   {
+    "category": "nrw",
+    "detail": "Ngabu zone NRW of 29.0% exceeds the SRWB 27% target.",
+    "metric": "pct_nrw",
+    "severity": "warning",
+    "title": "Ngabu Zone — NRW Above Target at 29.0%",
+    "value": 29.0,
+    "zone": "Ngabu"
+   },
+   {
+    "category": "operations",
+    "detail": "21,996.289999999997 meters are stuck (137.3% of 16,020.8 active accounts). Estimated monthly billing at risk: approx MWK 0.0M.",
+    "metric": "stuck_meters",
+    "severity": "warning",
+    "title": "Stuck Meters — 137.3% of accounts (21,996.289999999997 meters)",
+    "value": 21996.29,
+    "zone": null
+   },
+   {
+    "category": "operations",
+    "detail": "3,064.5 stuck meters in Liwonde zone (137.3% of accounts). Billing integrity at risk — prioritise meter replacement programme.",
+    "metric": "stuck_meters",
+    "severity": "warning",
+    "title": "Liwonde Zone — High Stuck Meter Rate (137.3%)",
+    "value": 3064.5,
+    "zone": "Liwonde"
+   },
+   {
+    "category": "operations",
+    "detail": "2,528.2200000000003 stuck meters in Mangochi zone (137.3% of accounts). Billing integrity at risk — prioritise meter replacement programme.",
+    "metric": "stuck_meters",
+    "severity": "warning",
+    "title": "Mangochi Zone — High Stuck Meter Rate (137.3%)",
+    "value": 2528.22,
+    "zone": "Mangochi"
+   },
+   {
+    "category": "operations",
+    "detail": "5,209.64 stuck meters in Mulanje zone (137.3% of accounts). Billing integrity at risk — prioritise meter replacement programme.",
+    "metric": "stuck_meters",
+    "severity": "warning",
+    "title": "Mulanje Zone — High Stuck Meter Rate (137.3%)",
+    "value": 5209.64,
+    "zone": "Mulanje"
+   },
+   {
+    "category": "operations",
+    "detail": "3,839.13 stuck meters in Ngabu zone (137.3% of accounts). Billing integrity at risk — prioritise meter replacement programme.",
+    "metric": "stuck_meters",
+    "severity": "warning",
+    "title": "Ngabu Zone — High Stuck Meter Rate (137.3%)",
+    "value": 3839.13,
+    "zone": "Ngabu"
+   },
+   {
+    "category": "operations",
+    "detail": "7,354.8 stuck meters in Zomba zone (137.3% of accounts). Billing integrity at risk — prioritise meter replacement programme.",
+    "metric": "stuck_meters",
+    "severity": "warning",
+    "title": "Zomba Zone — High Stuck Meter Rate (137.3%)",
+    "value": 7354.8,
+    "zone": "Zomba"
+   }
+  ],
+  "kpi_snapshot": {
+   "active_customers": 16020.8,
+   "collection_rate": 0,
+   "days_to_connect": 0,
+   "latest_month": "March",
+   "months_analysed": 12,
+   "nrw_pct": 30.7,
+   "stuck_meters": 21996.29,
+   "stuck_pct": 137.3,
+   "total_debtors_M": 0.0
+  },
+  "summary": {
+   "critical": 7,
+   "info": 0,
+   "total": 17,
+   "warning": 10
+  }
+ },
+ "status": 200
+}

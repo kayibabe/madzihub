@@ -17,15 +17,15 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import Float, Integer, Numeric
 from sqlalchemy.orm import Session
+from app.core.tenant import tenant as _tenant
 from app.database import Record, get_db
 from app.utils import MONTHS_ORDER as FY_MONTHS, apply_fy_filter, csv_list
 
 router = APIRouter(prefix="/api/panels", tags=["Panels"])
 
-ZONE_COLORS = {
-    "Liwonde":"#0077b6","Mangochi":"#0d9488",
-    "Mulanje":"#16a34a","Ngabu":"#d97706","Zomba":"#7c3aed",
-}
+# Zone colours and targets come from the tenant configuration.
+ZONE_COLORS = _tenant.zone_colors
+NRW_TARGET_PCT = _tenant.target("nrw_pct", 25.0)
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────
@@ -1436,7 +1436,7 @@ def panel_nrw(zones: Optional[str] = None, schemes: Optional[str] = None,
         "kpi": {
             "vol_produced": round(prod), "water_sold": round(sold),
             "nrw_volume": round(nrw), "pct_nrw": pct,
-            "target_nrw": 25.0, "gap_to_target": round(pct - 25.0, 1),
+            "target_nrw": NRW_TARGET_PCT, "gap_to_target": round(pct - NRW_TARGET_PCT, 1),
             "economic_nrw": economic_nrw, "avg_tariff_per_m3": round(avg_tariff, 2),
         },
         "by_zone": [{"zone": z["zone"], "color": z["color"],

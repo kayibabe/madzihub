@@ -1,0 +1,252 @@
+{
+ "json": {
+  "fuel_trend": [
+   {
+    "distances_km": 0,
+    "fuel_cost": 0,
+    "fuel_used_litres": 8103.43,
+    "month": "April"
+   },
+   {
+    "distances_km": 0,
+    "fuel_cost": 0,
+    "fuel_used_litres": 5788.16,
+    "month": "May"
+   },
+   {
+    "distances_km": 0,
+    "fuel_cost": 0,
+    "fuel_used_litres": 5932.87,
+    "month": "June"
+   },
+   {
+    "distances_km": 0,
+    "fuel_cost": 0,
+    "fuel_used_litres": 6077.57,
+    "month": "July"
+   },
+   {
+    "distances_km": 0,
+    "fuel_cost": 0,
+    "fuel_used_litres": 6222.27,
+    "month": "August"
+   },
+   {
+    "distances_km": 0,
+    "fuel_cost": 0,
+    "fuel_used_litres": 6366.97,
+    "month": "September"
+   },
+   {
+    "distances_km": 0,
+    "fuel_cost": 0,
+    "fuel_used_litres": 6511.68,
+    "month": "October"
+   },
+   {
+    "distances_km": 0,
+    "fuel_cost": 0,
+    "fuel_used_litres": 6656.39,
+    "month": "November"
+   },
+   {
+    "distances_km": 0,
+    "fuel_cost": 0,
+    "fuel_used_litres": 6801.09,
+    "month": "December"
+   },
+   {
+    "distances_km": 0,
+    "fuel_cost": 0,
+    "fuel_used_litres": 6945.79,
+    "month": "January"
+   },
+   {
+    "distances_km": 0,
+    "fuel_cost": 0,
+    "fuel_used_litres": 7090.49,
+    "month": "February"
+   },
+   {
+    "distances_km": 0,
+    "fuel_cost": 0,
+    "fuel_used_litres": 7235.2,
+    "month": "March"
+   }
+  ],
+  "staff_by_zone": [
+   {
+    "color": "#0077b6",
+    "distances_km": 9273.35,
+    "fuel_cost": 0,
+    "fuel_used_litres": 11108.16,
+    "m3_per_staff": 3.8,
+    "perm_staff": 2506,
+    "staff_costs": 0,
+    "temp_staff": 2673,
+    "total_staff": 5180,
+    "wages": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "color": "#0d9488",
+    "distances_km": 7650.5,
+    "fuel_cost": 0,
+    "fuel_used_litres": 9164.23,
+    "m3_per_staff": 3.8,
+    "perm_staff": 2068,
+    "staff_costs": 0,
+    "temp_staff": 2205,
+    "total_staff": 4273,
+    "wages": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "color": "#16a34a",
+    "distances_km": 15764.66,
+    "fuel_cost": 0,
+    "fuel_used_litres": 18883.87,
+    "m3_per_staff": 3.8,
+    "perm_staff": 4261,
+    "staff_costs": 0,
+    "temp_staff": 4544,
+    "total_staff": 8805,
+    "wages": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "color": "#d97706",
+    "distances_km": 11617.4,
+    "fuel_cost": 0,
+    "fuel_used_litres": 13916.06,
+    "m3_per_staff": 3.8,
+    "perm_staff": 3140,
+    "staff_costs": 0,
+    "temp_staff": 3349,
+    "total_staff": 6489,
+    "wages": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "color": "#7c3aed",
+    "distances_km": 22255.99,
+    "fuel_cost": 0,
+    "fuel_used_litres": 26659.59,
+    "m3_per_staff": 3.8,
+    "perm_staff": 6016,
+    "staff_costs": 0,
+    "temp_staff": 6415,
+    "total_staff": 12431,
+    "wages": 0,
+    "zone": "Zomba"
+   }
+  ],
+  "staff_trend": [
+   {
+    "month": "April",
+    "perm_staff": 20150,
+    "staff_costs": 0,
+    "temp_staff": 21489,
+    "wages": 0
+   },
+   {
+    "month": "May",
+    "perm_staff": 14393,
+    "staff_costs": 0,
+    "temp_staff": 15349,
+    "wages": 0
+   },
+   {
+    "month": "June",
+    "perm_staff": 14753,
+    "staff_costs": 0,
+    "temp_staff": 15733,
+    "wages": 0
+   },
+   {
+    "month": "July",
+    "perm_staff": 15113,
+    "staff_costs": 0,
+    "temp_staff": 16116,
+    "wages": 0
+   },
+   {
+    "month": "August",
+    "perm_staff": 15472,
+    "staff_costs": 0,
+    "temp_staff": 16500,
+    "wages": 0
+   },
+   {
+    "month": "September",
+    "perm_staff": 15832,
+    "staff_costs": 0,
+    "temp_staff": 16884,
+    "wages": 0
+   },
+   {
+    "month": "October",
+    "perm_staff": 16192,
+    "staff_costs": 0,
+    "temp_staff": 17268,
+    "wages": 0
+   },
+   {
+    "month": "November",
+    "perm_staff": 16552,
+    "staff_costs": 0,
+    "temp_staff": 17651,
+    "wages": 0
+   },
+   {
+    "month": "December",
+    "perm_staff": 16912,
+    "staff_costs": 0,
+    "temp_staff": 18035,
+    "wages": 0
+   },
+   {
+    "month": "January",
+    "perm_staff": 17271,
+    "staff_costs": 0,
+    "temp_staff": 18419,
+    "wages": 0
+   },
+   {
+    "month": "February",
+    "perm_staff": 17631,
+    "staff_costs": 0,
+    "temp_staff": 18802,
+    "wages": 0
+   },
+   {
+    "month": "March",
+    "perm_staff": 17991,
+    "staff_costs": 0,
+    "temp_staff": 19186,
+    "wages": 0
+   }
+  ],
+  "summary": {
+   "active_customers": 16021,
+   "distances_km": 66561.9,
+   "fuel_cost": 0,
+   "fuel_per_km": 1.2,
+   "fuel_used_litres": 79731.9,
+   "m3_per_staff": 3.8,
+   "maintenance": 0,
+   "payroll_cost_ratio": 0,
+   "perm_staff": 17991,
+   "staff_costs": 0,
+   "staff_per_1000_conn": 2320.6,
+   "staff_per_1000m3_12h": 1439.756,
+   "temp_staff": 19186,
+   "total_payroll": 0,
+   "total_staff": 37177,
+   "wages": 0,
+   "wages_per_staff": 0.0
+  },
+  "year": 2025
+ },
+ "status": 200
+}

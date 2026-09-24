@@ -1,0 +1,166 @@
+{
+ "json": {
+  "nrw_by_zone": [
+   {
+    "above_target": true,
+    "color": "#0077b6",
+    "distance_from_target": 11.0,
+    "nrw_pct": 38.0,
+    "nrw_vol": 7462.3,
+    "vol_produced": 19637.6,
+    "zone": "Liwonde"
+   },
+   {
+    "above_target": true,
+    "color": "#0d9488",
+    "distance_from_target": 8.0,
+    "nrw_pct": 35.0,
+    "nrw_vol": 5670.4,
+    "vol_produced": 16201.1,
+    "zone": "Mangochi"
+   },
+   {
+    "above_target": true,
+    "color": "#16a34a",
+    "distance_from_target": 5.0,
+    "nrw_pct": 32.0,
+    "nrw_vol": 10682.8,
+    "vol_produced": 33384.0,
+    "zone": "Mulanje"
+   },
+   {
+    "above_target": true,
+    "color": "#d97706",
+    "distance_from_target": 2.0,
+    "nrw_pct": 29.0,
+    "nrw_vol": 7134.5,
+    "vol_produced": 24601.6,
+    "zone": "Ngabu"
+   },
+   {
+    "above_target": false,
+    "color": "#7c3aed",
+    "distance_from_target": -1.0,
+    "nrw_pct": 26.0,
+    "nrw_vol": 12253.9,
+    "vol_produced": 47130.3,
+    "zone": "Zomba"
+   }
+  ],
+  "nrw_components": {
+   "commercial_loss_proxy": 10801.0,
+   "note": "Indicative split: physical losses assumed ~75% of NRW pending a full water-balance audit. Components sum to total NRW.",
+   "physical_loss_proxy": 32402.9,
+   "total_nrw": 43203.9
+  },
+  "nrw_target": 27.0,
+  "nrw_trend": [
+   {
+    "above_target": true,
+    "month": "April",
+    "nrw_pct": 30.65,
+    "nrw_vol": 4390.9,
+    "vol_produced": 14325.7
+   },
+   {
+    "above_target": true,
+    "month": "May",
+    "nrw_pct": 30.65,
+    "nrw_vol": 3136.4,
+    "vol_produced": 10232.6
+   },
+   {
+    "above_target": true,
+    "month": "June",
+    "nrw_pct": 30.65,
+    "nrw_vol": 3214.8,
+    "vol_produced": 10488.5
+   },
+   {
+    "above_target": true,
+    "month": "July",
+    "nrw_pct": 30.65,
+    "nrw_vol": 3293.2,
+    "vol_produced": 10744.3
+   },
+   {
+    "above_target": true,
+    "month": "August",
+    "nrw_pct": 30.65,
+    "nrw_vol": 3371.6,
+    "vol_produced": 11000.1
+   },
+   {
+    "above_target": true,
+    "month": "September",
+    "nrw_pct": 30.65,
+    "nrw_vol": 3450.0,
+    "vol_produced": 11255.9
+   },
+   {
+    "above_target": true,
+    "month": "October",
+    "nrw_pct": 30.65,
+    "nrw_vol": 3528.5,
+    "vol_produced": 11511.7
+   },
+   {
+    "above_target": true,
+    "month": "November",
+    "nrw_pct": 30.65,
+    "nrw_vol": 3606.9,
+    "vol_produced": 11767.5
+   },
+   {
+    "above_target": true,
+    "month": "December",
+    "nrw_pct": 30.65,
+    "nrw_vol": 3685.3,
+    "vol_produced": 12023.4
+   },
+   {
+    "above_target": true,
+    "month": "January",
+    "nrw_pct": 30.65,
+    "nrw_vol": 3763.7,
+    "vol_produced": 12279.2
+   },
+   {
+    "above_target": true,
+    "month": "February",
+    "nrw_pct": 30.65,
+    "nrw_vol": 3842.1,
+    "vol_produced": 12535.0
+   },
+   {
+    "above_target": true,
+    "month": "March",
+    "nrw_pct": 30.65,
+    "nrw_vol": 3920.5,
+    "vol_produced": 12790.8
+   }
+  ],
+  "summary": {
+   "above_target": true,
+   "avg_tariff": 0.0,
+   "nrw_cost_estimate": 0.0,
+   "nrw_pct": 30.7,
+   "nrw_vol": 43203.9,
+   "revenue_water": 97750.8,
+   "srwb_target_pct": 27.0,
+   "vol_billed": 479459.3,
+   "vol_produced": 140954.6
+  },
+  "year": 2025,
+  "zones_above_target": [
+   "Liwonde",
+   "Mangochi",
+   "Mulanje",
+   "Ngabu"
+  ],
+  "zones_below_target": [
+   "Zomba"
+  ]
+ },
+ "status": 200
+}

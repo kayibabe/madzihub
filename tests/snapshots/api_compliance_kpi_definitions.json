@@ -1,0 +1,690 @@
+{
+ "json": {
+  "by_label": {
+   "bacteriological compliance": {
+    "aliases": [
+     "Bacteriological Compliance"
+    ],
+    "benchmark_type": "Target line allowed once data exists",
+    "benchmark_value": "Permit / public-health standard",
+    "chart_guidance": "Only use explicit compliance thresholds with actual microbiological sample results.",
+    "currently_supported": false,
+    "evidence_class": "missing",
+    "evidence_short": "Data gap",
+    "evidence_status": "Source data not yet onboarded",
+    "formula": "Bacteriologically compliant samples ÷ total microbiological samples × 100",
+    "key": "bacteriological_compliance",
+    "notes": "Critical compliance metric still missing from the operational upload schema.",
+    "owner": "Water Quality Laboratory",
+    "required_fields": [
+     "ecoli_present",
+     "total_coliform_present",
+     "samples_total",
+     "samples_compliant"
+    ],
+    "support_status": "Needs governed source data",
+    "title": "Bacteriological Compliance",
+    "tooltip": "Bacteriologically compliant samples ÷ total microbiological samples × 100 Owner: Water Quality Laboratory. Source data not yet onboarded. Show an evidence caveat only until source fields are onboarded.",
+    "unit": "%",
+    "visual_treatment": "Show an evidence caveat only until source fields are onboarded."
+   },
+   "chlorine dose proxy": {
+    "aliases": [
+     "Treatment Chemical Dosing Proxy",
+     "chlorine dose proxy",
+     "Operational Proxy Data"
+    ],
+    "benchmark_type": "Context note only",
+    "benchmark_value": null,
+    "chart_guidance": "Do not draw compliance lines; current data does not contain sample-result compliance values.",
+    "currently_supported": true,
+    "evidence_class": "proxy",
+    "evidence_short": "Proxy",
+    "evidence_status": "Operational proxy only",
+    "formula": "Proxy only: chlorine kg and chemical cost reviewed alongside production",
+    "key": "chlorine_dose_proxy",
+    "notes": "Operational proxy, not a regulatory compliance result.",
+    "owner": "Water Quality",
+    "required_fields": [
+     "chlorine_kg",
+     "chem_cost",
+     "vol_produced"
+    ],
+    "support_status": "Live",
+    "title": "Treatment Chemical Dosing Proxy",
+    "tooltip": "Proxy only: chlorine kg and chemical cost reviewed alongside production Owner: Water Quality. Operational proxy only. Use proxy label and context note; do not imply statutory compliance.",
+    "unit": "proxy",
+    "visual_treatment": "Use proxy label and context note; do not imply statutory compliance."
+   },
+   "collection efficiency": {
+    "aliases": [
+     "Collection Rate",
+     "Collection Efficiency",
+     "Collections"
+    ],
+    "benchmark_type": "Target line allowed",
+    "benchmark_value": "95% benchmark",
+    "chart_guidance": "Use benchmark context or target line where the chart is explicitly about collection efficiency.",
+    "currently_supported": true,
+    "evidence_class": "approved",
+    "evidence_short": "Target",
+    "evidence_status": "Approved comparator available",
+    "formula": "Collection rate = cash collected ÷ amount billed × 100",
+    "key": "collection_rate",
+    "notes": "Financial sustainability metric suitable for KPI cards and trend charts.",
+    "owner": "Finance / Commercial",
+    "required_fields": [
+     "cash_collected",
+     "amt_billed",
+     "collection_rate"
+    ],
+    "support_status": "Live",
+    "title": "Collection Rate",
+    "tooltip": "Collection rate = cash collected ÷ amount billed × 100 Owner: Finance / Commercial. Approved comparator available. Literal target line allowed on purpose-built KPI charts.",
+    "unit": "%",
+    "visual_treatment": "Literal target line allowed on purpose-built KPI charts."
+   },
+   "collection rate": {
+    "aliases": [
+     "Collection Rate",
+     "Collection Efficiency",
+     "Collections"
+    ],
+    "benchmark_type": "Target line allowed",
+    "benchmark_value": "95% benchmark",
+    "chart_guidance": "Use benchmark context or target line where the chart is explicitly about collection efficiency.",
+    "currently_supported": true,
+    "evidence_class": "approved",
+    "evidence_short": "Target",
+    "evidence_status": "Approved comparator available",
+    "formula": "Collection rate = cash collected ÷ amount billed × 100",
+    "key": "collection_rate",
+    "notes": "Financial sustainability metric suitable for KPI cards and trend charts.",
+    "owner": "Finance / Commercial",
+    "required_fields": [
+     "cash_collected",
+     "amt_billed",
+     "collection_rate"
+    ],
+    "support_status": "Live",
+    "title": "Collection Rate",
+    "tooltip": "Collection rate = cash collected ÷ amount billed × 100 Owner: Finance / Commercial. Approved comparator available. Literal target line allowed on purpose-built KPI charts.",
+    "unit": "%",
+    "visual_treatment": "Literal target line allowed on purpose-built KPI charts."
+   },
+   "collections": {
+    "aliases": [
+     "Collection Rate",
+     "Collection Efficiency",
+     "Collections"
+    ],
+    "benchmark_type": "Target line allowed",
+    "benchmark_value": "95% benchmark",
+    "chart_guidance": "Use benchmark context or target line where the chart is explicitly about collection efficiency.",
+    "currently_supported": true,
+    "evidence_class": "approved",
+    "evidence_short": "Target",
+    "evidence_status": "Approved comparator available",
+    "formula": "Collection rate = cash collected ÷ amount billed × 100",
+    "key": "collection_rate",
+    "notes": "Financial sustainability metric suitable for KPI cards and trend charts.",
+    "owner": "Finance / Commercial",
+    "required_fields": [
+     "cash_collected",
+     "amt_billed",
+     "collection_rate"
+    ],
+    "support_status": "Live",
+    "title": "Collection Rate",
+    "tooltip": "Collection rate = cash collected ÷ amount billed × 100 Owner: Finance / Commercial. Approved comparator available. Literal target line allowed on purpose-built KPI charts.",
+    "unit": "%",
+    "visual_treatment": "Literal target line allowed on purpose-built KPI charts."
+   },
+   "continuity of supply": {
+    "aliases": [
+     "Continuity of Supply",
+     "supply hours",
+     "Supply Continuity"
+    ],
+    "benchmark_type": "Context note preferred",
+    "benchmark_value": "Local operating standard to be confirmed",
+    "chart_guidance": "Avoid a universal target line unless a board-approved service standard exists.",
+    "currently_supported": true,
+    "evidence_class": "context",
+    "evidence_short": "Context",
+    "evidence_status": "Operational context only",
+    "formula": "Continuity = average normal supply hours per day / period",
+    "key": "supply_hours",
+    "notes": "Useful for compliance context, but benchmark should be policy-led, not implied.",
+    "owner": "Operations",
+    "required_fields": [
+     "supply_hours",
+     "power_fail_hours"
+    ],
+    "support_status": "Live",
+    "title": "Continuity of Supply",
+    "tooltip": "Continuity = average normal supply hours per day / period Owner: Operations. Operational context only. Use interpretation note rather than a universal target line.",
+    "unit": "hours",
+    "visual_treatment": "Use interpretation note rather than a universal target line."
+   },
+   "corporate nrw": {
+    "aliases": [
+     "Non-Revenue Water",
+     "pct nrw",
+     "NRW Rate",
+     "NRW %",
+     "Corporate NRW %"
+    ],
+    "benchmark_type": "Target line allowed",
+    "benchmark_value": "SRWB target 27%; international good practice 20%",
+    "chart_guidance": "Use target lines on time-series and zone-comparison charts.",
+    "currently_supported": true,
+    "evidence_class": "approved",
+    "evidence_short": "Target",
+    "evidence_status": "Approved comparator available",
+    "formula": "NRW % = (non-revenue water ÷ volume produced) × 100",
+    "key": "pct_nrw",
+    "notes": "Core operational loss metric already represented in the current data model.",
+    "owner": "Operations / Commercial",
+    "required_fields": [
+     "vol_produced",
+     "nrw",
+     "pct_nrw"
+    ],
+    "support_status": "Live",
+    "title": "Non-Revenue Water",
+    "tooltip": "NRW % = (non-revenue water ÷ volume produced) × 100 Owner: Operations / Commercial. Approved comparator available. Literal target line allowed on purpose-built KPI charts.",
+    "unit": "%",
+    "visual_treatment": "Literal target line allowed on purpose-built KPI charts."
+   },
+   "non revenue water": {
+    "aliases": [
+     "Non-Revenue Water",
+     "pct nrw",
+     "NRW Rate",
+     "NRW %",
+     "Corporate NRW %"
+    ],
+    "benchmark_type": "Target line allowed",
+    "benchmark_value": "SRWB target 27%; international good practice 20%",
+    "chart_guidance": "Use target lines on time-series and zone-comparison charts.",
+    "currently_supported": true,
+    "evidence_class": "approved",
+    "evidence_short": "Target",
+    "evidence_status": "Approved comparator available",
+    "formula": "NRW % = (non-revenue water ÷ volume produced) × 100",
+    "key": "pct_nrw",
+    "notes": "Core operational loss metric already represented in the current data model.",
+    "owner": "Operations / Commercial",
+    "required_fields": [
+     "vol_produced",
+     "nrw",
+     "pct_nrw"
+    ],
+    "support_status": "Live",
+    "title": "Non-Revenue Water",
+    "tooltip": "NRW % = (non-revenue water ÷ volume produced) × 100 Owner: Operations / Commercial. Approved comparator available. Literal target line allowed on purpose-built KPI charts.",
+    "unit": "%",
+    "visual_treatment": "Literal target line allowed on purpose-built KPI charts."
+   },
+   "nrw": {
+    "aliases": [
+     "Non-Revenue Water",
+     "pct nrw",
+     "NRW Rate",
+     "NRW %",
+     "Corporate NRW %"
+    ],
+    "benchmark_type": "Target line allowed",
+    "benchmark_value": "SRWB target 27%; international good practice 20%",
+    "chart_guidance": "Use target lines on time-series and zone-comparison charts.",
+    "currently_supported": true,
+    "evidence_class": "approved",
+    "evidence_short": "Target",
+    "evidence_status": "Approved comparator available",
+    "formula": "NRW % = (non-revenue water ÷ volume produced) × 100",
+    "key": "pct_nrw",
+    "notes": "Core operational loss metric already represented in the current data model.",
+    "owner": "Operations / Commercial",
+    "required_fields": [
+     "vol_produced",
+     "nrw",
+     "pct_nrw"
+    ],
+    "support_status": "Live",
+    "title": "Non-Revenue Water",
+    "tooltip": "NRW % = (non-revenue water ÷ volume produced) × 100 Owner: Operations / Commercial. Approved comparator available. Literal target line allowed on purpose-built KPI charts.",
+    "unit": "%",
+    "visual_treatment": "Literal target line allowed on purpose-built KPI charts."
+   },
+   "nrw rate": {
+    "aliases": [
+     "Non-Revenue Water",
+     "pct nrw",
+     "NRW Rate",
+     "NRW %",
+     "Corporate NRW %"
+    ],
+    "benchmark_type": "Target line allowed",
+    "benchmark_value": "SRWB target 27%; international good practice 20%",
+    "chart_guidance": "Use target lines on time-series and zone-comparison charts.",
+    "currently_supported": true,
+    "evidence_class": "approved",
+    "evidence_short": "Target",
+    "evidence_status": "Approved comparator available",
+    "formula": "NRW % = (non-revenue water ÷ volume produced) × 100",
+    "key": "pct_nrw",
+    "notes": "Core operational loss metric already represented in the current data model.",
+    "owner": "Operations / Commercial",
+    "required_fields": [
+     "vol_produced",
+     "nrw",
+     "pct_nrw"
+    ],
+    "support_status": "Live",
+    "title": "Non-Revenue Water",
+    "tooltip": "NRW % = (non-revenue water ÷ volume produced) × 100 Owner: Operations / Commercial. Approved comparator available. Literal target line allowed on purpose-built KPI charts.",
+    "unit": "%",
+    "visual_treatment": "Literal target line allowed on purpose-built KPI charts."
+   },
+   "operational proxy data": {
+    "aliases": [
+     "Treatment Chemical Dosing Proxy",
+     "chlorine dose proxy",
+     "Operational Proxy Data"
+    ],
+    "benchmark_type": "Context note only",
+    "benchmark_value": null,
+    "chart_guidance": "Do not draw compliance lines; current data does not contain sample-result compliance values.",
+    "currently_supported": true,
+    "evidence_class": "proxy",
+    "evidence_short": "Proxy",
+    "evidence_status": "Operational proxy only",
+    "formula": "Proxy only: chlorine kg and chemical cost reviewed alongside production",
+    "key": "chlorine_dose_proxy",
+    "notes": "Operational proxy, not a regulatory compliance result.",
+    "owner": "Water Quality",
+    "required_fields": [
+     "chlorine_kg",
+     "chem_cost",
+     "vol_produced"
+    ],
+    "support_status": "Live",
+    "title": "Treatment Chemical Dosing Proxy",
+    "tooltip": "Proxy only: chlorine kg and chemical cost reviewed alongside production Owner: Water Quality. Operational proxy only. Use proxy label and context note; do not imply statutory compliance.",
+    "unit": "proxy",
+    "visual_treatment": "Use proxy label and context note; do not imply statutory compliance."
+   },
+   "pct nrw": {
+    "aliases": [
+     "Non-Revenue Water",
+     "pct nrw",
+     "NRW Rate",
+     "NRW %",
+     "Corporate NRW %"
+    ],
+    "benchmark_type": "Target line allowed",
+    "benchmark_value": "SRWB target 27%; international good practice 20%",
+    "chart_guidance": "Use target lines on time-series and zone-comparison charts.",
+    "currently_supported": true,
+    "evidence_class": "approved",
+    "evidence_short": "Target",
+    "evidence_status": "Approved comparator available",
+    "formula": "NRW % = (non-revenue water ÷ volume produced) × 100",
+    "key": "pct_nrw",
+    "notes": "Core operational loss metric already represented in the current data model.",
+    "owner": "Operations / Commercial",
+    "required_fields": [
+     "vol_produced",
+     "nrw",
+     "pct_nrw"
+    ],
+    "support_status": "Live",
+    "title": "Non-Revenue Water",
+    "tooltip": "NRW % = (non-revenue water ÷ volume produced) × 100 Owner: Operations / Commercial. Approved comparator available. Literal target line allowed on purpose-built KPI charts.",
+    "unit": "%",
+    "visual_treatment": "Literal target line allowed on purpose-built KPI charts."
+   },
+   "residual chlorine compliance": {
+    "aliases": [
+     "Residual Chlorine Compliance"
+    ],
+    "benchmark_type": "Target line allowed once data exists",
+    "benchmark_value": "Board / regulator standard",
+    "chart_guidance": "Use formal compliance line only when sample-result dataset exists.",
+    "currently_supported": false,
+    "evidence_class": "missing",
+    "evidence_short": "Data gap",
+    "evidence_status": "Source data not yet onboarded",
+    "formula": "Compliant samples ÷ total samples × 100",
+    "key": "residual_chlorine_compliance",
+    "notes": "Not yet represented in the current RawData schema.",
+    "owner": "Water Quality Laboratory",
+    "required_fields": [
+     "residual_chlorine_min",
+     "residual_chlorine_max",
+     "samples_total",
+     "samples_compliant"
+    ],
+    "support_status": "Needs governed source data",
+    "title": "Residual Chlorine Compliance",
+    "tooltip": "Compliant samples ÷ total samples × 100 Owner: Water Quality Laboratory. Source data not yet onboarded. Show an evidence caveat only until source fields are onboarded.",
+    "unit": "%",
+    "visual_treatment": "Show an evidence caveat only until source fields are onboarded."
+   },
+   "supply continuity": {
+    "aliases": [
+     "Continuity of Supply",
+     "supply hours",
+     "Supply Continuity"
+    ],
+    "benchmark_type": "Context note preferred",
+    "benchmark_value": "Local operating standard to be confirmed",
+    "chart_guidance": "Avoid a universal target line unless a board-approved service standard exists.",
+    "currently_supported": true,
+    "evidence_class": "context",
+    "evidence_short": "Context",
+    "evidence_status": "Operational context only",
+    "formula": "Continuity = average normal supply hours per day / period",
+    "key": "supply_hours",
+    "notes": "Useful for compliance context, but benchmark should be policy-led, not implied.",
+    "owner": "Operations",
+    "required_fields": [
+     "supply_hours",
+     "power_fail_hours"
+    ],
+    "support_status": "Live",
+    "title": "Continuity of Supply",
+    "tooltip": "Continuity = average normal supply hours per day / period Owner: Operations. Operational context only. Use interpretation note rather than a universal target line.",
+    "unit": "hours",
+    "visual_treatment": "Use interpretation note rather than a universal target line."
+   },
+   "supply hours": {
+    "aliases": [
+     "Continuity of Supply",
+     "supply hours",
+     "Supply Continuity"
+    ],
+    "benchmark_type": "Context note preferred",
+    "benchmark_value": "Local operating standard to be confirmed",
+    "chart_guidance": "Avoid a universal target line unless a board-approved service standard exists.",
+    "currently_supported": true,
+    "evidence_class": "context",
+    "evidence_short": "Context",
+    "evidence_status": "Operational context only",
+    "formula": "Continuity = average normal supply hours per day / period",
+    "key": "supply_hours",
+    "notes": "Useful for compliance context, but benchmark should be policy-led, not implied.",
+    "owner": "Operations",
+    "required_fields": [
+     "supply_hours",
+     "power_fail_hours"
+    ],
+    "support_status": "Live",
+    "title": "Continuity of Supply",
+    "tooltip": "Continuity = average normal supply hours per day / period Owner: Operations. Operational context only. Use interpretation note rather than a universal target line.",
+    "unit": "hours",
+    "visual_treatment": "Use interpretation note rather than a universal target line."
+   },
+   "treatment chemical dosing proxy": {
+    "aliases": [
+     "Treatment Chemical Dosing Proxy",
+     "chlorine dose proxy",
+     "Operational Proxy Data"
+    ],
+    "benchmark_type": "Context note only",
+    "benchmark_value": null,
+    "chart_guidance": "Do not draw compliance lines; current data does not contain sample-result compliance values.",
+    "currently_supported": true,
+    "evidence_class": "proxy",
+    "evidence_short": "Proxy",
+    "evidence_status": "Operational proxy only",
+    "formula": "Proxy only: chlorine kg and chemical cost reviewed alongside production",
+    "key": "chlorine_dose_proxy",
+    "notes": "Operational proxy, not a regulatory compliance result.",
+    "owner": "Water Quality",
+    "required_fields": [
+     "chlorine_kg",
+     "chem_cost",
+     "vol_produced"
+    ],
+    "support_status": "Live",
+    "title": "Treatment Chemical Dosing Proxy",
+    "tooltip": "Proxy only: chlorine kg and chemical cost reviewed alongside production Owner: Water Quality. Operational proxy only. Use proxy label and context note; do not imply statutory compliance.",
+    "unit": "proxy",
+    "visual_treatment": "Use proxy label and context note; do not imply statutory compliance."
+   },
+   "turbidity compliance": {
+    "aliases": [
+     "Turbidity Compliance"
+    ],
+    "benchmark_type": "Target line allowed once data exists",
+    "benchmark_value": "Permit / drinking-water standard",
+    "chart_guidance": "Use formal compliance line only when laboratory result data exists.",
+    "currently_supported": false,
+    "evidence_class": "missing",
+    "evidence_short": "Data gap",
+    "evidence_status": "Source data not yet onboarded",
+    "formula": "Compliant turbidity samples ÷ total turbidity samples × 100",
+    "key": "turbidity_compliance",
+    "notes": "Not yet represented in the current RawData schema.",
+    "owner": "Water Quality Laboratory",
+    "required_fields": [
+     "turbidity_ntu",
+     "samples_total",
+     "samples_compliant"
+    ],
+    "support_status": "Needs governed source data",
+    "title": "Turbidity Compliance",
+    "tooltip": "Compliant turbidity samples ÷ total turbidity samples × 100 Owner: Water Quality Laboratory. Source data not yet onboarded. Show an evidence caveat only until source fields are onboarded.",
+    "unit": "%",
+    "visual_treatment": "Show an evidence caveat only until source fields are onboarded."
+   }
+  },
+  "items": [
+   {
+    "aliases": [
+     "Non-Revenue Water",
+     "pct nrw",
+     "NRW Rate",
+     "NRW %",
+     "Corporate NRW %"
+    ],
+    "benchmark_type": "Target line allowed",
+    "benchmark_value": "SRWB target 27%; international good practice 20%",
+    "chart_guidance": "Use target lines on time-series and zone-comparison charts.",
+    "currently_supported": true,
+    "evidence_class": "approved",
+    "evidence_short": "Target",
+    "evidence_status": "Approved comparator available",
+    "formula": "NRW % = (non-revenue water ÷ volume produced) × 100",
+    "key": "pct_nrw",
+    "notes": "Core operational loss metric already represented in the current data model.",
+    "owner": "Operations / Commercial",
+    "required_fields": [
+     "vol_produced",
+     "nrw",
+     "pct_nrw"
+    ],
+    "support_status": "Live",
+    "title": "Non-Revenue Water",
+    "tooltip": "NRW % = (non-revenue water ÷ volume produced) × 100 Owner: Operations / Commercial. Approved comparator available. Literal target line allowed on purpose-built KPI charts.",
+    "unit": "%",
+    "visual_treatment": "Literal target line allowed on purpose-built KPI charts."
+   },
+   {
+    "aliases": [
+     "Collection Rate",
+     "Collection Efficiency",
+     "Collections"
+    ],
+    "benchmark_type": "Target line allowed",
+    "benchmark_value": "95% benchmark",
+    "chart_guidance": "Use benchmark context or target line where the chart is explicitly about collection efficiency.",
+    "currently_supported": true,
+    "evidence_class": "approved",
+    "evidence_short": "Target",
+    "evidence_status": "Approved comparator available",
+    "formula": "Collection rate = cash collected ÷ amount billed × 100",
+    "key": "collection_rate",
+    "notes": "Financial sustainability metric suitable for KPI cards and trend charts.",
+    "owner": "Finance / Commercial",
+    "required_fields": [
+     "cash_collected",
+     "amt_billed",
+     "collection_rate"
+    ],
+    "support_status": "Live",
+    "title": "Collection Rate",
+    "tooltip": "Collection rate = cash collected ÷ amount billed × 100 Owner: Finance / Commercial. Approved comparator available. Literal target line allowed on purpose-built KPI charts.",
+    "unit": "%",
+    "visual_treatment": "Literal target line allowed on purpose-built KPI charts."
+   },
+   {
+    "aliases": [
+     "Continuity of Supply",
+     "supply hours",
+     "Supply Continuity"
+    ],
+    "benchmark_type": "Context note preferred",
+    "benchmark_value": "Local operating standard to be confirmed",
+    "chart_guidance": "Avoid a universal target line unless a board-approved service standard exists.",
+    "currently_supported": true,
+    "evidence_class": "context",
+    "evidence_short": "Context",
+    "evidence_status": "Operational context only",
+    "formula": "Continuity = average normal supply hours per day / period",
+    "key": "supply_hours",
+    "notes": "Useful for compliance context, but benchmark should be policy-led, not implied.",
+    "owner": "Operations",
+    "required_fields": [
+     "supply_hours",
+     "power_fail_hours"
+    ],
+    "support_status": "Live",
+    "title": "Continuity of Supply",
+    "tooltip": "Continuity = average normal supply hours per day / period Owner: Operations. Operational context only. Use interpretation note rather than a universal target line.",
+    "unit": "hours",
+    "visual_treatment": "Use interpretation note rather than a universal target line."
+   },
+   {
+    "aliases": [
+     "Treatment Chemical Dosing Proxy",
+     "chlorine dose proxy",
+     "Operational Proxy Data"
+    ],
+    "benchmark_type": "Context note only",
+    "benchmark_value": null,
+    "chart_guidance": "Do not draw compliance lines; current data does not contain sample-result compliance values.",
+    "currently_supported": true,
+    "evidence_class": "proxy",
+    "evidence_short": "Proxy",
+    "evidence_status": "Operational proxy only",
+    "formula": "Proxy only: chlorine kg and chemical cost reviewed alongside production",
+    "key": "chlorine_dose_proxy",
+    "notes": "Operational proxy, not a regulatory compliance result.",
+    "owner": "Water Quality",
+    "required_fields": [
+     "chlorine_kg",
+     "chem_cost",
+     "vol_produced"
+    ],
+    "support_status": "Live",
+    "title": "Treatment Chemical Dosing Proxy",
+    "tooltip": "Proxy only: chlorine kg and chemical cost reviewed alongside production Owner: Water Quality. Operational proxy only. Use proxy label and context note; do not imply statutory compliance.",
+    "unit": "proxy",
+    "visual_treatment": "Use proxy label and context note; do not imply statutory compliance."
+   },
+   {
+    "aliases": [
+     "Residual Chlorine Compliance"
+    ],
+    "benchmark_type": "Target line allowed once data exists",
+    "benchmark_value": "Board / regulator standard",
+    "chart_guidance": "Use formal compliance line only when sample-result dataset exists.",
+    "currently_supported": false,
+    "evidence_class": "missing",
+    "evidence_short": "Data gap",
+    "evidence_status": "Source data not yet onboarded",
+    "formula": "Compliant samples ÷ total samples × 100",
+    "key": "residual_chlorine_compliance",
+    "notes": "Not yet represented in the current RawData schema.",
+    "owner": "Water Quality Laboratory",
+    "required_fields": [
+     "residual_chlorine_min",
+     "residual_chlorine_max",
+     "samples_total",
+     "samples_compliant"
+    ],
+    "support_status": "Needs governed source data",
+    "title": "Residual Chlorine Compliance",
+    "tooltip": "Compliant samples ÷ total samples × 100 Owner: Water Quality Laboratory. Source data not yet onboarded. Show an evidence caveat only until source fields are onboarded.",
+    "unit": "%",
+    "visual_treatment": "Show an evidence caveat only until source fields are onboarded."
+   },
+   {
+    "aliases": [
+     "Turbidity Compliance"
+    ],
+    "benchmark_type": "Target line allowed once data exists",
+    "benchmark_value": "Permit / drinking-water standard",
+    "chart_guidance": "Use formal compliance line only when laboratory result data exists.",
+    "currently_supported": false,
+    "evidence_class": "missing",
+    "evidence_short": "Data gap",
+    "evidence_status": "Source data not yet onboarded",
+    "formula": "Compliant turbidity samples ÷ total turbidity samples × 100",
+    "key": "turbidity_compliance",
+    "notes": "Not yet represented in the current RawData schema.",
+    "owner": "Water Quality Laboratory",
+    "required_fields": [
+     "turbidity_ntu",
+     "samples_total",
+     "samples_compliant"
+    ],
+    "support_status": "Needs governed source data",
+    "title": "Turbidity Compliance",
+    "tooltip": "Compliant turbidity samples ÷ total turbidity samples × 100 Owner: Water Quality Laboratory. Source data not yet onboarded. Show an evidence caveat only until source fields are onboarded.",
+    "unit": "%",
+    "visual_treatment": "Show an evidence caveat only until source fields are onboarded."
+   },
+   {
+    "aliases": [
+     "Bacteriological Compliance"
+    ],
+    "benchmark_type": "Target line allowed once data exists",
+    "benchmark_value": "Permit / public-health standard",
+    "chart_guidance": "Only use explicit compliance thresholds with actual microbiological sample results.",
+    "currently_supported": false,
+    "evidence_class": "missing",
+    "evidence_short": "Data gap",
+    "evidence_status": "Source data not yet onboarded",
+    "formula": "Bacteriologically compliant samples ÷ total microbiological samples × 100",
+    "key": "bacteriological_compliance",
+    "notes": "Critical compliance metric still missing from the operational upload schema.",
+    "owner": "Water Quality Laboratory",
+    "required_fields": [
+     "ecoli_present",
+     "total_coliform_present",
+     "samples_total",
+     "samples_compliant"
+    ],
+    "support_status": "Needs governed source data",
+    "title": "Bacteriological Compliance",
+    "tooltip": "Bacteriologically compliant samples ÷ total microbiological samples × 100 Owner: Water Quality Laboratory. Source data not yet onboarded. Show an evidence caveat only until source fields are onboarded.",
+    "unit": "%",
+    "visual_treatment": "Show an evidence caveat only until source fields are onboarded."
+   }
+  ],
+  "summary": {
+   "approved": 2,
+   "context": 1,
+   "missing": 3,
+   "proxy": 1,
+   "requires_new_data": 3,
+   "supported_now": 4,
+   "total_kpis": 7
+  }
+ },
+ "status": 200
+}

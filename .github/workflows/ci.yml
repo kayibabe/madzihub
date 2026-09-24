@@ -1,4 +1,4 @@
-name: phase4-ci
+name: ci
 
 on:
   push:
@@ -20,10 +20,10 @@ jobs:
         run: python -m compileall app scripts tests
       - name: Unit tests
         env:
-          SRWB_ENV: development
-          SRWB_SECRET_KEY: test-secret-key
+          MADZI_ENV: development
+          MADZI_SECRET_KEY: test-secret-key
         run: python -m unittest discover -s tests -p "test_*.py"
       - name: Build release bundle
         run: python scripts/build_release_bundle.py
       - name: Validate release bundle
-        run: python scripts/validate_release_bundle.py dist/opswebmobile-phase4-export-release.zip
+        run: python scripts/validate_release_bundle.py dist/madzihub-release.zip

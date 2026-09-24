@@ -1,0 +1,28 @@
+{
+ "json": {
+  "Liwonde": [
+   "Balaka",
+   "Liwonde",
+   "Machinga"
+  ],
+  "Mangochi": [
+   "Mangochi",
+   "Monkey Bay"
+  ],
+  "Mulanje": [
+   "Mulanje",
+   "Phalombe",
+   "Thyolo"
+  ],
+  "Ngabu": [
+   "Chikwawa",
+   "Ngabu"
+  ],
+  "Zomba": [
+   "Chinamwali",
+   "Domasi",
+   "Zomba"
+  ]
+ },
+ "status": 200
+}

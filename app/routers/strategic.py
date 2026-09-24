@@ -1,13 +1,12 @@
 """
-routers/strategic.py — SRWB Strategic Plan 2023-2028 Scorecard
-==============================================================
-Tracks the official Key Performance Indicators from the SRWB 2023-2028
-Strategic Plan (Section 5.5/5.6) against actuals computed from the captured
-monthly returns.
+routers/strategic.py — Strategic Plan KPI Scorecard
+===================================================
+Tracks the utility's strategic-plan Key Performance Indicators against actuals
+computed from the captured monthly returns.
 
-The target matrix below is transcribed verbatim from the approved Strategic
-Plan. Targets are keyed by FY *end* year (2024 = FY2023/24 … 2028 = FY2027/28),
-with the 2022/23 baseline. KPIs whose data the system does not yet capture are
+The target matrix comes from the tenant configuration (for SRWB: transcribed
+verbatim from the approved Strategic Plan 2023-2028). Targets are keyed by FY
+*end* year (2024 = FY2023/24 … 2028 = FY2027/28). KPIs whose data the system does not yet capture are
 returned as "target only" with actual = null and status = "no_data", so the
 board can see exactly which strategic measures still need a data feed.
 
@@ -17,85 +16,29 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
+from app.core.tenant import tenant as _tenant
 from app.database import Record, get_db
 from app.utils import fy_label
 
 router = APIRouter(prefix="/api/strategic", tags=["Strategic Plan"])
 
-SP_YEARS = [2024, 2025, 2026, 2027, 2028]   # FY end-years 23/24 … 27/28
-
-
-def _t(*vals) -> dict:
-    """Build a {end_year: target} map from the five SP target columns."""
-    return {y: v for y, v in zip(SP_YEARS, vals)}
-
-
-# (focus_area, name, unit, baseline_22_23, targets, actual_key, direction, capture)
+# The plan's KPI matrix (focus area, name, unit, baseline, per-year targets,
+# actual key, direction, capture) is utility-specific and lives in the tenant
+# configuration: tenants/<name>/tenant.yaml → strategic_plan.
+#
 # direction: "high" = higher is better; "low" = lower is better.
 # capture:
 #   "live"        → actual computed from captured data and reconciled to the SP definition
 #   "operational" → the metric is captured on an operational page but its raw aggregation
 #                   does not yet match the SP's exact definition (needs reconciliation)
 #   "gap"         → no data feed for this measure yet
+_PLAN = _tenant.strategic_plan
+SP_YEARS = list(_PLAN.years)
+SP_DEFAULT_YEAR = _PLAN.default_year or (SP_YEARS[-1] if SP_YEARS else 2026)
+
 KPIS = [
-    # ── Focus Area 1: Operations & Infrastructure Development ──────────────
-    ("Operations & Infrastructure", "Water Production", "m³/year", 15_200_060,
-     _t(15_400_000, 18_000_000, 22_000_000, 24_500_000, 27_000_000), "production", "high", "live"),
-    ("Operations & Infrastructure", "Water Sold", "m³/year", 11_000_005,
-     _t(11_200_000, 13_230_000, 16_280_000, 18_252_500, 20_250_000), "water_sold", "high", "live"),
-    ("Operations & Infrastructure", "Non-Revenue Water", "%", 30,
-     _t(27, 26.5, 26, 25.5, 25), "nrw_pct", "low", "live"),
-    ("Operations & Infrastructure", "Service Coverage", "%", 84,
-     _t(85, 86, 87, 88, 89), "coverage_pct", "high", "live"),
-    ("Operations & Infrastructure", "Centres Upgraded/Rehabilitated", "No.", 3,
-     _t(1, 2, 2, 2, 2), None, "high", "gap"),
-    ("Operations & Infrastructure", "New Water Supply Centres", "No.", 3,
-     _t(5, 5, 5, 5, 4), None, "high", "gap"),
-    ("Operations & Infrastructure", "Boreholes Drilled", "No.", 10,
-     _t(3, 4, 2, 2, 2), None, "high", "gap"),
-    ("Operations & Infrastructure", "Centres Digitised", "No.", 1,
-     _t(1, 2, 2, 1, 1), None, "high", "gap"),
-    ("Operations & Infrastructure", "Communal Water Points", "No.", 748,
-     _t(800, 820, 850, 870, 900), None, "high", "gap"),
-    ("Operations & Infrastructure", "Communal Water Point Customers", "No.", 200_000,
-     _t(220_000, 230_000, 250_000, 270_000, 300_000), None, "high", "operational"),
-    # ── Focus Area 2: Business Growth ──────────────────────────────────────
-    ("Business Growth", "Debtor Days", "Days", 200,
-     _t(150, 60, 60, 60, 60), "debtor_days", "low", "live"),
-    ("Business Growth", "New Water Connections", "No./year", 7_000,
-     _t(8_000, 7_000, 6_000, 7_000, 7_000), "new_connections", "high", "live"),
-    ("Business Growth", "Customer Base", "No.", 75_000,
-     _t(83_000, 90_000, 96_000, 103_000, 110_000), "customer_base", "high", "live"),
-    ("Business Growth", "Return on Capital Employed", "%", 6,
-     _t(6, 6, 6, 6, 6), None, "high", "gap"),
-    ("Business Growth", "Creditors Days", "Days", 300,
-     _t(150, 90, 60, 60, 60), None, "low", "gap"),
-    ("Business Growth", "Current Ratio", "ratio", 2.0,
-     _t(2.0, 2.0, 2.0, 2.0, 2.0), None, "high", "gap"),
-    ("Business Growth", "Revenue", "MK bn", 11.9,
-     _t(18.01, 21.2, 26.1, 29.2, 32.5), "revenue_bn", "high", "live"),
-    # ── Focus Area 3: Customer & Stakeholder Satisfaction ──────────────────
-    ("Customer & Stakeholder Satisfaction", "Job Satisfaction Level", "%", 90,
-     _t(90, 90, 90, 90, 90), None, "high", "gap"),
-    ("Customer & Stakeholder Satisfaction", "Water Samples Complying with WHO/MBS", "%", 95,
-     _t(96, 97, 98, 99, 100), None, "high", "gap"),
-    ("Customer & Stakeholder Satisfaction", "Service Connection Time", "Days", 60,
-     _t(45, 30, 28, 28, 28), None, "low", "operational"),
-    ("Customer & Stakeholder Satisfaction", "Connectivity Rate", "%", 75,
-     _t(80, 80, 85, 90, 95), None, "high", "operational"),
-    ("Customer & Stakeholder Satisfaction", "Response Time to Customer Queries", "Days", 30,
-     _t(20, 10, 7, 3, 3), None, "low", "operational"),
-    ("Customer & Stakeholder Satisfaction", "Continuity of Supply", "Hours", 19,
-     _t(20, 20, 21, 21, 22), None, "high", "operational"),
-    ("Customer & Stakeholder Satisfaction", "Customer Satisfaction Rating", "%", 60,
-     _t(70, 75, 80, 85, 85), None, "high", "gap"),
-    ("Customer & Stakeholder Satisfaction", "Response Time to Breakdown", "Hours", 6,
-     _t(4, 3, 3, 3, 3), None, "low", "gap"),
-    # ── Focus Area 4: Innovation & Productivity ────────────────────────────
-    ("Innovation & Productivity", "Staff per 1,000 Connections", "No.", 13,
-     _t(13, 13, 13, 13, 13), "staff_per_1000conn", "low", "live"),
-    ("Innovation & Productivity", "Staff per 1,000 m³ Produced", "No.", 8,
-     _t(8, 8, 8, 8, 8), "staff_per_1000m3", "low", "live"),
+    (k.focus_area, k.name, k.unit, k.baseline, dict(k.targets), k.actual_key, k.direction, k.capture)
+    for k in _PLAN.kpis
 ]
 
 
@@ -163,8 +106,8 @@ def _status(actual, target, direction):
     return "on_track" if ratio <= 1.05 else ("watch" if ratio <= 1.15 else "behind")
 
 
-@router.get("/scorecard", summary="Strategic Plan 2023-2028 KPI scorecard")
-def scorecard(year: int = Query(default=2026, description="FY end-year, e.g. 2026 = FY2025/26"),
+@router.get("/scorecard", summary="Strategic plan KPI scorecard")
+def scorecard(year: int = Query(default=SP_DEFAULT_YEAR, description="FY end-year, e.g. 2026 = FY2025/26"),
               db: Session = Depends(get_db)):
     rows = db.query(Record).filter(Record.fiscal_year == fy_label(year)).all()
     act = _actuals(rows)
@@ -193,7 +136,7 @@ def scorecard(year: int = Query(default=2026, description="FY end-year, e.g. 202
 
     return {
         "fy": fy_label(year), "year": year,
-        "plan": "SRWB Strategic Plan 2023-2028",
+        "plan": _PLAN.title,
         "summary": {
             "total": len(KPIS),
             "live": counts["live"], "operational": counts["operational"], "gap": counts["gap"],

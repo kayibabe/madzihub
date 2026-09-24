@@ -1,0 +1,187 @@
+{
+ "json": {
+  "by_zone": [
+   {
+    "active_customers": 2232,
+    "collection_rate": 0,
+    "color": "#0077b6",
+    "nrw_pct": 38.0,
+    "op_ratio": 0,
+    "vol_produced": 19637.6,
+    "zone": "Liwonde"
+   },
+   {
+    "active_customers": 1841,
+    "collection_rate": 0,
+    "color": "#0d9488",
+    "nrw_pct": 35.0,
+    "op_ratio": 0,
+    "vol_produced": 16201.1,
+    "zone": "Mangochi"
+   },
+   {
+    "active_customers": 3794,
+    "collection_rate": 0,
+    "color": "#16a34a",
+    "nrw_pct": 32.0,
+    "op_ratio": 0,
+    "vol_produced": 33384.0,
+    "zone": "Mulanje"
+   },
+   {
+    "active_customers": 2796,
+    "collection_rate": 0,
+    "color": "#d97706",
+    "nrw_pct": 29.0,
+    "op_ratio": 0,
+    "vol_produced": 24601.6,
+    "zone": "Ngabu"
+   },
+   {
+    "active_customers": 5357,
+    "collection_rate": 0,
+    "color": "#7c3aed",
+    "nrw_pct": 26.0,
+    "op_ratio": 0,
+    "vol_produced": 47130.3,
+    "zone": "Zomba"
+   }
+  ],
+  "executive_kpis": {
+   "active_customers": 16021,
+   "cash_collected": 0,
+   "collection_rate": 0,
+   "collection_rate_flag": "HIGH",
+   "dso": 0,
+   "dso_flag": "GOOD",
+   "energy_intensity": 2.37,
+   "nrw_flag": "HIGH",
+   "nrw_pct": 30.7,
+   "op_ratio": 0,
+   "op_ratio_flag": "GOOD",
+   "revenue": 0,
+   "supply_hours_avg": 23.4,
+   "total_breakdowns": 454543,
+   "vol_produced": 140954.6
+  },
+  "financial_snapshot": {
+   "cash_collected": 0,
+   "collection_rate": 0,
+   "dso": 0,
+   "net_margin_pct": 0,
+   "net_surplus": 0,
+   "op_costs": 0,
+   "op_ratio": 0,
+   "total_debtors": 0,
+   "total_revenue": 0
+  },
+  "months_filter": null,
+  "nrw_trend": [
+   {
+    "month": "April",
+    "value": 30.65
+   },
+   {
+    "month": "May",
+    "value": 30.65
+   },
+   {
+    "month": "June",
+    "value": 30.65
+   },
+   {
+    "month": "July",
+    "value": 30.65
+   },
+   {
+    "month": "August",
+    "value": 30.65
+   },
+   {
+    "month": "September",
+    "value": 30.65
+   },
+   {
+    "month": "October",
+    "value": 30.65
+   },
+   {
+    "month": "November",
+    "value": 30.65
+   },
+   {
+    "month": "December",
+    "value": 30.65
+   },
+   {
+    "month": "January",
+    "value": 30.65
+   },
+   {
+    "month": "February",
+    "value": 30.65
+   },
+   {
+    "month": "March",
+    "value": 30.65
+   }
+  ],
+  "year": 2025,
+  "yoy_comparison": {
+   "cash_collected": {
+    "change_pct": 0,
+    "current": 0,
+    "prior": 0
+   },
+   "current_year": 2025,
+   "nrw_pct": {
+    "current": 30.7,
+    "prior": 30.7
+   },
+   "op_costs": {
+    "change_pct": 0,
+    "current": 0,
+    "prior": 0
+   },
+   "prior_year": 2024,
+   "revenue": {
+    "change_pct": 0,
+    "current": 0,
+    "prior": 0
+   },
+   "vol_produced": {
+    "change_pct": -7.2,
+    "current": 140954.6,
+    "prior": 151954.7
+   }
+  },
+  "zone_risks": [
+   {
+    "collection_rate": 0,
+    "color": "#0077b6",
+    "dso": 0,
+    "nrw_pct": 38.0,
+    "risk_score": 1.407407,
+    "zone": "Liwonde"
+   },
+   {
+    "collection_rate": 0,
+    "color": "#0d9488",
+    "dso": 0,
+    "nrw_pct": 35.0,
+    "risk_score": 1.296296,
+    "zone": "Mangochi"
+   },
+   {
+    "collection_rate": 0,
+    "color": "#16a34a",
+    "dso": 0,
+    "nrw_pct": 32.0,
+    "risk_score": 1.185185,
+    "zone": "Mulanje"
+   }
+  ],
+  "zones_filter": null
+ },
+ "status": 200
+}

@@ -1,0 +1,24 @@
+{
+ "json": {
+  "compliance_position": {
+   "message": "Operational and treatment proxies are available, but formal laboratory compliance indicators are not yet in the current upload schema.",
+   "missing_regulated_datasets": [
+    "Residual Chlorine Compliance",
+    "Turbidity Compliance",
+    "Bacteriological Compliance"
+   ],
+   "status": "partial"
+  },
+  "coverage": {
+   "records": 325,
+   "zones": 5
+  },
+  "operational_proxies": {
+   "avg_chlorine_dose_proxy_kg_per_1000m3": 2308.08,
+   "avg_nrw_pct": 32.0,
+   "avg_power_failure_hours": 1269.47,
+   "avg_supply_hours": 1181.51
+  }
+ },
+ "status": 200
+}

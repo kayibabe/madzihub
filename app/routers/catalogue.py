@@ -19,7 +19,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.database import BudgetLine, FiscalYear, Record, get_db
-from app.utils import MONTHS_ORDER, fy_label
+from app.utils import MONTHS_ORDER, fy_dates, fy_end_year, fy_label
 
 router = APIRouter(prefix="/api/catalogue", tags=["Catalogue"])
 
@@ -92,7 +92,7 @@ def available_years(db: Session = Depends(get_db)):
     rows = db.query(Record.year, Record.month_no).distinct().all()
     fy_years: set[int] = set()
     for cal_year, month_no in rows:
-        fy_end = cal_year + 1 if month_no >= 4 else cal_year
+        fy_end = fy_end_year(cal_year, month_no)
         fy_years.add(fy_end)
 
     # Years from the fiscal_years registry (historical + current + future)
@@ -122,7 +122,7 @@ def fiscal_years_list(db: Session = Depends(get_db)) -> List[Dict]:
     data_rows = db.query(Record.year, Record.month_no).distinct().all()
     data_years: set[int] = set()
     for cal_year, month_no in data_rows:
-        data_years.add(cal_year + 1 if month_no >= 4 else cal_year)
+        data_years.add(fy_end_year(cal_year, month_no))
 
     result = []
     for fy in fys:
@@ -146,7 +146,7 @@ def fiscal_years_list(db: Session = Depends(get_db)) -> List[Dict]:
         result.append({
             "year":    y,
             "label":   fy_label(y),
-            "start_date": f"{y-1}-04-01", "end_date": f"{y}-03-31",
+            "start_date": fy_dates(y)[0], "end_date": fy_dates(y)[1],
             "status":  "historical",
             "tariff_per_m3": None,
             "notes":   "Auto-detected from data; not in FY registry",

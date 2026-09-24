@@ -20,18 +20,14 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
+from app.core.tenant import tenant as _tenant
 from app.database import Record, get_db
 from app.utils import MONTHS_ORDER, apply_fy_filter, csv_list
 
 router = APIRouter(prefix="/api/analytics", tags=["Analytics"])
 
-# Single source of truth for zone colours — also defined in panels.py.
-# Both must be kept in sync if zones are added or renamed.
-# Long-term, consider a zones catalogue table in the DB.
-ZONE_COLORS = {
-    "Liwonde": "#0077b6", "Mangochi": "#0d9488",
-    "Mulanje": "#16a34a", "Ngabu": "#d97706", "Zomba": "#7c3aed",
-}
+# Zone colours come from the tenant configuration (hierarchy.zones).
+ZONE_COLORS = _tenant.zone_colors
 
 
 
