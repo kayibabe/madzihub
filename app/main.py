@@ -232,7 +232,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
 
 # ── CORS ──────────────────────────────────────────────────────
-# Set SRWB_ALLOWED_ORIGINS to a comma-separated list of origins in
+# Set MADZI_ALLOWED_ORIGINS (legacy: SRWB_ALLOWED_ORIGINS) to a comma-separated list of origins in
 # production, e.g. "https://dashboard.srwb.mw,https://ops.srwb.mw"
 # Restricted localhost defaults for development; production validation blocks '*'.
 _allowed_origins = settings.allowed_origins

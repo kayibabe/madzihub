@@ -12,12 +12,12 @@ import json
 import os
 import re
 import unittest
-from importlib import reload
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from fastapi.testclient import TestClient
 
+from tests._app_loader import fresh_app
 from tests.fixtures.synthetic_dataset import build_records
 
 SNAP_DIR = Path(__file__).parent / "snapshots"
@@ -75,19 +75,7 @@ def bootstrap(tmpdir: str, tenant: str | None = None):
         os.environ["MADZI_TENANT"] = tenant
     else:
         os.environ.pop("MADZI_TENANT", None)
-    import app.core.config as config
-    reload(config)
-    try:
-        import app.core.tenant as tenant_mod
-        reload(tenant_mod)
-    except ImportError:
-        pass
-    import app.database as database
-    reload(database)
-    import app.auth as auth
-    reload(auth)
-    import app.main as main
-    reload(main)
+    main, database, auth, _ = fresh_app()
     return main, database, auth
 
 

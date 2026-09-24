@@ -33,6 +33,7 @@ from app.auth import (
     VALID_ROLES,
     create_access_token,
     get_current_user,
+    get_current_user_allow_pending,
     require_admin,
     hash_password,
     verify_password,
@@ -57,6 +58,7 @@ class TokenOut(BaseModel):
     username:     str
     role:         str
     full_name:    Optional[str] = None
+    must_change_password: bool = False
 
 
 class ChangePasswordIn(BaseModel):
@@ -80,6 +82,7 @@ class UserOut(BaseModel):
     created_at: Optional[datetime]
     created_by: Optional[str]
     last_login: Optional[datetime] = None
+    must_change_password: bool = False
 
     model_config = {"from_attributes": True}
 
@@ -171,12 +174,14 @@ def login(request: Request, payload: LoginIn, db: Session = Depends(get_db)):
     db.commit()
     ip = request.client.host if request.client else None
     log_event(db, user.username, "login", f"Logged in as {user.role}", ip_address=ip)
-    token = create_access_token(user.username, user.role, user.full_name)
+    must_change = bool(user.must_change_password)
+    token = create_access_token(user.username, user.role, user.full_name, must_change)
     return TokenOut(
         access_token=token,
         username=user.username,
         role=user.role,
         full_name=user.full_name,
+        must_change_password=must_change,
     )
 
 
@@ -186,15 +191,19 @@ def dev_preview_token(request: Request, db: Session = Depends(get_db)):
     DEV-ONLY local preview login. Lets the headless preview/QA browser render
     authenticated pages WITHOUT anyone typing a password. Hard-gated:
 
-      * Returns 404 when the app runs in production (SRWB_ENV=prod/production).
+      * Returns 404 unless MADZI_DEV_PREVIEW=true AND MADZI_ENV=development.
+        (Previously it was on whenever the env was not "production", and the
+        env defaults to development, so installs that never set it exposed it.)
       * Accepts ONLY same-machine (loopback) requests — remote callers get 403.
+        Note: behind a same-host reverse proxy every request looks local, which
+        is why the explicit opt-in above is required.
 
     It authenticates a dedicated, clearly-named ``__preview__`` account so the
     activity is obvious in audit logs and the account is trivially removable.
     Do NOT run the app with a development env on a publicly reachable host while
     this route exists.
     """
-    if settings.is_production:
+    if not settings.dev_preview_allowed:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
     client = (request.client.host if request.client else "") or ""
     if client not in {"127.0.0.1", "::1", "localhost", "::ffff:127.0.0.1"}:
@@ -220,7 +229,7 @@ def dev_preview_token(request: Request, db: Session = Depends(get_db)):
 
 
 @auth_router.get("/me", response_model=UserOut)
-def me(current_user: User = Depends(get_current_user)):
+def me(current_user: User = Depends(get_current_user_allow_pending)):
     """Return the currently authenticated user's profile."""
     return current_user
 
@@ -228,7 +237,7 @@ def me(current_user: User = Depends(get_current_user)):
 @auth_router.post("/change-password", status_code=204)
 def change_password(
     payload: ChangePasswordIn,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_allow_pending),
     db: Session = Depends(get_db),
 ):
     """
@@ -238,7 +247,13 @@ def change_password(
     if not verify_password(payload.current_password, current_user.password_hash):
         raise HTTPException(400, "Current password is incorrect.")
 
+    if len(payload.new_password) < 8:
+        raise HTTPException(400, "New password must be at least 8 characters.")
+    if verify_password(payload.new_password, current_user.password_hash):
+        raise HTTPException(400, "New password must differ from the current password.")
+
     current_user.password_hash = hash_password(payload.new_password)
+    current_user.must_change_password = False
     db.commit()
 
 
@@ -271,6 +286,7 @@ def create_user(
         password_hash=hash_password(payload.password),
         role=payload.role,
         created_by=current_user.username,
+        must_change_password=True,
     )
     db.add(user)
     db.commit()
@@ -331,6 +347,8 @@ def reset_password(
         raise HTTPException(404, f"User {user_id} not found.")
 
     user.password_hash = hash_password(payload.new_password)
+    # An admin-set password is temporary; the user must replace it at next login.
+    user.must_change_password = user.id != current_user.id
     db.commit()
     log_event(db, current_user.username, "password_reset", f"Reset password for '{user.username}'")
 

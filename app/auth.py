@@ -48,7 +48,7 @@ def _load_or_generate_secret() -> str:
 
     if settings.is_production:
         raise RuntimeError(
-            "SRWB auth secret is missing. Set SRWB_SECRET_KEY or provide a secure secret file before starting production."
+            "Auth secret is missing. Set MADZI_SECRET_KEY or provide a secure secret file before starting production."
         )
 
     key = secrets.token_urlsafe(48)
@@ -61,7 +61,9 @@ def _load_or_generate_secret() -> str:
 SECRET_KEY: str = _load_or_generate_secret()
 
 
-def create_access_token(username: str, role: str, full_name: str | None = None) -> str:
+def create_access_token(
+    username: str, role: str, full_name: str | None = None, must_change_password: bool = False,
+) -> str:
     expire = datetime.utcnow() + timedelta(hours=TOKEN_HOURS)
     payload = {
         "sub": username,
@@ -70,6 +72,9 @@ def create_access_token(username: str, role: str, full_name: str | None = None) 
         "exp": expire,
         "iat": datetime.utcnow(),
     }
+    if must_change_password:
+        # UI hint only; the server re-checks the database flag on every request.
+        payload["pwc"] = True
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 
@@ -86,10 +91,15 @@ _AUTH_EXC = HTTPException(
 )
 
 
-async def get_current_user(
+async def get_current_user_allow_pending(
     credentials: HTTPAuthorizationCredentials = Depends(_bearer),
     db: Session = Depends(get_db),
 ) -> User:
+    """Authenticate without enforcing a pending password change.
+
+    Only for the endpoints a user needs in order to change that password
+    (``/api/auth/me`` and ``/api/auth/change-password``).
+    """
     if not credentials:
         raise _AUTH_EXC
     try:
@@ -103,6 +113,15 @@ async def get_current_user(
     user = db.query(User).filter(User.username == username, User.is_active == True).first()
     if not user:
         raise _AUTH_EXC
+    return user
+
+
+async def get_current_user(user: User = Depends(get_current_user_allow_pending)) -> User:
+    if getattr(user, "must_change_password", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="password_change_required",
+        )
     return user
 
 
@@ -129,20 +148,21 @@ def ensure_default_admin(db: Session) -> None:
             password_hash=hash_password(password),
             role="admin",
             created_by="system",
+            must_change_password=True,
         )
         db.add(admin)
         db.commit()
         print(
             "\n"
             "╔══════════════════════════════════════════════════════════╗\n"
-            "║          SRWB Dashboard — First-Run Setup                ║\n"
+            "║          MadziHub — First-Run Setup                      ║\n"
             "╠══════════════════════════════════════════════════════════╣\n"
             "║  A default admin account has been created.               ║\n"
             "║                                                          ║\n"
             f"║  Username : admin                                        ║\n"
             f"║  Password : {password:<46} ║\n"
             "║                                                          ║\n"
-            "║  *** CHANGE THIS PASSWORD IMMEDIATELY AFTER LOGIN ***    ║\n"
+            "║  You will be required to change it at first login.       ║\n"
             "║  This message will NOT appear again.                     ║\n"
             "╚══════════════════════════════════════════════════════════╝\n"
         )

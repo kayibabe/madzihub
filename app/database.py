@@ -478,6 +478,8 @@ class User(Base):
     created_at    = Column(DateTime, default=datetime.utcnow)
     created_by    = Column(String(60), nullable=True)
     last_login    = Column(DateTime, nullable=True)
+    # Set for bootstrap/reset passwords; the user must choose a new one before using the API.
+    must_change_password = Column(Boolean, nullable=False, default=False)
 
 
 def get_db():
@@ -493,6 +495,7 @@ def create_tables():
     _ensure_table_columns(UploadLog)
     _ensure_table_columns(ActivityLog)
     _ensure_table_columns(OrgProfile)
+    _ensure_table_columns(User)
 
 def recreate_tables():
     Base.metadata.drop_all(bind=engine)

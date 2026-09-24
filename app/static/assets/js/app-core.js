@@ -7,7 +7,7 @@ function decodeJwt(t){try{return JSON.parse(atob(t.split('.')[1].replace(/-/g,'+
 function isExpired(t){const p=decodeJwt(t);return!p||!p.exp||Date.now()>=p.exp*1000}
 const LAST_PAGE_KEY='srwb_last_page';
 const ROLE_HOME_PAGE={viewer:'board',user:'board',admin:'board'};
-(function(){const t=getToken();if(t&&!isExpired(t))showApp(getUser(),{restoreLastPage:true})})();
+(function(){const t=getToken();if(t&&!isExpired(t)){if(decodeJwt(t)?.pwc){clearSession();return;}showApp(getUser(),{restoreLastPage:true})}})();
 (async function(){
   if(location.hash!=='#devpreview')return;
   if(!['localhost','127.0.0.1'].includes(location.hostname))return;
@@ -21,10 +21,41 @@ const ROLE_HOME_PAGE={viewer:'board',user:'board',admin:'board'};
     showApp(user,{forceRoleHome:true});
   }catch(e){console.warn('dev-preview-token failed',e);}
 })();
+// Blocking first-login / post-reset password change. The server rejects every
+// data request with 403 "password_change_required" until this succeeds.
+function forcePasswordChange(token,user,currentPw,remember){
+  document.getElementById('madzi-pwc')?.remove();
+  const dlg=document.createElement('dialog');dlg.id='madzi-pwc';
+  dlg.style.cssText='max-width:380px;width:92vw;border:1px solid var(--ds-border,#e2e8f0);border-radius:12px;padding:22px;font:inherit;color:var(--ds-text-primary,#0f172a);background:var(--ds-surface,#fff)';
+  dlg.innerHTML='<form method="dialog" style="display:grid;gap:10px">'
+    +'<div style="font-weight:700;font-size:1.05rem">Choose a new password</div>'
+    +'<div style="font-size:.85rem;opacity:.8">Your password was set by an administrator or at installation. Set your own before continuing.</div>'
+    +'<input id="pwc-new" type="password" autocomplete="new-password" placeholder="New password (min 8 characters)" required minlength="8" style="padding:9px;border:1px solid var(--ds-border,#cbd5e1);border-radius:8px">'
+    +'<input id="pwc-conf" type="password" autocomplete="new-password" placeholder="Repeat new password" required style="padding:9px;border:1px solid var(--ds-border,#cbd5e1);border-radius:8px">'
+    +'<div id="pwc-msg" role="alert" style="font-size:.82rem;color:var(--ds-red,#b91c1c);min-height:1em"></div>'
+    +'<button id="pwc-go" type="submit" style="padding:10px;border:0;border-radius:8px;background:var(--ds-primary,#0f766e);color:#fff;font-weight:600;cursor:pointer">Save and continue</button>'
+    +'</form>';
+  document.body.appendChild(dlg);
+  dlg.addEventListener('cancel',e=>e.preventDefault());
+  dlg.querySelector('form').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const nw=dlg.querySelector('#pwc-new').value,cf=dlg.querySelector('#pwc-conf').value,msg=dlg.querySelector('#pwc-msg');
+    if(nw.length<8)return msg.textContent='At least 8 characters.';
+    if(nw!==cf)return msg.textContent='Passwords do not match.';
+    try{
+      const r=await fetch(API+'/api/auth/change-password',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({current_password:currentPw,new_password:nw})});
+      if(!r.ok){const t=await r.text();let d={};try{d=JSON.parse(t)}catch{}return msg.textContent=d.detail||'Could not change password.';}
+      const fresh=await tryLogin(user.username,nw,'json');
+      if(!fresh)return msg.textContent='Password changed. Please sign in again.';
+      dlg.close();dlg.remove();saveSession(fresh,user,remember);showApp(user,{forceRoleHome:true});
+    }catch(err){msg.textContent='Network error: '+err.message;}
+  });
+  dlg.showModal();
+}
 async function handleLogin(e){
   e.preventDefault();const username=document.getElementById('username').value.trim();const password=document.getElementById('password').value;const remember=document.getElementById('remember-me').checked;
   if(!username||!password)return showError('Please enter your username and password.');setLoading(true);clearError();
-  try{let token=await tryLogin(username,password,'json');if(token===null)token=await tryLogin(username,password,'form');if(!token)throw new Error('Invalid username or password.');const d=decodeJwt(token);const user={username:d?.sub||username,role:d?.role||'user',full_name:d?.full_name||null};saveSession(token,user,remember);showApp(user,{forceRoleHome:true});}
+  try{let token=await tryLogin(username,password,'json');if(token===null)token=await tryLogin(username,password,'form');if(!token)throw new Error('Invalid username or password.');const d=decodeJwt(token);const user={username:d?.sub||username,role:d?.role||'user',full_name:d?.full_name||null};if(d?.pwc){setLoading(false);return forcePasswordChange(token,user,password,remember);}saveSession(token,user,remember);showApp(user,{forceRoleHome:true});}
   catch(err){showError(err.message||'Unable to sign in.')}finally{setLoading(false)}
 }
 async function tryLogin(u,p,fmt){const isJ=fmt==='json';let res;try{res=await fetch(`${API}/api/auth/login`,{method:'POST',headers:{'Content-Type':isJ?'application/json':'application/x-www-form-urlencoded'},body:isJ?JSON.stringify({username:u,password:p}):new URLSearchParams({username:u,password:p})});}catch{throw new Error('Cannot reach the server.')}
