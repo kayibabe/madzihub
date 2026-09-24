@@ -1,131 +1,155 @@
 @echo off
 setlocal EnableDelayedExpansion
-title SRWB Operations Dashboard — Starting
+title MadziHub - Starting
 
-cd /d "C:\WebApps\opsapp"
+rem Always run from the folder this script lives in, so every copy of
+rem MadziHub starts its own code (never a hard-coded path).
+cd /d "%~dp0"
+set "APP_DIR=%CD%"
+
+rem Port: first argument, else MADZI_PORT, else 8000.   e.g.  start.bat 8001
+set "PORT=%~1"
+if not defined PORT set "PORT=%MADZI_PORT%"
+if not defined PORT set "PORT=8000"
 
 echo.
 echo  =====================================================
-echo    SRWB Operations Dashboard
-echo    Southern Region Water Board
+echo    MadziHub - Water Utility Performance Platform
+echo    Folder: %APP_DIR%
+echo    Port:   %PORT%
 echo  =====================================================
 echo.
 
-:: ── Check if already running on port 8000 ─────────────────────────────────
-netstat -ano | findstr ":8000 " | findstr "LISTENING" >nul 2>&1
-if %ERRORLEVEL%==0 (
-    echo  [WARN] Port 8000 is already in use.
+if not exist logs mkdir logs
+if not exist data mkdir data
+
+rem -- Is something already listening on the port? --------------------------
+set "BUSY_PID="
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%PORT% " ^| findstr "LISTENING"') do set "BUSY_PID=%%p"
+if defined BUSY_PID (
+    echo  [WARN] Port %PORT% is already in use by PID !BUSY_PID!:
+    powershell -NoProfile -Command "$c = (Get-CimInstance Win32_Process -Filter 'ProcessId=!BUSY_PID!').CommandLine; if ($c) { '         ' + $c } else { '         (process details unavailable)' }"
     echo.
-    for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":8000 " ^| findstr "LISTENING"') do (
-        echo  Running process PID: %%p
-        tasklist /fi "PID eq %%p" /fo list 2>nul | findstr "Image Name"
-    )
-    echo.
-    echo  If this is the dashboard, it is already running.
-    echo  Open:  http://localhost:8000
-    echo.
-    set /p CHOICE="  Force restart? (Y/N): "
-    if /i "!CHOICE!" NEQ "Y" (
-        echo  Keeping existing instance. Done.
+    echo  It may be another copy of the dashboard, running from a different folder.
+    set "CHOICE="
+    set /p CHOICE="  Stop it and start THIS copy instead? (Y/N): "
+    if /i not "!CHOICE!"=="Y" (
+        echo  Keeping the existing server. To run this copy alongside it:  start.bat 8001
         pause
         exit /b 0
     )
-    echo  Stopping existing instance...
-    call stop.bat --silent
+    call "%APP_DIR%\stop.bat" --silent --port %PORT%
     timeout /t 2 /nobreak >nul
 )
 
-:: ── Ensure logs directory exists ───────────────────────────────────────────
-if not exist logs mkdir logs
+rem -- Python: this folder's own virtual environment --------------------------
+echo  [1/5] Locating Python...
+set "VENV_DIR="
+if exist "venv\Scripts\python.exe" set "VENV_DIR=%APP_DIR%\venv"
+if not defined VENV_DIR if exist ".venv\Scripts\python.exe" set "VENV_DIR=%APP_DIR%\.venv"
 
-:: ── Locate Python interpreter ───────────────────────────────────────────────
-echo  [1/4] Locating Python interpreter...
-set PYTHON_EXE=
-
-if exist "C:\Users\Cromwell Mhango\AppData\Local\Python\pythoncore-3.14-64\python.exe" (
-    set "PYTHON_EXE=C:\Users\Cromwell Mhango\AppData\Local\Python\pythoncore-3.14-64\python.exe"
-) else if exist "C:\Python314\python.exe" (
-    set "PYTHON_EXE=C:\Python314\python.exe"
-) else if exist ".venv\Scripts\python.exe" (
-    set "PYTHON_EXE=%CD%\.venv\Scripts\python.exe"
+if not defined VENV_DIR (
+    echo         No virtual environment here yet - creating venv\ ...
+    set "BASE_PY="
+    where py >nul 2>&1 && set "BASE_PY=py -3"
+    if not defined BASE_PY where python >nul 2>&1 && set "BASE_PY=python"
+    if not defined BASE_PY (
+        echo  [ERROR] Python not found. Install Python 3.11+ from python.org and tick "Add to PATH".
+        pause
+        exit /b 1
+    )
+    !BASE_PY! -m venv venv
+    if errorlevel 1 (
+        echo  [ERROR] Could not create the virtual environment.
+        pause
+        exit /b 1
+    )
+    set "VENV_DIR=%APP_DIR%\venv"
 )
+set "PYTHON_EXE=%VENV_DIR%\Scripts\python.exe"
+echo         Using: %PYTHON_EXE%
 
-if not defined PYTHON_EXE (
-    echo  [ERROR] Python not found. Ensure PyManager or Python 3.14 is installed.
-    pause
-    exit /b 1
+rem -- Dependencies: reinstall whenever requirements.txt changes -------------
+echo  [2/5] Checking dependencies...
+fc /b "requirements.txt" "%VENV_DIR%\requirements.installed" >nul 2>&1
+if errorlevel 1 (
+    echo         Installing requirements - this can take a few minutes the first time...
+    "%PYTHON_EXE%" -m pip install --disable-pip-version-check -q -r requirements.txt
+    if errorlevel 1 (
+        echo  [ERROR] pip install failed. See the messages above.
+        pause
+        exit /b 1
+    )
+    copy /y "requirements.txt" "%VENV_DIR%\requirements.installed" >nul
 )
-echo         Using: !PYTHON_EXE!
+echo         Done.
 
-:: ── Verify uvicorn is available ─────────────────────────────────────────────
-"!PYTHON_EXE!" -c "import uvicorn" >nul 2>&1
-if %ERRORLEVEL% NEQ 0 (
-    echo.
-    echo  [ERROR] uvicorn not installed.
-    echo         Run:  "!PYTHON_EXE!" -m pip install -r requirements.txt
-    pause
-    exit /b 1
-)
-
-:: ── Run DB migration / seed (idempotent — safe every startup) ─────────────
-echo  [2/4] Initialising database and seeding fiscal years...
-"!PYTHON_EXE!" scripts\seed_fiscal_years.py >> logs\seed.log 2>&1
-if %ERRORLEVEL% NEQ 0 (
-    echo  [WARN] Seed script reported an issue — check logs\seed.log
+rem -- Database seed (idempotent - safe on every start) ----------------------
+echo  [3/5] Initialising database...
+"%PYTHON_EXE%" scripts\seed_fiscal_years.py >> logs\seed.log 2>&1
+if errorlevel 1 (
+    echo  [WARN] Seed script reported an issue - check logs\seed.log
 ) else (
     echo         Done.
 )
 
-:: ── Start uvicorn in background, capture PID via PowerShell ───────────────
-echo  [3/4] Starting server on http://localhost:8000 ...
-
-powershell -NoProfile -Command ^
-  "$pyExe = '!PYTHON_EXE!'.Replace('\','\\'); ^
-   $p = Start-Process -FilePath '!PYTHON_EXE!' ^
-    -ArgumentList '-m','uvicorn','app.main:app','--host','0.0.0.0','--port','8000','--log-level','info' ^
-    -WorkingDirectory '%CD%' ^
-    -RedirectStandardOutput 'logs\srwb.log' ^
-    -RedirectStandardError  'logs\srwb-error.log' ^
-    -PassThru -WindowStyle Hidden; ^
-   $p.Id | Out-File -Encoding ascii 'data\srwb.pid'"
-
-if %ERRORLEVEL% NEQ 0 (
-    echo  [ERROR] Failed to start the server. Check logs\srwb-error.log
+rem -- Start the server in the background ------------------------------------
+echo  [4/5] Starting server on http://localhost:%PORT% ...
+rem UTF-8 + unbuffered output, so the log is readable and complete straight away.
+set PYTHONUTF8=1
+set PYTHONIOENCODING=utf-8
+set PYTHONUNBUFFERED=1
+powershell -NoProfile -Command "$p = Start-Process -FilePath '%PYTHON_EXE%' -ArgumentList '-m','uvicorn','app.main:app','--host','0.0.0.0','--port','%PORT%','--log-level','info' -WorkingDirectory '%APP_DIR%' -RedirectStandardOutput '%APP_DIR%\logs\madzihub.log' -RedirectStandardError '%APP_DIR%\logs\madzihub-error.log' -PassThru -WindowStyle Hidden; $p.Id | Out-File -Encoding ascii '%APP_DIR%\data\madzihub.pid'"
+if errorlevel 1 (
+    echo  [ERROR] Failed to start the server. Check logs\madzihub-error.log
     pause
     exit /b 1
 )
+> "data\madzihub.port" echo %PORT%
 
-:: ── Wait for server to be ready (up to 15 seconds) ────────────────────────
-echo         Waiting for server to be ready...
+echo         Waiting for the server to be ready...
 set READY=0
-for /l %%i in (1,1,15) do (
+for /l %%i in (1,1,30) do (
     if !READY!==0 (
         timeout /t 1 /nobreak >nul
-        curl -s -o nul -w "%%{http_code}" http://localhost:8000/health 2>nul | findstr "200" >nul
-        if !ERRORLEVEL!==0 set READY=1
+        powershell -NoProfile -Command "try { Invoke-WebRequest -Uri 'http://localhost:%PORT%/health' -UseBasicParsing -TimeoutSec 1 -ErrorAction Stop | Out-Null; exit 0 } catch { exit 1 }" >nul 2>&1
+        if !errorlevel!==0 set READY=1
     )
 )
-
 if !READY!==0 (
-    echo  [WARN] Server did not respond within 15 seconds.
-    echo         Check logs\srwb-error.log for startup errors.
-) else (
-    echo         Server is ready.
+    echo  [WARN] The server did not respond within 30 seconds.
+    echo         Check logs\madzihub-error.log for startup errors.
+    pause
+    exit /b 1
+)
+echo         Server is ready.
+
+rem -- First run: the one-time admin password goes to the log, so show it ----
+set "FIRST_PW="
+for /f "usebackq delims=" %%w in (`powershell -NoProfile -Command "$m = Select-String -Path '%APP_DIR%\logs\madzihub.log' -Pattern 'Password : (\S+)' -ErrorAction SilentlyContinue; if ($m) { $m[0].Matches[0].Groups[1].Value }"`) do set "FIRST_PW=%%w"
+if defined FIRST_PW (
+    echo.
+    echo  *****************************************************
+    echo    FIRST RUN - a default admin account was created
+    echo      Username:  admin
+    echo      Password:  !FIRST_PW!
+    echo    Copy it now. You will choose a new one at first login.
+    echo  *****************************************************
 )
 
-:: ── Open browser ──────────────────────────────────────────────────────────
-echo  [4/4] Opening dashboard in browser...
-start "" "http://localhost:8000"
+rem -- Open the browser --------------------------------------------------------
+echo  [5/5] Opening the dashboard in your browser...
+powershell -NoProfile -Command "Start-Process 'http://localhost:%PORT%'"
 
-:: ── Show PID and summary ──────────────────────────────────────────────────
-set /p SERVER_PID=<data\srwb.pid
+set /p SERVER_PID=<data\madzihub.pid
 echo.
 echo  =====================================================
-echo    Dashboard is running
-echo    URL:     http://localhost:8000
+echo    MadziHub is running
+echo    URL:     http://localhost:%PORT%
+echo    Folder:  %APP_DIR%
 echo    PID:     %SERVER_PID%
-echo    Log:     logs\srwb.log
-echo    Stop:    Run  stop.bat
+echo    Log:     logs\madzihub.log
+echo    Stop:    stop.bat
 echo  =====================================================
 echo.
 pause
