@@ -19,6 +19,7 @@
 <link rel="stylesheet" href="/static/assets/css/reports.css?v=20260613-8">
 <link rel="stylesheet" href="/static/assets/css/print.css">
 <link rel="stylesheet" href="/static/assets/css/department-tabs.css?v=20260613-1">
+<link rel="stylesheet" href="/static/assets/css/ux-enhancements.css?v=20260727-1">
 </head>
 <body>
 
@@ -470,6 +471,14 @@
         <div class="nls">__ORG_NAME__</div>
       </div>
     </div>
+
+    <!-- Sidebar collapse toggle -->
+    <button class="nav-collapse-btn" id="nav-collapse-btn" onclick="toggleSidebarCollapse()" title="Collapse sidebar" aria-label="Collapse sidebar" aria-expanded="true">
+      <span class="ncd-icon">
+        <svg class="ncd-chevron" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span style="font-size:10px;font-weight:600;letter-spacing:.04em;color:inherit">Collapse</span>
+      </span>
+    </button>
 
     <!-- Scrollable nav body (compliance badge + dept menus) -->
     <div class="nav-scroll">
@@ -926,6 +935,12 @@
       <span class="tb-live-time" id="tb-live-time">—</span>
     </div>
 
+    <!-- Dark mode toggle -->
+    <button class="tb-theme-btn" id="theme-toggle-btn" onclick="toggleTheme()" title="Switch to dark mode" aria-label="Switch to dark mode">
+      <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.8"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+
     <!-- Upload Data (admin only — visible only on the Administration tab) -->
     <button id="tb-upload-btn" onclick="openUploadModal()" title="Upload monthly data" style="display:none">
       <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 1v9M5 4l3-3 3 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -1094,11 +1109,55 @@
         </div>
       </div>
       <div class="soon-panel">
-        <div class="soon-panel-ico"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <div class="soon-panel-eyebrow">Coming soon</div>
-        <h2 class="soon-panel-title" id="soon-panel-title">Module</h2>
-        <p class="soon-panel-msg" id="soon-panel-msg">Awaiting its data feed.</p>
-        <p class="soon-panel-note">The financial-year, zone and period filters above are already wired in — this view will respond to them as soon as the underlying data is collected.</p>
+        <div class="soon-panel-inner-header">
+          <div class="soon-panel-ico">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div>
+            <h2 class="soon-panel-title" id="soon-panel-title">Module</h2>
+            <p class="soon-panel-msg" id="soon-panel-msg">Awaiting its data feed.</p>
+          </div>
+        </div>
+
+        <div class="soon-timeline">
+          <div class="soon-timeline-title">Development Roadmap</div>
+
+          <div class="soon-tl-item">
+            <div class="soon-tl-dot soon-tl-dot-done">✓</div>
+            <div class="soon-tl-body">
+              <div class="soon-tl-label">Requirements &amp; Data Mapping<span class="soon-tl-tag soon-tl-tag-done">Done</span></div>
+              <div class="soon-tl-desc">Data sources identified, KPIs defined and field mappings confirmed with zone offices.</div>
+            </div>
+          </div>
+
+          <div class="soon-tl-item">
+            <div class="soon-tl-dot soon-tl-dot-active">●</div>
+            <div class="soon-tl-body">
+              <div class="soon-tl-label">Data Collection &amp; Validation<span class="soon-tl-tag soon-tl-tag-active">In Progress</span></div>
+              <div class="soon-tl-desc">Historical records being digitised and validated; monthly return workflows being onboarded.</div>
+            </div>
+          </div>
+
+          <div class="soon-tl-item">
+            <div class="soon-tl-dot soon-tl-dot-next">3</div>
+            <div class="soon-tl-body">
+              <div class="soon-tl-label">Dashboard Build &amp; Testing<span class="soon-tl-tag soon-tl-tag-next">Planned</span></div>
+              <div class="soon-tl-desc">Charts, KPI tiles, zone-level breakdowns and trend analysis built and reviewed.</div>
+            </div>
+          </div>
+
+          <div class="soon-tl-item">
+            <div class="soon-tl-dot soon-tl-dot-next">4</div>
+            <div class="soon-tl-body">
+              <div class="soon-tl-label">Go Live<span class="soon-tl-tag soon-tl-tag-next">Upcoming</span></div>
+              <div class="soon-tl-desc">Module activated and visible here — filters will respond just like Operations does today.</div>
+            </div>
+          </div>
+        </div>
+
+        <p class="soon-panel-note">
+          <strong>Filters are already live.</strong> The financial-year, zone and period selectors above are wired in — as soon as data collection for this module is complete the view will respond to them automatically.
+        </p>
       </div>
     </div>
 
@@ -3228,6 +3287,9 @@
 </div>
 
 <script src="/static/assets/js/app-workers.js"></script>
+
+<!-- Toast notification rack -->
+<div id="toast-rack" role="region" aria-label="Notifications" aria-live="polite"></div>
 
 <!-- ── Floating draggable alert bell ─────────────────────────────────── -->
 <div id="alert-float" title="System alerts — drag to reposition">

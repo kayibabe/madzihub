@@ -3924,7 +3924,7 @@ async function loadWorkforce(){
     mkChart('ch-wf-main',{type:'line',data:{labels:lb,datasets:[
       {label:'Fuel Used (000 L)',data:dm.map(m=>+((m.fuel_used_litres||0)/1000).toFixed(2)),borderColor:'#dc2626',tension:.3,pointRadius:3,borderWidth:2,yAxisID:'y'},
       {label:'Fuel Cost (__CURRENCY__ M)',data:dm.map(m=>+((m.fuel_cost||0)/1e6).toFixed(2)),borderColor:'#1A8FD1',tension:.3,pointRadius:3,borderWidth:2,yAxisID:'y1'}
-    ]},options:{responsive:true,maintainAspectRatio:false,animation:chartAnim,scales:{x:{ticks:{color:LC,font:{size:10}},grid:{color:GC,drawBorder:false}},y:{ticks:{color:'#dc2626',font:{size:10},callback:v=>v+'k'},grid:{color:GC},border:{display:false}},y1:{position:'right',ticks:{color:'#1A8FD1',font:{size:10},callback:v=>v+'M'},grid:{display:false},border:{display:false}}},...tooltipPlugin,plugins:{...legendOpts()}}});
+    ]},options:{responsive:true,maintainAspectRatio:false,animation:chartAnim,scales:{x:{ticks:{color:LC,font:{size:10}},grid:{color:GC,drawBorder:false}},y:{ticks:{color:'#dc2626',font:{size:10},callback:v=>parseFloat(v.toFixed(2))+'k'},grid:{color:GC},border:{display:false}},y1:{position:'right',ticks:{color:'#1A8FD1',font:{size:10},callback:v=>parseFloat(v.toFixed(2))+'M'},grid:{display:false},border:{display:false}}},...tooltipPlugin,plugins:{...legendOpts()}}});
     mkChart('ch-wf-zone',{type:'bar',data:{labels:d.by_zone.map(z=>z.zone),datasets:[
       {label:'Distance (km)',data:d.by_zone.map(z=>+(z.distances_km||0).toFixed(0)),backgroundColor:d.by_zone.map(z=>z.color||'#64748b'),borderRadius:4},
       {label:'Fuel Used (L)',data:d.by_zone.map(z=>+(z.fuel_used_litres||0).toFixed(0)),backgroundColor:'rgba(220,38,38,.55)',borderRadius:4}
@@ -4990,8 +4990,26 @@ async function admDoCopyBudget(){
 // ── Load admin page ────────────────────────────────────────────────────────
 
 async function loadAdmin(){
-  // Ensure first tab is shown and data loaded
+  setupAdmUserTableDelegate();
   admTab('users');
+}
+
+function setupAdmUserTableDelegate(){
+  const tbody = document.getElementById('adm-user-tbody');
+  if(!tbody || tbody._admDelegated) return;
+  tbody._admDelegated = true;
+  tbody.addEventListener('click', e => {
+    const btn = e.target.closest('button[data-action]');
+    if(!btn || btn.disabled) return;
+    const action = btn.dataset.action;
+    const uid    = Number(btn.dataset.uid);
+    const uname  = btn.dataset.uname || '';
+    const active = btn.dataset.active === 'true';
+    if(action === 'edit')   admOpenEditUser(uid);
+    if(action === 'reset')  admOpenReset(uid, uname);
+    if(action === 'toggle') admToggleActive(uid, active);
+    if(action === 'delete') admDeleteUser(uid, uname);
+  });
 }
 
 // ── User Management ────────────────────────────────────────────────────────
@@ -5056,15 +5074,15 @@ function admRenderUsers(users){
       <td class="adm-td-meta">${created}</td>
       <td>
         <div class="adm-act-row">
-          <button class="adm-act-btn edit" onclick="admOpenEditUser(${u.id})" title="Edit user">Edit</button>
-          <button class="adm-act-btn reset" onclick="admOpenReset(${u.id},'${u.username}')" title="Reset password">Reset PW</button>
+          <button class="adm-act-btn edit" data-action="edit" data-uid="${u.id}" title="Edit user">Edit</button>
+          <button class="adm-act-btn reset" data-action="reset" data-uid="${u.id}" data-uname="${u.username}" title="Reset password">Reset PW</button>
           <button class="adm-act-btn ${u.is_active?'warn':'edit'}"
-            onclick="admToggleActive(${u.id},${u.is_active})"
+            data-action="toggle" data-uid="${u.id}" data-active="${u.is_active}"
             ${isSelf?'disabled title="Cannot deactivate yourself"':'title="'+(u.is_active?'Deactivate':'Activate')+' user"'}>
             ${u.is_active?'Deactivate':'Activate'}
           </button>
           <button class="adm-act-btn danger"
-            onclick="admDeleteUser(${u.id},'${u.username}')"
+            data-action="delete" data-uid="${u.id}" data-uname="${u.username}"
             ${isSelf?'disabled title="Cannot delete yourself"':'title="Delete user"'}>
             Delete
           </button>
@@ -7331,7 +7349,40 @@ function _rcHeader(title,scope,generated){
 function _rcSectionHdr(title){return `<div class="rc-section-hdr">${title}</div>`;}
 function _rcKpiRow(cards){return `<div class="rc-kpi-row">${cards.map(c=>`<div class="rc-kpi-card ${c.tone||''}"><div class="rc-kpi-val">${c.val}</div><div class="rc-kpi-lbl">${c.lbl}</div>${c.sub?`<div class="rc-kpi-sub">${c.sub}</div>`:''}</div>`).join('')}</div>`;}
 function _rcTable(headers,rows,sheet){
-  return `<div class="rc-tbl-wrap"><table class="rc-tbl"${sheet?` data-sheet="${sheet}"`:''}><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((c,i)=>`<td${i===0?' class="rc-row-label"':''}>${c??'—'}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  const uid = Math.random().toString(36).slice(2,8);
+  const ths = headers.map((h,i)=>`<th data-col="${i}" tabindex="0" title="Sort by ${h}"><span class="rc-th-txt">${h}</span><span class="rc-sort-ind" aria-hidden="true"></span></th>`).join('');
+  const searchSvg = '<svg viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.6"/><path d="M10 10l3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+  const tbl = `<table class="rc-tbl rc-sortable" data-search-id="${uid}"${sheet?` data-sheet="${sheet}"`:''}><thead><tr>${ths}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((c,i)=>`<td${i===0?' class="rc-row-label"':''}>${c??'—'}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+  return `<div class="rc-tbl-outer"><div class="rc-tbl-searchbar">${searchSvg}<input type="search" id="rcts-${uid}" class="rc-tbl-search" data-tbl="${uid}" placeholder="Filter rows…" aria-label="Filter table rows"><span class="rc-tbl-search-count" id="rcts-cnt-${uid}">${rows.length} rows</span></div><div class="rc-tbl-wrap">${tbl}</div></div>`;
+}
+function _rcSortTable(table,col){
+  const prev = parseInt(table.dataset.sortCol??'-1',10);
+  const asc  = prev===col ? table.dataset.sortDir!=='asc' : true;
+  table.dataset.sortCol = col;
+  table.dataset.sortDir = asc?'asc':'desc';
+  const tbody = table.querySelector('tbody');
+  const rows  = Array.from(tbody.querySelectorAll('tr'));
+  const parse = s => {
+    if(!s||s==='—') return asc ? Infinity : -Infinity;
+    const n = parseFloat(s.replace(/[,%\s]/g,'').replace(/[MKk]$/,'').replace(/[()]/g,'').replace(/m³$/,'').replace(/[^0-9.\-]/g,''));
+    return isNaN(n) ? s.toLowerCase() : n;
+  };
+  rows.sort((a,b)=>{
+    const va=parse(a.cells[col]?.textContent?.trim());
+    const vb=parse(b.cells[col]?.textContent?.trim());
+    if(typeof va==='string'&&typeof vb==='string') return asc?va.localeCompare(vb):vb.localeCompare(va);
+    return asc?va-vb:vb-va;
+  });
+  table.querySelectorAll('thead th[data-col]').forEach((t,i)=>{
+    const ind=t.querySelector('.rc-sort-ind');
+    t.removeAttribute('aria-sort');
+    if(ind) ind.textContent='';
+    if(i===col){
+      t.setAttribute('aria-sort',asc?'ascending':'descending');
+      if(ind) ind.textContent=asc?' ↑':' ↓';
+    }
+  });
+  rows.forEach(r=>tbody.appendChild(r));
 }
 function _rcNarrative(n){
   if(!n)return'';
@@ -8921,4 +8972,343 @@ function _rcDisconnectionsReport(arr,narrative,alerts){
   h+=_rcAlertsPanel(alerts);
   h+=_rcNarrative(narrative);
   return h;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   WORLD-CLASS UX ENHANCEMENTS
+   Theme toggle · Sidebar collapse · Toast notifications
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Theme (Dark / Light mode) ──────────────────────────────────────── */
+
+function initTheme() {
+  const stored = localStorage.getItem('srwb-theme');
+  let dark = false;
+  if (stored === 'dark') {
+    dark = true;
+  } else if (!stored && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    dark = true;
+  }
+  if (dark) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+  _syncThemeBtn(dark);
+}
+
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const next = isDark ? 'light' : 'dark';
+  if (next === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+  localStorage.setItem('srwb-theme', next);
+  _syncThemeBtn(next === 'dark');
+}
+
+function _syncThemeBtn(isDark) {
+  const btn = document.getElementById('theme-toggle-btn');
+  if (!btn) return;
+  btn.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+  btn.setAttribute('aria-label', btn.title);
+}
+
+/* ── Sidebar collapse ───────────────────────────────────────────────── */
+
+function initSidebarCollapse() {
+  const collapsed = localStorage.getItem('srwb-nav-collapsed') === '1';
+  const nav = document.getElementById('db-nav');
+  if (!nav) return;
+  if (collapsed) {
+    nav.classList.add('nav-collapsed');
+    _syncCollapseBtn(true);
+  }
+  _applyNavTooltips();
+}
+
+function toggleSidebarCollapse() {
+  const nav = document.getElementById('db-nav');
+  if (!nav) return;
+  const isNowCollapsed = nav.classList.toggle('nav-collapsed');
+  localStorage.setItem('srwb-nav-collapsed', isNowCollapsed ? '1' : '0');
+  _syncCollapseBtn(isNowCollapsed);
+  _applyNavTooltips();
+}
+
+function _syncCollapseBtn(isCollapsed) {
+  const btn = document.getElementById('nav-collapse-btn');
+  if (!btn) return;
+  btn.title = isCollapsed ? 'Expand sidebar' : 'Collapse sidebar';
+  btn.setAttribute('aria-label', btn.title);
+  btn.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
+}
+
+function _applyNavTooltips() {
+  document.querySelectorAll('#db-nav .nav-item').forEach(function(item) {
+    const lbl = item.querySelector('.nav-item-label');
+    if (lbl && lbl.textContent.trim()) {
+      item.setAttribute('data-tooltip', lbl.textContent.trim());
+    }
+  });
+}
+
+/* ── Toast notifications ────────────────────────────────────────────── */
+
+function showToast(message, type, duration) {
+  type     = type     || 'info';
+  duration = (duration === undefined) ? 4000 : duration;
+  const rack = document.getElementById('toast-rack');
+  if (!rack) return;
+
+  const icons = {
+    success: '<path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
+    error:   '<path d="M6 18L18 6M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+    warning: '<path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>',
+    info:    '<circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M12 8v4m0 4h.01" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>',
+  };
+
+  const toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.innerHTML =
+    '<svg class="toast-icon" viewBox="0 0 24 24" fill="none" width="17" height="17">' + (icons[type] || icons.info) + '</svg>' +
+    '<span class="toast-msg">' + DOMPurify.sanitize(message) + '</span>' +
+    '<button class="toast-close" aria-label="Dismiss" onclick="this.closest(\'.toast\').remove()">' +
+      '<svg viewBox="0 0 16 16" fill="none" width="12" height="12"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
+    '</button>';
+
+  rack.appendChild(toast);
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() { toast.classList.add('toast-visible'); });
+  });
+
+  if (duration > 0) {
+    setTimeout(function() {
+      toast.classList.remove('toast-visible');
+      setTimeout(function() { if (toast.parentNode) toast.remove(); }, 360); }, duration);
+  }
+  return toast;
+}
+
+/* ── Initialise on page load ────────────────────────────────────────── */
+
+(function _uxInit() {
+  initTheme();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      initSidebarCollapse();
+      _initTableSort();
+      _initTableSearch();
+      _initMobileNavBtn();
+      _initKeyboardShortcuts();
+      _initDataFreshness();
+    });
+  } else {
+    initSidebarCollapse();
+    _initTableSort();
+    _initTableSearch();
+    _initMobileNavBtn();
+    _initKeyboardShortcuts();
+    _initDataFreshness();
+  }
+})();
+
+function _initTableSort() {
+  document.addEventListener('click', function(e) {
+    const th = e.target.closest('th[data-col]');
+    if (!th) return;
+    const table = th.closest('table.rc-sortable');
+    if (!table) return;
+    _rcSortTable(table, parseInt(th.getAttribute('data-col'), 10));
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const th = e.target.closest('th[data-col]');
+    if (!th) return;
+    const table = th.closest('table.rc-sortable');
+    if (!table) return;
+    e.preventDefault();
+    _rcSortTable(table, parseInt(th.getAttribute('data-col'), 10));
+  });
+}
+
+function _initMobileNavBtn() {
+  if (window.innerWidth > 900) return;
+  var topbar = document.getElementById('db-topbar');
+  if (!topbar || document.getElementById('mobile-nav-btn')) return;
+  var btn = document.createElement('button');
+  btn.id = 'mobile-nav-btn';
+  btn.setAttribute('aria-label', 'Open navigation');
+  btn.setAttribute('title', 'Open navigation');
+  btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  btn.onclick = function() { toggleSidebarCollapse(); };
+  topbar.insertBefore(btn, topbar.firstChild);
+}
+
+/* ── Table search / filter ──────────────────────────────────────────── */
+
+function _initTableSearch() {
+  document.addEventListener('input', function(e) {
+    if (!e.target.classList.contains('rc-tbl-search')) return;
+    var uid = e.target.getAttribute('data-tbl');
+    var table = uid && document.querySelector('.rc-tbl[data-search-id="' + uid + '"]');
+    if (!table) return;
+    var q = e.target.value.toLowerCase().trim();
+    var rows = table.querySelectorAll('tbody tr');
+    var visible = 0;
+    rows.forEach(function(row) {
+      var show = !q || row.textContent.toLowerCase().includes(q);
+      row.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    var cnt = document.getElementById('rcts-cnt-' + uid);
+    if (cnt) cnt.textContent = q ? (visible + ' of ' + rows.length + ' rows') : (rows.length + ' rows');
+  });
+  /* Clear on Escape inside the search box */
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Escape' || !e.target.classList.contains('rc-tbl-search')) return;
+    e.target.value = '';
+    e.target.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+}
+
+/* ── Keyboard shortcuts ─────────────────────────────────────────────── */
+
+var _KBD_DEPT_ORDER = ['board', 'operations', 'finance', 'hr', 'infrastructure', 'reports'];
+var _KBD_DEPT_LABELS = { board: 'Board View', operations: 'Operations', finance: 'Finance',
+                         hr: 'Human Resource & Admin', infrastructure: 'Infrastructure', reports: 'Reports' };
+
+function _initKeyboardShortcuts() {
+  document.addEventListener('keydown', function(e) {
+    var tag = e.target.tagName;
+    var inField = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable;
+
+    /* Alt+1..6 — switch department (works even in fields) */
+    if (e.altKey && !e.ctrlKey && !e.metaKey && e.key >= '1' && e.key <= '6') {
+      e.preventDefault();
+      var dept = _KBD_DEPT_ORDER[parseInt(e.key, 10) - 1];
+      if (dept && typeof window.switchDepartment === 'function') window.switchDepartment(dept);
+      return;
+    }
+
+    if (inField) return;
+
+    /* Escape — close overlay/modal/drawer */
+    if (e.key === 'Escape') { _kbdCloseAll(); return; }
+
+    /* ? — toggle shortcut overlay */
+    if (e.key === '?' && !e.altKey && !e.ctrlKey && !e.metaKey) {
+      e.preventDefault();
+      _toggleKbdOverlay();
+    }
+  });
+}
+
+function _kbdCloseAll() {
+  var kov = document.getElementById('kbd-overlay');
+  if (kov && kov.classList.contains('visible')) { kov.classList.remove('visible'); return; }
+  var ad = document.getElementById('alert-drawer');
+  if (ad && ad.classList.contains('open')) {
+    if (typeof window.toggleAlertDrawer === 'function') window.toggleAlertDrawer(); return;
+  }
+  var um = document.getElementById('upload-modal');
+  if (um && um.style.display !== 'none') {
+    if (typeof window.closeUploadModal === 'function') window.closeUploadModal(); return;
+  }
+  var am = document.getElementById('adm-modal-overlay');
+  if (am && am.style.display !== 'none') {
+    if (typeof window.closeAdminModal === 'function') window.closeAdminModal();
+    else am.style.display = 'none';
+  }
+}
+
+function _toggleKbdOverlay() {
+  var ov = document.getElementById('kbd-overlay');
+  if (!ov) ov = _buildKbdOverlay();
+  ov.classList.toggle('visible');
+}
+
+function _buildKbdOverlay() {
+  var ov = document.createElement('div');
+  ov.id = 'kbd-overlay';
+  ov.setAttribute('role', 'dialog');
+  ov.setAttribute('aria-label', 'Keyboard shortcuts');
+  ov.addEventListener('click', function(e) { if (e.target === ov) ov.classList.remove('visible'); });
+
+  var deptRows = _KBD_DEPT_ORDER.map(function(d, i) {
+    return '<div class="kbd-row"><span class="kbd-desc">Switch to ' + _KBD_DEPT_LABELS[d] + '</span>'
+         + '<span class="kbd-keys"><span class="kbd-key">Alt</span><span class="kbd-plus">+</span>'
+         + '<span class="kbd-key">' + (i + 1) + '</span></span></div>';
+  }).join('');
+
+  ov.innerHTML = '<div class="kbd-panel">'
+    + '<div class="kbd-panel-hdr">'
+    +   '<span class="kbd-panel-title">Keyboard Shortcuts</span>'
+    +   '<button class="kbd-close" onclick="document.getElementById(\'kbd-overlay\').classList.remove(\'visible\')" aria-label="Close">&#x2715;</button>'
+    + '</div>'
+    + '<div class="kbd-body">'
+    +   '<div class="kbd-group"><div class="kbd-group-label">Navigation</div>' + deptRows + '</div>'
+    +   '<div class="kbd-group"><div class="kbd-group-label">General</div>'
+    +     '<div class="kbd-row"><span class="kbd-desc">Close panel / modal / drawer</span><span class="kbd-keys"><span class="kbd-key">Esc</span></span></div>'
+    +     '<div class="kbd-row"><span class="kbd-desc">Show keyboard shortcuts</span><span class="kbd-keys"><span class="kbd-key">?</span></span></div>'
+    +     '<div class="kbd-row"><span class="kbd-desc">Clear table search</span><span class="kbd-keys"><span class="kbd-key">Esc</span><span class="kbd-plus"> inside search</span></span></div>'
+    +   '</div>'
+    + '</div>'
+    + '</div>';
+
+  document.body.appendChild(ov);
+  return ov;
+}
+
+/* ── Data freshness badge ───────────────────────────────────────────── */
+
+function _initDataFreshness() {
+  if (typeof window.updatePageMeta !== 'function' || window.updatePageMeta.__freshnessWrapped) return;
+  var orig = window.updatePageMeta;
+  window.updatePageMeta = function() {
+    var r = orig.apply(this, arguments);
+    _updateFreshnessBadges();
+    return r;
+  };
+  window.updatePageMeta.__freshnessWrapped = true;
+}
+
+function _updateFreshnessBadges() {
+  var fyEl = document.getElementById('fy-select');
+  if (!fyEl) return;
+  var fyText = (fyEl.options[fyEl.selectedIndex] || {}).text || '';
+  var m = fyText.match(/(\d{4})\/(\d{2})/);
+  var label = m ? 'Data: FY ' + m[0] : (fyText ? 'Data: ' + fyText : '');
+  if (!label) return;
+
+  var cls = 'current';
+  if (m) {
+    var startYear = parseInt(m[1], 10);
+    var now = new Date();
+    var fyStartIdx = ['January','February','March','April','May','June','July','August',
+      'September','October','November','December'].indexOf(__FY_MONTHS__[0]);
+    var currentFY = now.getMonth() >= fyStartIdx ? now.getFullYear() : now.getFullYear() - 1;
+    cls = startYear < currentFY ? 'lagging' : startYear > currentFY ? 'fresh' : 'current';
+  }
+
+  /* Stamp print date on active page for @page::after content */
+  var ap = document.querySelector('.db-page.active');
+  if (ap) {
+    ap.setAttribute('data-print-org', '__ORG_NAME__');
+    ap.setAttribute('data-print-date',
+      new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }));
+  }
+
+  document.querySelectorAll('.pg-hdr-left').forEach(function(hdr) {
+    var badge = hdr.querySelector('.pg-freshness');
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.className = 'pg-freshness';
+      var anchor = hdr.querySelector('.pg-sub') || hdr.querySelector('.pg-meta');
+      if (anchor) anchor.insertAdjacentElement('afterend', badge);
+      else hdr.appendChild(badge);
+    }
+    badge.className = 'pg-freshness ' + cls;
+    badge.innerHTML = '<span class="pg-freshness-dot"></span>' + label;
+  });
 }
