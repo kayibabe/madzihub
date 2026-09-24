@@ -1,0 +1,4 @@
+month,branch_code,measure,billing_report_value,madzihub_value,difference,difference_pct,within_tolerance,explanation
+2026-06,BR01,revenue_water,,,,,,
+2026-06,BR01,amt_billed,,,,,,
+2026-06,BR01,cash_collected,,,,,,

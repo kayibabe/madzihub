@@ -38,6 +38,8 @@ dataupdater/FY2627/A6D65900
 *.xlsx
 *.xls
 *.csv
+# Empty pilot templates (headers and placeholders only, never utility data) are the one exception.
+!docs/pilots/**/*_template.csv
 !tests/fixtures/**
 !tenants/*/samples/**
 dataupdater/

@@ -492,12 +492,14 @@ def get_db():
         db.close()
 
 def create_tables():
+    from app.integration import models as integration_models  # registers integration tables on Base
     Base.metadata.create_all(bind=engine)
     _ensure_record_columns()
     _ensure_table_columns(UploadLog)
     _ensure_table_columns(ActivityLog)
     _ensure_table_columns(OrgProfile)
     _ensure_table_columns(User)
+    _ensure_table_columns(integration_models.Metric)
 
 def recreate_tables():
     Base.metadata.drop_all(bind=engine)

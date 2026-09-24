@@ -4,12 +4,17 @@
 
 MadziHub turns a water utility's monthly operational, commercial and financial returns into board-ready KPIs, reports and alerts: production and NRW, treatment and energy, customers and connections, billing and collections, costs, debtors, budgets and the strategic-plan scorecard. It is IWA/IBNET-aligned.
 
+MadziHub pulls a utility's scattered systems, files and reports (ERP, asset management, billing, SCADA historians, HR, spreadsheets) into one governed repository. Management gets one trusted picture of **where we were, where we are and where we are going**: history with lineage, the current position with data freshness, and targets with the gap to them. See [docs/INTEGRATION_HUB.md](docs/INTEGRATION_HUB.md).
+
 One installation serves one utility. Everything that differs between utilities lives in a tenant configuration file, not in the code: name, logo, currency, fiscal year, zones, targets, thresholds and the strategic plan.
 
 > MadziHub began as the SRWB Corporate Performance Hub (Southern Region Water Board, Malawi). SRWB is the reference tenant (`tenants/srwb`). Ownership and licensing of the original code and of SRWB's content are being settled with SRWB, so no licence is granted yet.
 
 - **Product plan:** [docs/BLUEPRINT.md](docs/BLUEPRINT.md)
 - **Roadmap / checklist:** [docs/ROADMAP.md](docs/ROADMAP.md)
+- **Market gap analysis:** [docs/COMPETITIVE_GAP_ANALYSIS.md](docs/COMPETITIVE_GAP_ANALYSIS.md)
+- **Integration hub (SAP, Maximo, billing, SCADA, HR, spreadsheets):** [docs/INTEGRATION_HUB.md](docs/INTEGRATION_HUB.md)
+- **First live connection, the billing pilot:** [docs/pilots/BILLING_PILOT.md](docs/pilots/BILLING_PILOT.md)
 
 ---
 
@@ -72,6 +77,10 @@ python -m unittest discover -s tests -p "test_*.py"
 `tests/test_parity_snapshots.py` seeds a deterministic **synthetic** dataset and compares 58 read endpoints with committed JSON snapshots. Any refactor that changes output fails it. If a change is intentional, re-record with `MADZI_RECORD_SNAPSHOTS=1` and explain the diff in the PR.
 
 CI (`.github/workflows/ci.yml`) runs a syntax check, the tests, and the release-bundle build and validation. The bundle excludes databases, secrets, uploads and spreadsheets.
+
+## Offline installs and third-party front-end files
+
+The browser loads nothing from the internet. Chart.js, DOMPurify, SheetJS and the Inter and IBM Plex Mono fonts are vendored in `app/static/vendor`, with their licences and a `manifest.json` of SHA-256 checksums. Tests and the release-bundle validator fail if a file is missing or changed. To upgrade one, change its version in `scripts/update_vendor_assets.py`, run the script (it downloads the npm package, verifies the registry's integrity hash and rewrites the manifest), then run the tests.
 
 ## Data handling
 

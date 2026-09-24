@@ -15,16 +15,17 @@
 <link rel="manifest" href="/static/brand/site.webmanifest">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#FFFFFF">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#142E49">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Third-party libraries and fonts are vendored (app/static/vendor, see manifest.json): no CDN, works offline. -->
+<script src="/static/vendor/chart.js/chart.umd.js?v=4.4.1"></script>
+<script src="/static/vendor/xlsx/xlsx.full.min.js?v=0.18.5"></script>
+<script src="/static/vendor/dompurify/purify.min.js?v=3.1.6"></script>
+<link rel="stylesheet" href="/static/vendor/fonts/fonts.css?v=5.3.0">
 <link rel="stylesheet" href="/static/assets/css/base.css?v=20260924-1">
 
 <link rel="stylesheet" href="/static/assets/css/reports.css?v=20260613-8">
 <link rel="stylesheet" href="/static/assets/css/print.css">
 <link rel="stylesheet" href="/static/assets/css/department-tabs.css?v=20260613-1">
+<link rel="stylesheet" href="/static/assets/css/integration-hub.css?v=20260924-3">
 </head>
 <body>
 
@@ -416,6 +417,106 @@
   </div>
 </div>
 
+<!-- Data source editor (integration hub) -->
+<div class="adm-modal-overlay" id="ih-src-modal">
+  <div class="adm-modal ih-wide">
+    <div class="adm-modal-hdr">
+      <span class="adm-modal-title" id="ih-modal-title">Add data source</span>
+      <button class="adm-modal-close" onclick="ihCloseEditor()" aria-label="Close">
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="adm-modal-body">
+      <div class="ih-form-grid">
+        <div class="adm-field"><label class="adm-label" for="ih-f-code">Code</label>
+          <input class="adm-input" id="ih-f-code" placeholder="e.g. billing" autocomplete="off">
+          <div class="ih-hint">Lowercase letters, digits, - and _. Cannot be changed later.</div></div>
+        <div class="adm-field"><label class="adm-label" for="ih-f-name">Name</label>
+          <input class="adm-input" id="ih-f-name" placeholder="e.g. Billing system (CIS)" autocomplete="off"></div>
+        <div class="adm-field"><label class="adm-label" for="ih-f-system">System type</label>
+          <select class="adm-select" id="ih-f-system">
+            <option value="erp">ERP / finance (e.g. SAP)</option><option value="eam">Asset management (e.g. Maximo)</option>
+            <option value="billing">Billing / customer system</option><option value="scada">SCADA / historian</option>
+            <option value="hr">HR / payroll</option><option value="gis">GIS</option><option value="lims">Laboratory (LIMS)</option>
+            <option value="file">Reports and spreadsheets</option><option value="legacy">Existing MadziHub returns</option><option value="other">Other</option>
+          </select></div>
+        <div class="adm-field"><label class="adm-label" for="ih-f-connector">Connector</label>
+          <select class="adm-select" id="ih-f-connector" onchange="ihConnectorChanged()">
+            <option value="file">File drop / upload (CSV, Excel)</option><option value="sql">Database (SQL, read-only)</option>
+            <option value="rest">API (REST / OData)</option><option value="push">Push feed (token)</option>
+            <option value="legacy_records">Existing monthly returns</option>
+          </select></div>
+        <div class="adm-field"><label class="adm-label" for="ih-f-priority">Priority</label>
+          <input class="adm-input" id="ih-f-priority" type="number" min="0" value="100">
+          <div class="ih-hint">Lower wins when two sources report the same measure.</div></div>
+        <div class="adm-field"><label class="adm-label" for="ih-f-schedule">Pull every (minutes)</label>
+          <input class="adm-input" id="ih-f-schedule" type="number" min="5" placeholder="blank = manual only"></div>
+        <div class="adm-field"><label class="adm-label" for="ih-f-owner">Owner</label>
+          <input class="adm-input" id="ih-f-owner" placeholder="Who fixes it when it goes red"></div>
+        <div class="adm-field" id="ih-reset-field"><label class="adm-label">Reload</label>
+          <label style="font-size:12.5px;display:flex;gap:8px;align-items:center"><input type="checkbox" id="ih-f-reset"> Reload everything on the next run (reset watermark)</label></div>
+      </div>
+      <div class="adm-field"><label class="adm-label" for="ih-f-config">Connection settings (JSON)</label>
+        <textarea class="adm-input ih-json" id="ih-f-config" spellcheck="false"></textarea>
+        <div class="ih-hint">Never paste passwords here. Name environment variables instead (<code>MADZI_SRC_*</code>) in <code>url_env</code>, <code>password_env</code> or <code>token_env</code>. See docs/INTEGRATION_HUB.md for SAP, Maximo, billing, SCADA and HR recipes.</div></div>
+      <div class="adm-field"><label class="adm-label" for="ih-f-mapping">Mapping (JSON)</label>
+        <textarea class="adm-input ih-json" id="ih-f-mapping" spellcheck="false"></textarea>
+        <div class="ih-hint">Which column is the period, which is the unit, and which columns are which measures.</div></div>
+      <div id="ih-modal-err" style="color:var(--ds-red);font-size:12px;margin-top:8px;display:none"></div>
+    </div>
+    <div class="adm-modal-footer">
+      <button class="um-btn um-btn-cancel" onclick="ihCloseEditor()">Cancel</button>
+      <button class="adm-btn-primary" onclick="ihSaveEditor()">Save source</button>
+    </div>
+  </div>
+</div>
+
+<!-- Measure editor (integration hub) -->
+<div class="adm-modal-overlay" id="ihm-modal">
+  <div class="adm-modal ih-wide">
+    <div class="adm-modal-hdr">
+      <span class="adm-modal-title" id="ihm-modal-title">Add measure</span>
+      <button class="adm-modal-close" onclick="ihmCloseEditor()" aria-label="Close">
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="adm-modal-body">
+      <div class="ih-form-grid">
+        <div class="adm-field"><label class="adm-label" for="ihm-f-code">Code</label>
+          <input class="adm-input" id="ihm-f-code" placeholder="e.g. cost_per_m3" autocomplete="off" oninput="ihmCheckFormulaSoon()">
+          <div class="ih-hint">Lowercase letters, digits and _. Used in formulas and mappings; cannot be changed later.</div></div>
+        <div class="adm-field"><label class="adm-label" for="ihm-f-name">Name</label>
+          <input class="adm-input" id="ihm-f-name" placeholder="e.g. Operating cost per m³ produced" autocomplete="off"></div>
+        <div class="adm-field"><label class="adm-label" for="ihm-f-unit">Unit</label>
+          <input class="adm-input" id="ihm-f-unit" placeholder="e.g. %, m³, count, or the currency code" oninput="ihmCheckFormulaSoon()"></div>
+        <div class="adm-field"><label class="adm-label" for="ihm-f-category">Category</label>
+          <input class="adm-input" id="ihm-f-category" placeholder="e.g. Operations, Finance, Customers, HR"></div>
+        <div class="adm-field"><label class="adm-label" for="ihm-f-agg">Combined by</label>
+          <select class="adm-select" id="ihm-f-agg" onchange="ihmCheckFormulaSoon()">
+            <option value="sum">Added up (volumes, money, counts)</option><option value="avg">Averaged (ratios, rates, levels)</option>
+            <option value="last">Latest value (customers, stock)</option><option value="max">Highest</option><option value="min">Lowest</option>
+          </select>
+          <div class="ih-hint">How months roll up to quarters and years. For formulas: "Averaged" for ratios (comparable year to date); "Added up" for results that accumulate.</div></div>
+        <div class="adm-field"><label class="adm-label" for="ihm-f-dir">Better when</label>
+          <select class="adm-select" id="ihm-f-dir"><option value="higher">Higher is better</option><option value="lower">Lower is better</option><option value="range">Within a band</option></select></div>
+      </div>
+      <div class="adm-field"><label class="adm-label" for="ihm-f-formula">Formula <span style="color:var(--ds-text-muted);font-weight:400;text-transform:none;letter-spacing:0">(leave blank for measures loaded from sources)</span></label>
+        <textarea class="adm-input ih-json" id="ihm-f-formula" style="min-height:70px" spellcheck="false" placeholder="e.g. nrw / vol_produced * 100" oninput="ihmCheckFormulaSoon()"></textarea>
+        <div class="ih-hint">Numbers, measure codes, + − × ÷ (use * and /), brackets, min(), max(), abs(). Click a code to insert it:</div>
+        <div class="ih-code-chips" id="ihm-codes"></div>
+        <div class="ihm-check" id="ihm-formula-check" aria-live="polite"></div></div>
+      <div class="adm-field"><label class="adm-label" for="ihm-f-desc">Definition</label>
+        <textarea class="adm-input" id="ihm-f-desc" style="min-height:56px" placeholder="What it measures, its source and any standard it follows (e.g. IWA, IBNET)"></textarea></div>
+      <label style="font-size:12.5px;display:flex;gap:8px;align-items:center"><input type="checkbox" id="ihm-f-active" checked> Active (shown on the Strategic Position page)</label>
+      <div id="ihm-modal-err" style="color:var(--ds-red);font-size:12px;margin-top:8px;display:none"></div>
+    </div>
+    <div class="adm-modal-footer">
+      <button class="um-btn um-btn-cancel" onclick="ihmCloseEditor()">Cancel</button>
+      <button class="adm-btn-primary" onclick="ihmSaveEditor()">Save measure</button>
+    </div>
+  </div>
+</div>
+
 <!-- Reset Password Modal -->
 <div class="adm-modal-overlay" id="adm-reset-modal">
   <div class="adm-modal">
@@ -507,6 +608,7 @@
         <div class="nav-item nav-item-child" data-page="board" data-section="Board View" data-title="Consolidated Executive Summary" onclick="navigate('board')"><span class="nav-item-label">Consolidated Summary</span></div>
         <div class="nav-item nav-item-child" data-page="overview" data-section="Executive Dashboard" data-title="Executive Dashboard" onclick="navigate('overview')"><span class="nav-item-label">Executive Dashboard</span></div>
         <div class="nav-item nav-item-child" data-page="strategic" data-section="Board View" data-title="Strategic Plan 2023–2028 Scorecard" onclick="navigate('strategic')"><span class="nav-item-label">Strategic Plan Scorecard</span></div>
+        <div class="nav-item nav-item-child" data-page="position" data-section="Board View" data-title="Strategic Position" onclick="navigate('position')"><span class="nav-item-label">Strategic Position</span></div>
         <div class="nav-item nav-item-child nav-item-soon"><span class="nav-item-label">Risk Dashboard</span><span class="nav-soon">Soon</span></div>
         <div class="nav-item nav-item-child nav-item-soon"><span class="nav-item-label">Budget Performance</span><span class="nav-soon">Soon</span></div>
       </div>
@@ -973,6 +1075,35 @@
         <div id="sp-legend" style="margin:.4rem .25rem 0;font-size:.76rem;color:var(--muted,#64748b);display:flex;gap:1rem;flex-wrap:wrap"></div>
       </div>
       <div id="sp-sections"></div>
+    </div>
+
+    <!-- Strategic Position: where we were, where we are, where we are going (integration hub) -->
+    <div id="page-position" class="db-page report-page-standard">
+      <div class="pg-hdr">
+        <div class="pg-hdr-left">
+          <div class="pg-title">Strategic Position</div>
+          <div class="pg-meta">Every connected system, file and report in one picture</div>
+          <div class="pg-sub">Where we were, where we are and where we are going: history with its source, the current position with data freshness, and targets with the gap to them. Select a measure for its trend and lineage.</div>
+        </div>
+      </div>
+      <div class="pos-controls">
+        <div class="adm-field"><label class="adm-label" for="pos-unit">Organisational unit</label>
+          <select class="adm-select" id="pos-unit" onchange="ihRenderPosition()"></select></div>
+        <div class="adm-field"><label class="adm-label" for="pos-period">Period</label>
+          <select class="adm-select" id="pos-period" onchange="ihRenderPosition()">
+            <option value="month">Month</option><option value="quarter">Quarter</option><option value="year">Fiscal year</option>
+          </select></div>
+      </div>
+      <div class="pos-fresh" id="pos-fresh"></div>
+      <div class="adm-stats pos-summary" id="pos-summary"></div>
+      <div id="pos-grid"></div>
+      <div class="pos-detail" id="pos-detail" style="display:none">
+        <div class="pos-detail-hdr">
+          <div class="adm-section-title" id="pos-detail-title">Measure</div>
+          <button class="adm-btn-secondary" onclick="document.getElementById('pos-detail').style.display='none'">Close</button>
+        </div>
+        <div id="pos-detail-body"></div>
+      </div>
     </div>
 
     <div id="page-board" class="db-page">
@@ -2753,6 +2884,12 @@
           <div class="adm-tab" data-tab="uploads" onclick="admTab('uploads')">
             <span class="adm-tab-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 15V5m-4 4l4-4 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v1a2 2 0 002 2h12a2 2 0 002-2v-1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span> Upload History
           </div>
+          <div class="adm-tab" data-tab="sources" onclick="admTab('sources')">
+            <span class="adm-tab-icon"><svg viewBox="0 0 24 24" fill="none"><ellipse cx="12" cy="5.5" rx="7" ry="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M5 5.5v6c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-6M5 11.5v6c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-6" stroke="currentColor" stroke-width="1.8"/></svg></span> Data Sources
+          </div>
+          <div class="adm-tab" data-tab="measures" onclick="admTab('measures')">
+            <span class="adm-tab-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="19" cy="6" r="2.5" stroke="currentColor" stroke-width="1.6"/></svg></span> Measures &amp; Targets
+          </div>
           <div class="adm-tab-grp">System</div>
           <div class="adm-tab" data-tab="activity" onclick="admTab('activity')">
             <span class="adm-tab-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M9 6h9M9 12h9M9 18h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="5.5" cy="6" r="1.2" fill="currentColor"/><circle cx="5.5" cy="12" r="1.2" fill="currentColor"/><circle cx="5.5" cy="18" r="1.2" fill="currentColor"/></svg></span> Activity Log
@@ -3044,6 +3181,118 @@
           </div>
 
 
+          <!-- ── TAB: Data Sources (integration hub) ───────────────── -->
+          <div id="adm-tab-sources" style="display:none">
+            <div class="adm-section-hdr">
+              <div>
+                <div class="adm-section-title">Data Sources</div>
+                <div class="adm-section-sub">Systems, file drops and feeds that supply the Strategic Position: run them, load reports, fix rejected rows and map source keys</div>
+              </div>
+              <button class="adm-btn-primary" onclick="ihOpenEditor(null)">
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                Add Source
+              </button>
+            </div>
+            <div class="adm-stats">
+              <div class="adm-stat-card purple"><div class="adm-stat-val" id="ih-stat-total">—</div><div class="adm-stat-lbl">Sources</div></div>
+              <div class="adm-stat-card green"><div class="adm-stat-val" id="ih-stat-healthy">—</div><div class="adm-stat-lbl">✓ Healthy</div></div>
+              <div class="adm-stat-card red"><div class="adm-stat-val" id="ih-stat-attention">—</div><div class="adm-stat-lbl">! Need attention</div></div>
+              <div class="adm-stat-card"><div class="adm-stat-val" id="ih-stat-values">—</div><div class="adm-stat-lbl">Values loaded</div></div>
+            </div>
+            <div class="ih-empty-card" id="ih-empty" style="display:none">
+              <span>No sources yet. Start from the monthly returns already in MadziHub: this creates the organisation tree, core measures, strategic-plan targets and a source that republishes the returns.</span>
+              <button class="adm-btn-primary" onclick="ihBootstrap()">Set up from existing returns</button>
+            </div>
+            <div class="ih-notice info" id="ih-notice" style="display:none"></div>
+            <div class="adm-table-wrap">
+              <table class="adm-table">
+                <thead><tr>
+                  <th style="width:22%">Source</th><th style="width:15%">Status</th><th style="width:10%">Last success</th>
+                  <th style="width:9%">Schedule</th><th style="width:7%;text-align:right">Priority</th>
+                  <th style="width:7%;text-align:right">Values</th><th style="width:30%">Actions</th>
+                </tr></thead>
+                <tbody id="ih-src-tbody"><tr><td colspan="7" class="adm-empty">Loading…</td></tr></tbody>
+              </table>
+            </div>
+            <input type="file" id="ih-upload-input" accept=".csv,.xlsx,.xlsm,.txt" style="display:none">
+            <div class="ih-detail" id="ih-detail" style="display:none">
+              <div class="adm-section-hdr"><div>
+                <div class="adm-section-title">Runs &amp; mappings: <span id="ih-detail-title"></span></div>
+                <div class="adm-section-sub">Rejected rows explain why. Use <strong>Map</strong> to point an unknown source key at a MadziHub code, then test or run the source again.</div>
+              </div>
+              <button class="adm-btn-secondary" data-ih-act="test-file" title="Check a report file against this source's mapping without loading it">Test a file</button></div>
+              <div id="ih-dry"></div>
+              <div class="ih-detail-grid">
+                <div id="ih-runs"></div>
+                <div>
+                  <div id="ih-maps"></div>
+                  <div class="ih-map-form">
+                    <div class="adm-field"><label class="adm-label" for="ih-map-kind">Kind</label>
+                      <select class="adm-select" id="ih-map-kind"><option value="org_unit">Unit</option><option value="metric">Measure</option></select></div>
+                    <div class="adm-field"><label class="adm-label" for="ih-map-ext">Source key</label>
+                      <input class="adm-input" id="ih-map-ext" placeholder="e.g. CC-1001"></div>
+                    <div class="adm-field"><label class="adm-label" for="ih-map-int">MadziHub code</label>
+                      <input class="adm-input" id="ih-map-int" placeholder="e.g. north.zomba"></div>
+                    <button class="adm-btn-secondary" onclick="ihSaveMapping()">Add mapping</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── TAB: Measures & Targets (integration hub) ───────────── -->
+          <div id="adm-tab-measures" style="display:none">
+            <div class="adm-section-hdr">
+              <div>
+                <div class="adm-section-title">Measures &amp; Targets</div>
+                <div class="adm-section-sub">The catalogue behind the Strategic Position: what each measure is, how it combines across units and time, formulas for ratios, and where the utility is going</div>
+              </div>
+              <button class="adm-btn-primary" onclick="ihmOpenEditor(null)">
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                Add Measure
+              </button>
+            </div>
+            <div class="ih-notice info" id="ihm-notice" style="display:none"></div>
+            <div class="adm-table-wrap">
+              <table class="adm-table">
+                <thead><tr>
+                  <th style="width:23%">Measure</th><th style="width:16%">Combined by</th><th style="width:12%">Better when</th>
+                  <th style="width:19%">Formula</th><th style="width:9%">Status</th><th style="width:21%">Actions</th>
+                </tr></thead>
+                <tbody id="ihm-tbody"><tr><td colspan="6" class="adm-empty">Loading…</td></tr></tbody>
+              </table>
+            </div>
+
+            <div class="ih-detail" id="ihm-targets">
+              <div class="adm-section-hdr"><div>
+                <div class="adm-section-title">Targets</div>
+                <div class="adm-section-sub">Where we are going, by measure, unit and period. Periods follow the utility's fiscal calendar. Saving the same period and basis again replaces the value.</div>
+              </div></div>
+              <div class="ihm-picker">
+                <div class="adm-field"><label class="adm-label" for="ihm-t-metric">Measure</label><select class="adm-select" id="ihm-t-metric" onchange="ihmLoadTargets()"></select></div>
+                <div class="adm-field"><label class="adm-label" for="ihm-t-unit">Unit</label><select class="adm-select" id="ihm-t-unit" onchange="ihmLoadTargets()"></select></div>
+                <div class="adm-field"><label class="adm-label" for="ihm-t-ptype">Period type</label>
+                  <select class="adm-select" id="ihm-t-ptype" onchange="ihmLoadTargets()"><option value="year">Fiscal year</option><option value="quarter">Quarter</option><option value="month">Month</option></select></div>
+              </div>
+              <div class="adm-table-wrap">
+                <table class="adm-table">
+                  <thead><tr><th style="width:18%">Period</th><th style="width:14%;text-align:right">Target</th><th style="width:18%">Tolerance band</th><th style="width:14%">Basis</th><th>Note</th><th style="width:90px"></th></tr></thead>
+                  <tbody id="ihm-t-tbody"><tr><td colspan="6" class="adm-empty">Loading…</td></tr></tbody>
+                </table>
+              </div>
+              <div class="ihm-target-form">
+                <div class="adm-field"><label class="adm-label" for="ihm-t-period">Period</label><select class="adm-select" id="ihm-t-period"></select></div>
+                <div class="adm-field"><label class="adm-label" for="ihm-t-value">Target</label><input class="adm-input" id="ihm-t-value" type="number" step="any"></div>
+                <div class="adm-field"><label class="adm-label" for="ihm-t-lower">Band low</label><input class="adm-input" id="ihm-t-lower" type="number" step="any" placeholder="optional"></div>
+                <div class="adm-field"><label class="adm-label" for="ihm-t-upper">Band high</label><input class="adm-input" id="ihm-t-upper" type="number" step="any" placeholder="optional"></div>
+                <div class="adm-field"><label class="adm-label" for="ihm-t-basis">Basis</label>
+                  <select class="adm-select" id="ihm-t-basis"><option value="strategic_plan">Strategic plan</option><option value="budget">Budget</option><option value="regulator">Regulator</option><option value="internal">Internal</option></select></div>
+                <div class="adm-field ihm-note"><label class="adm-label" for="ihm-t-note">Note</label><input class="adm-input" id="ihm-t-note" placeholder="e.g. Corporate Plan 2025-2029, KPI 3"></div>
+                <button class="adm-btn-primary" onclick="ihmSaveTarget()">Save target</button>
+              </div>
+            </div>
+          </div>
+
           <!-- ── TAB: Activity Log ──────────────────────────────────── -->
           <div id="adm-tab-activity" style="display:none">
             <div class="adm-section-hdr">
@@ -3226,8 +3475,9 @@
 </div><!-- /srwb-app -->
 </div><!-- /app-view -->
 
-<script src="/static/assets/js/app-core.js?v=20260614-1"></script>
+<script src="/static/assets/js/app-core.js?v=20260924-2"></script>
 <script src="/static/assets/js/department-tabs.js?v=20260613-1"></script>
+<script src="/static/assets/js/integration-hub.js?v=20260924-3"></script>
 
 <!-- ══ ATTRIBUTION FOOTER ════════════════════════════════════════════════ -->
 <div id="attr-footer">
