@@ -511,7 +511,8 @@ def _default_sql(column):
     if isinstance(default, str):
         return f" DEFAULT '{default}'"
     if isinstance(default, bool):
-        return f" DEFAULT {1 if default else 0}"
+        # TRUE/FALSE literals work on SQLite (>= 3.23) and PostgreSQL; 1/0 fail on PostgreSQL.
+        return f" DEFAULT {'TRUE' if default else 'FALSE'}"
     return f" DEFAULT {default}"
 
 
