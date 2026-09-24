@@ -102,16 +102,16 @@
    },
    {
     "category": "operations",
-    "detail": "21,996.289999999997 meters are stuck (137.3% of 16,020.8 active accounts). Estimated monthly billing at risk: approx MWK 0.0M.",
+    "detail": "21,996 meters are stuck (137.3% of 16,021 active accounts). Estimated monthly billing at risk: approx MWK 0.0M.",
     "metric": "stuck_meters",
     "severity": "warning",
-    "title": "Stuck Meters — 137.3% of accounts (21,996.289999999997 meters)",
+    "title": "Stuck Meters — 137.3% of accounts (21,996 meters)",
     "value": 21996.29,
     "zone": null
    },
    {
     "category": "operations",
-    "detail": "3,064.5 stuck meters in Liwonde zone (137.3% of accounts). Billing integrity at risk — prioritise meter replacement programme.",
+    "detail": "3,064 stuck meters in Liwonde zone (137.3% of accounts). Billing integrity at risk — prioritise meter replacement programme.",
     "metric": "stuck_meters",
     "severity": "warning",
     "title": "Liwonde Zone — High Stuck Meter Rate (137.3%)",
@@ -120,7 +120,7 @@
    },
    {
     "category": "operations",
-    "detail": "2,528.2200000000003 stuck meters in Mangochi zone (137.3% of accounts). Billing integrity at risk — prioritise meter replacement programme.",
+    "detail": "2,528 stuck meters in Mangochi zone (137.3% of accounts). Billing integrity at risk — prioritise meter replacement programme.",
     "metric": "stuck_meters",
     "severity": "warning",
     "title": "Mangochi Zone — High Stuck Meter Rate (137.3%)",
@@ -129,7 +129,7 @@
    },
    {
     "category": "operations",
-    "detail": "5,209.64 stuck meters in Mulanje zone (137.3% of accounts). Billing integrity at risk — prioritise meter replacement programme.",
+    "detail": "5,210 stuck meters in Mulanje zone (137.3% of accounts). Billing integrity at risk — prioritise meter replacement programme.",
     "metric": "stuck_meters",
     "severity": "warning",
     "title": "Mulanje Zone — High Stuck Meter Rate (137.3%)",
@@ -138,7 +138,7 @@
    },
    {
     "category": "operations",
-    "detail": "3,839.13 stuck meters in Ngabu zone (137.3% of accounts). Billing integrity at risk — prioritise meter replacement programme.",
+    "detail": "3,839 stuck meters in Ngabu zone (137.3% of accounts). Billing integrity at risk — prioritise meter replacement programme.",
     "metric": "stuck_meters",
     "severity": "warning",
     "title": "Ngabu Zone — High Stuck Meter Rate (137.3%)",
@@ -147,7 +147,7 @@
    },
    {
     "category": "operations",
-    "detail": "7,354.8 stuck meters in Zomba zone (137.3% of accounts). Billing integrity at risk — prioritise meter replacement programme.",
+    "detail": "7,355 stuck meters in Zomba zone (137.3% of accounts). Billing integrity at risk — prioritise meter replacement programme.",
     "metric": "stuck_meters",
     "severity": "warning",
     "title": "Zomba Zone — High Stuck Meter Rate (137.3%)",

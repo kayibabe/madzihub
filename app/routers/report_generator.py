@@ -1142,7 +1142,7 @@ def report_scorecard(
             "score": svc_score,
             "grade": _grade(svc_score),
             "metrics": [
-                {"name": "Active Customers",   "value": f"{active:,}",           "benchmark": "YTD snapshot",       "flag": ""},
+                {"name": "Active Customers",   "value": f"{active:,.0f}",           "benchmark": "YTD snapshot",       "flag": ""},
                 {"name": "Days to Connect",    "value": f"{dtc_avg:.0f}d" if dtc_avg else "N/A", "benchmark": "<30d (World Bank)", "flag": "GOOD" if dtc_avg and dtc_avg < 30 else ("WATCH" if dtc_avg and dtc_avg < 60 else ("HIGH" if dtc_avg else ""))},
             ],
         },

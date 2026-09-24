@@ -224,8 +224,8 @@ def generate_alerts(db: Session, year: int = None) -> dict[str, Any]:
     if stuck_pct > T["stuck_pct_warn"]:
         unbilled = round(stuck_now * (billed_ytd / max(active_now, 1)) / len(months_with_data) / 1e6, 1)
         alert("warning","operations",
-              f"Stuck Meters — {stuck_pct}% of accounts ({stuck_now:,} meters)",
-              f"{stuck_now:,} meters are stuck ({stuck_pct}% of {active_now:,} active accounts). "
+              f"Stuck Meters — {stuck_pct}% of accounts ({stuck_now:,.0f} meters)",
+              f"{stuck_now:,.0f} meters are stuck ({stuck_pct}% of {active_now:,.0f} active accounts). "
               f"Estimated monthly billing at risk: approx {_CUR} {unbilled}M.",
               metric="stuck_meters", value=stuck_now)
 
@@ -298,7 +298,7 @@ def generate_alerts(db: Session, year: int = None) -> dict[str, Any]:
         if zstuck_pct > T["stuck_pct_warn"] * 1.5:  # 12% — elevated threshold for zone
             alert("warning","operations",
                   f"{zone} Zone — High Stuck Meter Rate ({zstuck_pct}%)",
-                  f"{zstuck:,} stuck meters in {zone} zone ({zstuck_pct}% of accounts). "
+                  f"{zstuck:,.0f} stuck meters in {zone} zone ({zstuck_pct}% of accounts). "
                   f"Billing integrity at risk — prioritise meter replacement programme.",
                   zone=zone, metric="stuck_meters", value=zstuck)
 

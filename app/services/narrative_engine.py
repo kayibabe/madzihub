@@ -121,7 +121,7 @@ def _build_context(db: Session, year: int) -> dict[str, Any]:
 def _build_prompt(ctx: dict) -> str:
     zones_text = "\n".join(
         f"  • {z['zone']}: NRW {z['nrw_pct']}%, Collection {z['collection_rate']}%, "
-        f"Pipe failures {z['pipe_breakdowns']:,}, Debtors {_tenant.currency.code} {z['total_debtors_M']:.0f}M"
+        f"Pipe failures {z['pipe_breakdowns']:,.0f}, Debtors {_tenant.currency.code} {z['total_debtors_M']:.0f}M"
         for z in ctx.get("zones", [])
     )
 
@@ -137,9 +137,9 @@ KEY METRICS:
 - NRW Rate: {ctx['nrw_pct']}% ({ident.short_name} target: <{ctx['nrw_target']}%) — trend: {ctx['nrw_trend']}
 - Collection Rate: {ctx['collection_rate']}% (IBNET benchmark: >{ctx['coll_benchmark']}%)
 - Operating Ratio: {ctx['operating_ratio']} (World Bank target: <0.80)
-- Active Customers: {ctx['active_customers']:,}
+- Active Customers: {ctx['active_customers']:,.0f}
 - New Connections: {ctx['new_connections']:,}
-- Stuck Meters: {ctx['stuck_meters']:,} ({ctx['stuck_pct']}% of accounts)
+- Stuck Meters: {ctx['stuck_meters']:,.0f} ({ctx['stuck_pct']}% of accounts)
 - Pipe Breakdowns: {ctx['pipe_breakdowns']:,}
 - Avg Days to Connect: {ctx['days_to_connect']} days (target: <30)
 - Total Debtors: {cur} {ctx['total_debtors_M']:.0f}M
