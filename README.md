@@ -10,6 +10,7 @@ One installation serves one utility. Everything that differs between utilities l
 
 - **Product plan:** [docs/BLUEPRINT.md](docs/BLUEPRINT.md)
 - **Roadmap / checklist:** [docs/ROADMAP.md](docs/ROADMAP.md)
+- **Market gap analysis:** [docs/COMPETITIVE_GAP_ANALYSIS.md](docs/COMPETITIVE_GAP_ANALYSIS.md)
 
 ---
 
