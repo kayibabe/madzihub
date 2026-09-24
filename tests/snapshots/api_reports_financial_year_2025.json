@@ -1,0 +1,196 @@
+{
+ "json": {
+  "billed_collected_trend": [
+   {
+    "amt_billed": 0,
+    "cash_collected": 0,
+    "collection_rate": 0,
+    "month": "April"
+   },
+   {
+    "amt_billed": 0,
+    "cash_collected": 0,
+    "collection_rate": 0,
+    "month": "May"
+   },
+   {
+    "amt_billed": 0,
+    "cash_collected": 0,
+    "collection_rate": 0,
+    "month": "June"
+   },
+   {
+    "amt_billed": 0,
+    "cash_collected": 0,
+    "collection_rate": 0,
+    "month": "July"
+   },
+   {
+    "amt_billed": 0,
+    "cash_collected": 0,
+    "collection_rate": 0,
+    "month": "August"
+   },
+   {
+    "amt_billed": 0,
+    "cash_collected": 0,
+    "collection_rate": 0,
+    "month": "September"
+   },
+   {
+    "amt_billed": 0,
+    "cash_collected": 0,
+    "collection_rate": 0,
+    "month": "October"
+   },
+   {
+    "amt_billed": 0,
+    "cash_collected": 0,
+    "collection_rate": 0,
+    "month": "November"
+   },
+   {
+    "amt_billed": 0,
+    "cash_collected": 0,
+    "collection_rate": 0,
+    "month": "December"
+   },
+   {
+    "amt_billed": 0,
+    "cash_collected": 0,
+    "collection_rate": 0,
+    "month": "January"
+   },
+   {
+    "amt_billed": 0,
+    "cash_collected": 0,
+    "collection_rate": 0,
+    "month": "February"
+   },
+   {
+    "amt_billed": 0,
+    "cash_collected": 0,
+    "collection_rate": 0,
+    "month": "March"
+   }
+  ],
+  "budget_variance": {},
+  "by_zone": [
+   {
+    "amt_billed": 0,
+    "cash_collected": 0,
+    "collection_rate": 0,
+    "color": "#0077b6",
+    "op_cost": 0,
+    "total_debtors": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "amt_billed": 0,
+    "cash_collected": 0,
+    "collection_rate": 0,
+    "color": "#0d9488",
+    "op_cost": 0,
+    "total_debtors": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "amt_billed": 0,
+    "cash_collected": 0,
+    "collection_rate": 0,
+    "color": "#16a34a",
+    "op_cost": 0,
+    "total_debtors": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "amt_billed": 0,
+    "cash_collected": 0,
+    "collection_rate": 0,
+    "color": "#d97706",
+    "op_cost": 0,
+    "total_debtors": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "amt_billed": 0,
+    "cash_collected": 0,
+    "collection_rate": 0,
+    "color": "#7c3aed",
+    "op_cost": 0,
+    "total_debtors": 0,
+    "zone": "Zomba"
+   }
+  ],
+  "cost_breakdown": {
+   "chem_cost": 0,
+   "fuel_cost": 0,
+   "maintenance": 0,
+   "op_cost": 0,
+   "other_overhead": 0,
+   "power_cost": 0,
+   "staff_costs": 0,
+   "wages": 0
+  },
+  "debtors_by_zone": [
+   {
+    "color": "#0077b6",
+    "debtors_to_billed_pct": 0,
+    "private_debtors": 0,
+    "public_debtors": 0,
+    "total_debtors": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "color": "#0d9488",
+    "debtors_to_billed_pct": 0,
+    "private_debtors": 0,
+    "public_debtors": 0,
+    "total_debtors": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "color": "#16a34a",
+    "debtors_to_billed_pct": 0,
+    "private_debtors": 0,
+    "public_debtors": 0,
+    "total_debtors": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "color": "#d97706",
+    "debtors_to_billed_pct": 0,
+    "private_debtors": 0,
+    "public_debtors": 0,
+    "total_debtors": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "color": "#7c3aed",
+    "debtors_to_billed_pct": 0,
+    "private_debtors": 0,
+    "public_debtors": 0,
+    "total_debtors": 0,
+    "zone": "Zomba"
+   }
+  ],
+  "summary": {
+   "cash_collected": 0,
+   "collection_rate": 0,
+   "collection_rate_flag": "HIGH",
+   "dso": 0,
+   "dso_flag": "GOOD",
+   "meter_rental": 0,
+   "net_surplus": 0,
+   "op_costs": 0,
+   "op_ratio": 0,
+   "op_ratio_flag": "GOOD",
+   "service_charge": 0,
+   "total_debtors": 0,
+   "total_revenue": 0,
+   "total_sales": 0
+  },
+  "year": 2025
+ },
+ "status": 200
+}

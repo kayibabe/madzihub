@@ -1,0 +1,5665 @@
+{
+ "json": {
+  "issues": [
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Liwonde",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "May",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Liwonde",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "June",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Liwonde",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "July",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Liwonde",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "August",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Liwonde",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "September",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Liwonde",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "October",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Liwonde",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "November",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Liwonde",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "November",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Liwonde",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "December",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Liwonde",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "December",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Liwonde",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "January",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Liwonde",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "January",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Liwonde",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "February",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Liwonde",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "February",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Liwonde",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "March",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Liwonde",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "March",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Liwonde",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Liwonde",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Liwonde",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "June",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Liwonde",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "July",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Liwonde",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "August",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Liwonde",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "September",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Liwonde",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "October",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Liwonde",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "November",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Liwonde",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "December",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Liwonde",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "January",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Liwonde",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "February",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Liwonde",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "March",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Liwonde",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Liwonde",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Liwonde",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Balaka",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Balaka",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "May",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Balaka",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "May",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Balaka",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "June",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Balaka",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "June",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Balaka",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "July",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Balaka",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "July",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Balaka",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "August",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Balaka",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "August",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Balaka",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "September",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Balaka",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "September",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Balaka",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "October",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Balaka",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "October",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Balaka",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "November",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Balaka",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "November",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Balaka",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "December",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Balaka",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "December",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Balaka",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "January",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Balaka",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "January",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Balaka",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "February",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Balaka",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "February",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Balaka",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "March",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Balaka",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "March",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Balaka",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Balaka",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Balaka",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "May",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Balaka",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "June",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Balaka",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "July",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Balaka",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "August",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Balaka",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "August",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Balaka",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "September",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Balaka",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "September",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Balaka",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "October",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Balaka",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "October",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Balaka",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "November",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Balaka",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "November",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Balaka",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "December",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Balaka",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "December",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Balaka",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "January",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Balaka",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "January",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Balaka",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "February",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Balaka",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "February",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Balaka",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "March",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Balaka",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "March",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Balaka",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Balaka",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Balaka",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Machinga",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Machinga",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "May",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Machinga",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "May",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Machinga",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "June",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Machinga",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "June",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Machinga",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "July",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Machinga",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "July",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Machinga",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "August",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Machinga",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "August",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Machinga",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "September",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Machinga",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "September",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Machinga",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "October",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Machinga",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "October",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Machinga",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "November",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Machinga",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "November",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Machinga",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "December",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Machinga",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "December",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Machinga",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "January",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Machinga",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "January",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Machinga",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "February",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Machinga",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "February",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Machinga",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "March",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Machinga",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "March",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Machinga",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Machinga",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Machinga",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "May",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Machinga",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "May",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Machinga",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "June",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Machinga",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "June",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Machinga",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "July",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Machinga",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "July",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Machinga",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "August",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Machinga",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "August",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Machinga",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "September",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Machinga",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "September",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Machinga",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "October",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Machinga",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "October",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Machinga",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "November",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Machinga",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "November",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Machinga",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "December",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Machinga",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "December",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Machinga",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "January",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Machinga",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "January",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Machinga",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "February",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Machinga",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "February",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Machinga",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "March",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Machinga",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "March",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Machinga",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Machinga",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Machinga",
+    "sev": "High",
+    "value": 3800.0,
+    "zone": "Liwonde"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mangochi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mangochi",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "May",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mangochi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "May",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mangochi",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "June",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mangochi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "June",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mangochi",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "July",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mangochi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "July",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mangochi",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "August",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mangochi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "August",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mangochi",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "September",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mangochi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "September",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mangochi",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "October",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mangochi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "October",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mangochi",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "November",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mangochi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "November",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mangochi",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "December",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mangochi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "December",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mangochi",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "January",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mangochi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "January",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mangochi",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "February",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mangochi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "February",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mangochi",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "March",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mangochi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "March",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mangochi",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mangochi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mangochi",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "May",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mangochi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "May",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mangochi",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "June",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mangochi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "June",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mangochi",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "July",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mangochi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "July",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mangochi",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "August",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mangochi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "August",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mangochi",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "September",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mangochi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "September",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mangochi",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "October",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mangochi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "October",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mangochi",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "November",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mangochi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "November",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mangochi",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "December",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mangochi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "December",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mangochi",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "January",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mangochi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "January",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mangochi",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "February",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mangochi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "February",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mangochi",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "March",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mangochi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "March",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mangochi",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mangochi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mangochi",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Monkey Bay",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Monkey Bay",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "May",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Monkey Bay",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "May",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Monkey Bay",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "June",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Monkey Bay",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "June",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Monkey Bay",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "July",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Monkey Bay",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "July",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Monkey Bay",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "August",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Monkey Bay",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "August",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Monkey Bay",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "September",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Monkey Bay",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "September",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Monkey Bay",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "October",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Monkey Bay",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "October",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Monkey Bay",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "November",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Monkey Bay",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "November",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Monkey Bay",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "December",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Monkey Bay",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "December",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Monkey Bay",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "January",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Monkey Bay",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "January",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Monkey Bay",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "February",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Monkey Bay",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "February",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Monkey Bay",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "March",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Monkey Bay",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "March",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Monkey Bay",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Monkey Bay",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Monkey Bay",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "May",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Monkey Bay",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "May",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Monkey Bay",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "June",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Monkey Bay",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "June",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Monkey Bay",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "July",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Monkey Bay",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "July",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Monkey Bay",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "August",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Monkey Bay",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "August",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Monkey Bay",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "September",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Monkey Bay",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "September",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Monkey Bay",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "October",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Monkey Bay",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "October",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Monkey Bay",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "November",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Monkey Bay",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "November",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Monkey Bay",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "December",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Monkey Bay",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "December",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Monkey Bay",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "January",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Monkey Bay",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "January",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Monkey Bay",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "February",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Monkey Bay",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "February",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Monkey Bay",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "March",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Monkey Bay",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "March",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Monkey Bay",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Monkey Bay",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Monkey Bay",
+    "sev": "High",
+    "value": 3500.0,
+    "zone": "Mangochi"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mulanje",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mulanje",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "May",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mulanje",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "May",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mulanje",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "June",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mulanje",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "June",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mulanje",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "July",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mulanje",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "July",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mulanje",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "August",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mulanje",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "August",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mulanje",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "September",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mulanje",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "September",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mulanje",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "October",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mulanje",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "October",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mulanje",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "November",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mulanje",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "November",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mulanje",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "December",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mulanje",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "December",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mulanje",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "January",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mulanje",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "January",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mulanje",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "February",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mulanje",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "February",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mulanje",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "March",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mulanje",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "March",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mulanje",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mulanje",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mulanje",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "May",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mulanje",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "May",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mulanje",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "June",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mulanje",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "June",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mulanje",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "July",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mulanje",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "July",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mulanje",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "August",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mulanje",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "August",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mulanje",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "September",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mulanje",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "September",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mulanje",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "October",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mulanje",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "October",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mulanje",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "November",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mulanje",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "November",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mulanje",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "December",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mulanje",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "December",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mulanje",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "January",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mulanje",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "January",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mulanje",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "February",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mulanje",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "February",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mulanje",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "March",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mulanje",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "March",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mulanje",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Mulanje",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Mulanje",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Thyolo",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Thyolo",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "May",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Thyolo",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "May",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Thyolo",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "June",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Thyolo",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "June",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Thyolo",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "July",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Thyolo",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "July",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Thyolo",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "August",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Thyolo",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "August",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Thyolo",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "September",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Thyolo",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "September",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Thyolo",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "October",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Thyolo",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "October",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Thyolo",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "November",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Thyolo",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "November",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Thyolo",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "December",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Thyolo",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "December",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Thyolo",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "January",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Thyolo",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "January",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Thyolo",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "February",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Thyolo",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "February",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Thyolo",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "March",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Thyolo",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "March",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Thyolo",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Thyolo",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Thyolo",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "May",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Thyolo",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "May",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Thyolo",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "June",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Thyolo",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "June",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Thyolo",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "July",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Thyolo",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "July",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Thyolo",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "August",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Thyolo",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "August",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Thyolo",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "September",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Thyolo",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "September",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Thyolo",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "October",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Thyolo",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "October",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Thyolo",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "November",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Thyolo",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "November",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Thyolo",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "December",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Thyolo",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "December",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Thyolo",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "January",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Thyolo",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "January",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Thyolo",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "February",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Thyolo",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "February",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Thyolo",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "March",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Thyolo",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "March",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Thyolo",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Thyolo",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Thyolo",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Phalombe",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Phalombe",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "May",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Phalombe",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "May",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Phalombe",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "June",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Phalombe",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "June",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Phalombe",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "July",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Phalombe",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "July",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Phalombe",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "August",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Phalombe",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "August",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Phalombe",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "September",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Phalombe",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "September",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Phalombe",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "October",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Phalombe",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "October",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Phalombe",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "November",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Phalombe",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "November",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Phalombe",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "December",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Phalombe",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "December",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Phalombe",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "January",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Phalombe",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "January",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Phalombe",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "February",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Phalombe",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "February",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Phalombe",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "March",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Phalombe",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "March",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Phalombe",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Phalombe",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Phalombe",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "May",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Phalombe",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "May",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Phalombe",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "June",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Phalombe",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "June",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Phalombe",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "July",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Phalombe",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "July",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Phalombe",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "August",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Phalombe",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "August",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Phalombe",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "September",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Phalombe",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "September",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Phalombe",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "October",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Phalombe",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "October",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Phalombe",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "November",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Phalombe",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "November",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Phalombe",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "December",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Phalombe",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "December",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Phalombe",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "January",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Phalombe",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "January",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Phalombe",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "February",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Phalombe",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "February",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Phalombe",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "March",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Phalombe",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "March",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Phalombe",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Phalombe",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Phalombe",
+    "sev": "High",
+    "value": 3200.0,
+    "zone": "Mulanje"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Ngabu",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Ngabu",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "May",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Ngabu",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "May",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Ngabu",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "June",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Ngabu",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "June",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Ngabu",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "July",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Ngabu",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "July",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Ngabu",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "August",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Ngabu",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "August",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Ngabu",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "September",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Ngabu",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "September",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Ngabu",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "October",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Ngabu",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "October",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Ngabu",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "November",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Ngabu",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "November",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Ngabu",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "December",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Ngabu",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "December",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Ngabu",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "January",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Ngabu",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "January",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Ngabu",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "February",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Ngabu",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "February",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Ngabu",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "March",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Ngabu",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "March",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Ngabu",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Ngabu",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Ngabu",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "May",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Ngabu",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "May",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Ngabu",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "June",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Ngabu",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "June",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Ngabu",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "July",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Ngabu",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "July",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Ngabu",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "August",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Ngabu",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "August",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Ngabu",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "September",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Ngabu",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "September",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Ngabu",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "October",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Ngabu",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "October",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Ngabu",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "November",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Ngabu",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "November",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Ngabu",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "December",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Ngabu",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "December",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Ngabu",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "January",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Ngabu",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "January",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Ngabu",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "February",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Ngabu",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "February",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Ngabu",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "March",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Ngabu",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "March",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Ngabu",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Ngabu",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Ngabu",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chikwawa",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chikwawa",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "May",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chikwawa",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "May",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chikwawa",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "June",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chikwawa",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "June",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chikwawa",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "July",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chikwawa",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "July",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chikwawa",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "August",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chikwawa",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "August",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chikwawa",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "September",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chikwawa",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "September",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chikwawa",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "October",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chikwawa",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "October",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chikwawa",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "November",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chikwawa",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "November",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chikwawa",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "December",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chikwawa",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "December",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chikwawa",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "January",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chikwawa",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "January",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chikwawa",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "February",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chikwawa",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "February",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chikwawa",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "March",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chikwawa",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "March",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chikwawa",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chikwawa",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chikwawa",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "May",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chikwawa",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "May",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chikwawa",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "June",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chikwawa",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "June",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chikwawa",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "July",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chikwawa",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "July",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chikwawa",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "August",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chikwawa",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "August",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chikwawa",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "September",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chikwawa",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "September",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chikwawa",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "October",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chikwawa",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "October",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chikwawa",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "November",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chikwawa",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "November",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chikwawa",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "December",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chikwawa",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "December",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chikwawa",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "January",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chikwawa",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "January",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chikwawa",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "February",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chikwawa",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "February",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chikwawa",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "March",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chikwawa",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "March",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chikwawa",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chikwawa",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chikwawa",
+    "sev": "High",
+    "value": 2900.0,
+    "zone": "Ngabu"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Zomba",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Zomba",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "May",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Zomba",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "May",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Zomba",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "June",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Zomba",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "June",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Zomba",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "July",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Zomba",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "July",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Zomba",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "August",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Zomba",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "August",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Zomba",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "September",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Zomba",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "September",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Zomba",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "October",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Zomba",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "October",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Zomba",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "November",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Zomba",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "November",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Zomba",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "December",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Zomba",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "December",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Zomba",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "January",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Zomba",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "January",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Zomba",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "February",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Zomba",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "February",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Zomba",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "March",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Zomba",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "March",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Zomba",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Zomba",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Zomba",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "May",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Zomba",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "May",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Zomba",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "June",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Zomba",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "June",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Zomba",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "July",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Zomba",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "July",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Zomba",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "August",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Zomba",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "August",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Zomba",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "September",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Zomba",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "September",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Zomba",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "October",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Zomba",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "October",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Zomba",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "November",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Zomba",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "November",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Zomba",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "December",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Zomba",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "December",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Zomba",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "January",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Zomba",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "January",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Zomba",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "February",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Zomba",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "February",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Zomba",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "March",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Zomba",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "March",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Zomba",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Zomba",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Zomba",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chinamwali",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chinamwali",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "May",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chinamwali",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "May",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chinamwali",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "June",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chinamwali",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "June",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chinamwali",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "July",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chinamwali",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "July",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chinamwali",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "August",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chinamwali",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "August",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chinamwali",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "September",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chinamwali",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "September",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chinamwali",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "October",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chinamwali",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "October",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chinamwali",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "November",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chinamwali",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "November",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chinamwali",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "December",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chinamwali",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "December",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chinamwali",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "January",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chinamwali",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "January",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chinamwali",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "February",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chinamwali",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "February",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chinamwali",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "March",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chinamwali",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "March",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chinamwali",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chinamwali",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chinamwali",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "May",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chinamwali",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "May",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chinamwali",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "June",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chinamwali",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "June",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chinamwali",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "July",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chinamwali",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "July",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chinamwali",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "August",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chinamwali",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "August",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chinamwali",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "September",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chinamwali",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "September",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chinamwali",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "October",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chinamwali",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "October",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chinamwali",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "November",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chinamwali",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "November",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chinamwali",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "December",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chinamwali",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "December",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chinamwali",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "January",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chinamwali",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "January",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chinamwali",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "February",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chinamwali",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "February",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chinamwali",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "March",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chinamwali",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "March",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chinamwali",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Chinamwali",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Chinamwali",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Domasi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Domasi",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "May",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Domasi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "May",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Domasi",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "June",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Domasi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "June",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Domasi",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "July",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Domasi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "July",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Domasi",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "August",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Domasi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "August",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Domasi",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "September",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Domasi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "September",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Domasi",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "October",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Domasi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "October",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Domasi",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "November",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Domasi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "November",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Domasi",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "December",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Domasi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "December",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Domasi",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "January",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Domasi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "January",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Domasi",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "February",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Domasi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "February",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Domasi",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "March",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Domasi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "March",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Domasi",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Domasi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Domasi",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "May",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Domasi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "May",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Domasi",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "June",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Domasi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "June",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Domasi",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "July",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Domasi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "July",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Domasi",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "August",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Domasi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "August",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Domasi",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "September",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Domasi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "September",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Domasi",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "October",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Domasi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "October",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Domasi",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "November",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Domasi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "November",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Domasi",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "December",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Domasi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "December",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Domasi",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "January",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Domasi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "January",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Domasi",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "February",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Domasi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "February",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Domasi",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "March",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Domasi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "March",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Domasi",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "Staff Costs",
+    "month": "April",
+    "msg": "Zero staff costs with >500 customers — payroll data missing?",
+    "scheme": "Domasi",
+    "sev": "Medium",
+    "value": 0,
+    "zone": "Zomba"
+   },
+   {
+    "field": "NRW %",
+    "month": "April",
+    "msg": "NRW exceeds 50% — verify metering or check for pipe losses",
+    "scheme": "Domasi",
+    "sev": "High",
+    "value": 2600.0,
+    "zone": "Zomba"
+   }
+  ],
+  "summary": {
+   "high": 304,
+   "low": 0,
+   "medium": 324,
+   "total": 628
+  }
+ },
+ "status": 200
+}

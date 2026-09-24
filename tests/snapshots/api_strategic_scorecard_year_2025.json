@@ -1,0 +1,505 @@
+{
+ "json": {
+  "fy": "FY2024/25",
+  "items": [
+   {
+    "actual": 140954.63,
+    "baseline": 15200060,
+    "capture": "live",
+    "direction": "high",
+    "focus_area": "Operations & Infrastructure",
+    "name": "Water Production",
+    "status": "behind",
+    "target": 18000000,
+    "target_series": {
+     "2024": 15400000,
+     "2025": 18000000,
+     "2026": 22000000,
+     "2027": 24500000,
+     "2028": 27000000
+    },
+    "unit": "m³/year"
+   },
+   {
+    "actual": 479459.27,
+    "baseline": 11000005,
+    "capture": "live",
+    "direction": "high",
+    "focus_area": "Operations & Infrastructure",
+    "name": "Water Sold",
+    "status": "behind",
+    "target": 13230000,
+    "target_series": {
+     "2024": 11200000,
+     "2025": 13230000,
+     "2026": 16280000,
+     "2027": 18252500,
+     "2028": 20250000
+    },
+    "unit": "m³/year"
+   },
+   {
+    "actual": 30.65,
+    "baseline": 30,
+    "capture": "live",
+    "direction": "low",
+    "focus_area": "Operations & Infrastructure",
+    "name": "Non-Revenue Water",
+    "status": "behind",
+    "target": 26.5,
+    "target_series": {
+     "2024": 27,
+     "2025": 26.5,
+     "2026": 26,
+     "2027": 25.5,
+     "2028": 25
+    },
+    "unit": "%"
+   },
+   {
+    "actual": 106.49,
+    "baseline": 84,
+    "capture": "live",
+    "direction": "high",
+    "focus_area": "Operations & Infrastructure",
+    "name": "Service Coverage",
+    "status": "on_track",
+    "target": 86,
+    "target_series": {
+     "2024": 85,
+     "2025": 86,
+     "2026": 87,
+     "2027": 88,
+     "2028": 89
+    },
+    "unit": "%"
+   },
+   {
+    "actual": null,
+    "baseline": 3,
+    "capture": "gap",
+    "direction": "high",
+    "focus_area": "Operations & Infrastructure",
+    "name": "Centres Upgraded/Rehabilitated",
+    "status": "no_data",
+    "target": 2,
+    "target_series": {
+     "2024": 1,
+     "2025": 2,
+     "2026": 2,
+     "2027": 2,
+     "2028": 2
+    },
+    "unit": "No."
+   },
+   {
+    "actual": null,
+    "baseline": 3,
+    "capture": "gap",
+    "direction": "high",
+    "focus_area": "Operations & Infrastructure",
+    "name": "New Water Supply Centres",
+    "status": "no_data",
+    "target": 5,
+    "target_series": {
+     "2024": 5,
+     "2025": 5,
+     "2026": 5,
+     "2027": 5,
+     "2028": 4
+    },
+    "unit": "No."
+   },
+   {
+    "actual": null,
+    "baseline": 10,
+    "capture": "gap",
+    "direction": "high",
+    "focus_area": "Operations & Infrastructure",
+    "name": "Boreholes Drilled",
+    "status": "no_data",
+    "target": 4,
+    "target_series": {
+     "2024": 3,
+     "2025": 4,
+     "2026": 2,
+     "2027": 2,
+     "2028": 2
+    },
+    "unit": "No."
+   },
+   {
+    "actual": null,
+    "baseline": 1,
+    "capture": "gap",
+    "direction": "high",
+    "focus_area": "Operations & Infrastructure",
+    "name": "Centres Digitised",
+    "status": "no_data",
+    "target": 2,
+    "target_series": {
+     "2024": 1,
+     "2025": 2,
+     "2026": 2,
+     "2027": 1,
+     "2028": 1
+    },
+    "unit": "No."
+   },
+   {
+    "actual": null,
+    "baseline": 748,
+    "capture": "gap",
+    "direction": "high",
+    "focus_area": "Operations & Infrastructure",
+    "name": "Communal Water Points",
+    "status": "no_data",
+    "target": 820,
+    "target_series": {
+     "2024": 800,
+     "2025": 820,
+     "2026": 850,
+     "2027": 870,
+     "2028": 900
+    },
+    "unit": "No."
+   },
+   {
+    "actual": null,
+    "baseline": 200000,
+    "capture": "operational",
+    "direction": "high",
+    "focus_area": "Operations & Infrastructure",
+    "name": "Communal Water Point Customers",
+    "status": "no_data",
+    "target": 230000,
+    "target_series": {
+     "2024": 220000,
+     "2025": 230000,
+     "2026": 250000,
+     "2027": 270000,
+     "2028": 300000
+    },
+    "unit": "No."
+   },
+   {
+    "actual": null,
+    "baseline": 200,
+    "capture": "live",
+    "direction": "low",
+    "focus_area": "Business Growth",
+    "name": "Debtor Days",
+    "status": "no_data",
+    "target": 60,
+    "target_series": {
+     "2024": 150,
+     "2025": 60,
+     "2026": 60,
+     "2027": 60,
+     "2028": 60
+    },
+    "unit": "Days"
+   },
+   {
+    "actual": 264111.9,
+    "baseline": 7000,
+    "capture": "live",
+    "direction": "high",
+    "focus_area": "Business Growth",
+    "name": "New Water Connections",
+    "status": "on_track",
+    "target": 7000,
+    "target_series": {
+     "2024": 8000,
+     "2025": 7000,
+     "2026": 6000,
+     "2027": 7000,
+     "2028": 7000
+    },
+    "unit": "No./year"
+   },
+   {
+    "actual": 16020.8,
+    "baseline": 75000,
+    "capture": "live",
+    "direction": "high",
+    "focus_area": "Business Growth",
+    "name": "Customer Base",
+    "status": "behind",
+    "target": 90000,
+    "target_series": {
+     "2024": 83000,
+     "2025": 90000,
+     "2026": 96000,
+     "2027": 103000,
+     "2028": 110000
+    },
+    "unit": "No."
+   },
+   {
+    "actual": null,
+    "baseline": 6,
+    "capture": "gap",
+    "direction": "high",
+    "focus_area": "Business Growth",
+    "name": "Return on Capital Employed",
+    "status": "no_data",
+    "target": 6,
+    "target_series": {
+     "2024": 6,
+     "2025": 6,
+     "2026": 6,
+     "2027": 6,
+     "2028": 6
+    },
+    "unit": "%"
+   },
+   {
+    "actual": null,
+    "baseline": 300,
+    "capture": "gap",
+    "direction": "low",
+    "focus_area": "Business Growth",
+    "name": "Creditors Days",
+    "status": "no_data",
+    "target": 90,
+    "target_series": {
+     "2024": 150,
+     "2025": 90,
+     "2026": 60,
+     "2027": 60,
+     "2028": 60
+    },
+    "unit": "Days"
+   },
+   {
+    "actual": null,
+    "baseline": 2.0,
+    "capture": "gap",
+    "direction": "high",
+    "focus_area": "Business Growth",
+    "name": "Current Ratio",
+    "status": "no_data",
+    "target": 2.0,
+    "target_series": {
+     "2024": 2.0,
+     "2025": 2.0,
+     "2026": 2.0,
+     "2027": 2.0,
+     "2028": 2.0
+    },
+    "unit": "ratio"
+   },
+   {
+    "actual": null,
+    "baseline": 11.9,
+    "capture": "live",
+    "direction": "high",
+    "focus_area": "Business Growth",
+    "name": "Revenue",
+    "status": "no_data",
+    "target": 21.2,
+    "target_series": {
+     "2024": 18.01,
+     "2025": 21.2,
+     "2026": 26.1,
+     "2027": 29.2,
+     "2028": 32.5
+    },
+    "unit": "MK bn"
+   },
+   {
+    "actual": null,
+    "baseline": 90,
+    "capture": "gap",
+    "direction": "high",
+    "focus_area": "Customer & Stakeholder Satisfaction",
+    "name": "Job Satisfaction Level",
+    "status": "no_data",
+    "target": 90,
+    "target_series": {
+     "2024": 90,
+     "2025": 90,
+     "2026": 90,
+     "2027": 90,
+     "2028": 90
+    },
+    "unit": "%"
+   },
+   {
+    "actual": null,
+    "baseline": 95,
+    "capture": "gap",
+    "direction": "high",
+    "focus_area": "Customer & Stakeholder Satisfaction",
+    "name": "Water Samples Complying with WHO/MBS",
+    "status": "no_data",
+    "target": 97,
+    "target_series": {
+     "2024": 96,
+     "2025": 97,
+     "2026": 98,
+     "2027": 99,
+     "2028": 100
+    },
+    "unit": "%"
+   },
+   {
+    "actual": null,
+    "baseline": 60,
+    "capture": "operational",
+    "direction": "low",
+    "focus_area": "Customer & Stakeholder Satisfaction",
+    "name": "Service Connection Time",
+    "status": "no_data",
+    "target": 30,
+    "target_series": {
+     "2024": 45,
+     "2025": 30,
+     "2026": 28,
+     "2027": 28,
+     "2028": 28
+    },
+    "unit": "Days"
+   },
+   {
+    "actual": null,
+    "baseline": 75,
+    "capture": "operational",
+    "direction": "high",
+    "focus_area": "Customer & Stakeholder Satisfaction",
+    "name": "Connectivity Rate",
+    "status": "no_data",
+    "target": 80,
+    "target_series": {
+     "2024": 80,
+     "2025": 80,
+     "2026": 85,
+     "2027": 90,
+     "2028": 95
+    },
+    "unit": "%"
+   },
+   {
+    "actual": null,
+    "baseline": 30,
+    "capture": "operational",
+    "direction": "low",
+    "focus_area": "Customer & Stakeholder Satisfaction",
+    "name": "Response Time to Customer Queries",
+    "status": "no_data",
+    "target": 10,
+    "target_series": {
+     "2024": 20,
+     "2025": 10,
+     "2026": 7,
+     "2027": 3,
+     "2028": 3
+    },
+    "unit": "Days"
+   },
+   {
+    "actual": null,
+    "baseline": 19,
+    "capture": "operational",
+    "direction": "high",
+    "focus_area": "Customer & Stakeholder Satisfaction",
+    "name": "Continuity of Supply",
+    "status": "no_data",
+    "target": 20,
+    "target_series": {
+     "2024": 20,
+     "2025": 20,
+     "2026": 21,
+     "2027": 21,
+     "2028": 22
+    },
+    "unit": "Hours"
+   },
+   {
+    "actual": null,
+    "baseline": 60,
+    "capture": "gap",
+    "direction": "high",
+    "focus_area": "Customer & Stakeholder Satisfaction",
+    "name": "Customer Satisfaction Rating",
+    "status": "no_data",
+    "target": 75,
+    "target_series": {
+     "2024": 70,
+     "2025": 75,
+     "2026": 80,
+     "2027": 85,
+     "2028": 85
+    },
+    "unit": "%"
+   },
+   {
+    "actual": null,
+    "baseline": 6,
+    "capture": "gap",
+    "direction": "low",
+    "focus_area": "Customer & Stakeholder Satisfaction",
+    "name": "Response Time to Breakdown",
+    "status": "no_data",
+    "target": 3,
+    "target_series": {
+     "2024": 4,
+     "2025": 3,
+     "2026": 3,
+     "2027": 3,
+     "2028": 3
+    },
+    "unit": "Hours"
+   },
+   {
+    "actual": 2320.56,
+    "baseline": 13,
+    "capture": "live",
+    "direction": "low",
+    "focus_area": "Innovation & Productivity",
+    "name": "Staff per 1,000 Connections",
+    "status": "behind",
+    "target": 13,
+    "target_series": {
+     "2024": 13,
+     "2025": 13,
+     "2026": 13,
+     "2027": 13,
+     "2028": 13
+    },
+    "unit": "No."
+   },
+   {
+    "actual": 1439.76,
+    "baseline": 8,
+    "capture": "live",
+    "direction": "low",
+    "focus_area": "Innovation & Productivity",
+    "name": "Staff per 1,000 m³ Produced",
+    "status": "behind",
+    "target": 8,
+    "target_series": {
+     "2024": 8,
+     "2025": 8,
+     "2026": 8,
+     "2027": 8,
+     "2028": 8
+    },
+    "unit": "No."
+   }
+  ],
+  "plan": "SRWB Strategic Plan 2023-2028",
+  "summary": {
+   "behind": 6,
+   "gap": 12,
+   "live": 10,
+   "on_track": 2,
+   "operational": 5,
+   "total": 27,
+   "watch": 0
+  },
+  "year": 2025
+ },
+ "status": 200
+}

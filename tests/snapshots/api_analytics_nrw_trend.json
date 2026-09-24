@@ -1,0 +1,271 @@
+{
+ "json": {
+  "months": [
+   "April",
+   "May",
+   "June",
+   "July",
+   "August",
+   "September",
+   "October",
+   "November",
+   "December",
+   "January",
+   "February",
+   "March"
+  ],
+  "series": {
+   "Liwonde": [
+    {
+     "month": "April",
+     "pct_nrw": 38.0
+    },
+    {
+     "month": "May",
+     "pct_nrw": 38.0
+    },
+    {
+     "month": "June",
+     "pct_nrw": 38.0
+    },
+    {
+     "month": "July",
+     "pct_nrw": 38.0
+    },
+    {
+     "month": "August",
+     "pct_nrw": 38.0
+    },
+    {
+     "month": "September",
+     "pct_nrw": 38.0
+    },
+    {
+     "month": "October",
+     "pct_nrw": 38.0
+    },
+    {
+     "month": "November",
+     "pct_nrw": 38.0
+    },
+    {
+     "month": "December",
+     "pct_nrw": 38.0
+    },
+    {
+     "month": "January",
+     "pct_nrw": 38.0
+    },
+    {
+     "month": "February",
+     "pct_nrw": 38.0
+    },
+    {
+     "month": "March",
+     "pct_nrw": 38.0
+    }
+   ],
+   "Mangochi": [
+    {
+     "month": "April",
+     "pct_nrw": 35.0
+    },
+    {
+     "month": "May",
+     "pct_nrw": 35.0
+    },
+    {
+     "month": "June",
+     "pct_nrw": 35.0
+    },
+    {
+     "month": "July",
+     "pct_nrw": 35.0
+    },
+    {
+     "month": "August",
+     "pct_nrw": 35.0
+    },
+    {
+     "month": "September",
+     "pct_nrw": 35.0
+    },
+    {
+     "month": "October",
+     "pct_nrw": 35.0
+    },
+    {
+     "month": "November",
+     "pct_nrw": 35.0
+    },
+    {
+     "month": "December",
+     "pct_nrw": 35.0
+    },
+    {
+     "month": "January",
+     "pct_nrw": 35.0
+    },
+    {
+     "month": "February",
+     "pct_nrw": 35.0
+    },
+    {
+     "month": "March",
+     "pct_nrw": 35.0
+    }
+   ],
+   "Mulanje": [
+    {
+     "month": "April",
+     "pct_nrw": 32.0
+    },
+    {
+     "month": "May",
+     "pct_nrw": 32.0
+    },
+    {
+     "month": "June",
+     "pct_nrw": 32.0
+    },
+    {
+     "month": "July",
+     "pct_nrw": 32.0
+    },
+    {
+     "month": "August",
+     "pct_nrw": 32.0
+    },
+    {
+     "month": "September",
+     "pct_nrw": 32.0
+    },
+    {
+     "month": "October",
+     "pct_nrw": 32.0
+    },
+    {
+     "month": "November",
+     "pct_nrw": 32.0
+    },
+    {
+     "month": "December",
+     "pct_nrw": 32.0
+    },
+    {
+     "month": "January",
+     "pct_nrw": 32.0
+    },
+    {
+     "month": "February",
+     "pct_nrw": 32.0
+    },
+    {
+     "month": "March",
+     "pct_nrw": 32.0
+    }
+   ],
+   "Ngabu": [
+    {
+     "month": "April",
+     "pct_nrw": 29.0
+    },
+    {
+     "month": "May",
+     "pct_nrw": 29.0
+    },
+    {
+     "month": "June",
+     "pct_nrw": 29.0
+    },
+    {
+     "month": "July",
+     "pct_nrw": 29.0
+    },
+    {
+     "month": "August",
+     "pct_nrw": 29.0
+    },
+    {
+     "month": "September",
+     "pct_nrw": 29.0
+    },
+    {
+     "month": "October",
+     "pct_nrw": 29.0
+    },
+    {
+     "month": "November",
+     "pct_nrw": 29.0
+    },
+    {
+     "month": "December",
+     "pct_nrw": 29.0
+    },
+    {
+     "month": "January",
+     "pct_nrw": 29.0
+    },
+    {
+     "month": "February",
+     "pct_nrw": 29.0
+    },
+    {
+     "month": "March",
+     "pct_nrw": 29.0
+    }
+   ],
+   "Zomba": [
+    {
+     "month": "April",
+     "pct_nrw": 26.0
+    },
+    {
+     "month": "May",
+     "pct_nrw": 26.0
+    },
+    {
+     "month": "June",
+     "pct_nrw": 26.0
+    },
+    {
+     "month": "July",
+     "pct_nrw": 26.0
+    },
+    {
+     "month": "August",
+     "pct_nrw": 26.0
+    },
+    {
+     "month": "September",
+     "pct_nrw": 26.0
+    },
+    {
+     "month": "October",
+     "pct_nrw": 26.0
+    },
+    {
+     "month": "November",
+     "pct_nrw": 26.0
+    },
+    {
+     "month": "December",
+     "pct_nrw": 26.0
+    },
+    {
+     "month": "January",
+     "pct_nrw": 26.0
+    },
+    {
+     "month": "February",
+     "pct_nrw": 26.0
+    },
+    {
+     "month": "March",
+     "pct_nrw": 26.0
+    }
+   ]
+  }
+ },
+ "status": 200
+}
