@@ -41,6 +41,27 @@
   --ds-purple-border:  rgba(124,58,237,.30);
 }
 
+/* The sign-in screen is designed for light only (glass card, light
+   gradients). Keep it light under the dark theme: restore the light
+   tokens and the light "Powered by" artwork inside #login-view. */
+:root[data-theme="dark"] #login-view {
+  --ds-bg:             #F9FAFB;
+  --ds-surface:        #ffffff;
+  --ds-border:         #E5E7EB;
+  --ds-text-primary:   #111827;
+  --ds-text-secondary: #6B7280;
+  --ds-text-muted:     #9CA3AF;
+  --navy:              #07192E;
+  --g50:               #F7F9FC;
+  --g100:              #EEF2F7;
+  --g300:              #C8D3E0;
+  --g400:              #8FA3B8;
+  --g500:              #5C7590;
+  --g800:              #1A2B3C;
+}
+:root[data-theme="dark"] #login-view .brand-on-light { display: block !important }
+:root[data-theme="dark"] #login-view .brand-on-dark  { display: none !important }
+
 /* html/body background in dark */
 [data-theme="dark"] body { background: var(--ds-bg) }
 [data-theme="dark"] #app-view { background: var(--ds-bg) }
