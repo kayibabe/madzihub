@@ -5,3 +5,4 @@ module with tables is added here and nowhere else.
 """
 from app.integration import models as _integration  # noqa: F401
 from app.platform import models as _platform  # noqa: F401
+from app.modules.strategy import models as _strategy  # noqa: F401

@@ -195,9 +195,6 @@ def create_action(body: ActionIn, scope: Scope = Depends(get_scope), db: Session
         # Raising an action "from" a record needs sight of that record.
         entities.load(db, scope, body.source_type, body.source_id)
     a = act.create(db, scope, **body.model_dump())
-    if body.source_type:
-        links.add_link(db, scope, "action", a.id, body.source_type, body.source_id, relation="responds_to",
-                       role="viewer")
     db.commit()
     return act.action_dict(a, scope)
 

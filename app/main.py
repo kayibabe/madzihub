@@ -295,7 +295,10 @@ app.include_router(insights.router,     dependencies=_org_wide)
 app.include_router(strategic.router,    dependencies=_org_wide)
 
 # ── Shared governance foundation and modules (scope resolved per request) ──
+from app.modules.strategy.router import router as strategy_router  # noqa: E402
+
 app.include_router(platform_router)
+app.include_router(strategy_router)
 
 # ── Upload (admin only) ───────────────────────────────────────
 app.include_router(upload.router, dependencies=[Depends(require_admin)])

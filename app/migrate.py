@@ -304,6 +304,42 @@ def _baseline_column_matches(table: str, column: str, baseline: dict) -> bool:
     return model_col is not None and _type_key(model_col.type) == baseline["tables"][table]["columns"][column]["type"]
 
 
+def _baseline_table(name: str, baseline: dict):
+    """The table exactly as revision 0001 defines it: only baseline columns, keys and indexes.
+
+    Built from the current model's column types, restricted to the baseline fingerprint,
+    so columns added by later revisions are left for those revisions to add.
+    """
+    from sqlalchemy import Column, ForeignKeyConstraint, MetaData, Table, UniqueConstraint
+
+    model = Base.metadata.tables.get(name)
+    if model is None:
+        raise MigrationError(f"Table {name} is missing and no longer defined; adopt it with an older release.")
+    spec = baseline["tables"][name]
+    md = MetaData()
+    columns = []
+    for col, want in spec["columns"].items():
+        c = model.columns.get(col)
+        if c is None or _type_key(c.type) != want["type"]:
+            raise MigrationError(f"Table {name} is missing and its column {col} has changed since the baseline; "
+                                 "adopt with the release that introduced migrations.")
+        columns.append(Column(c.name, c.type, primary_key=c.primary_key, nullable=want["nullable"],
+                              autoincrement=c.autoincrement))
+    named_uniques = {tuple(sorted(con.columns.keys())): con.name for con in model.constraints
+                     if isinstance(con, UniqueConstraint)}
+    extra = []
+    for cols in spec["uniques"]:
+        extra.append(UniqueConstraint(*cols, name=named_uniques.get(tuple(sorted(cols)))))
+    for local, ref_table, ref_cols in spec["foreign_keys"]:
+        if ref_table != name and ref_table not in md.tables:
+            Table(ref_table, md, *[Column(rc, sqltypes.Integer) for rc in ref_cols])   # name-only stub for DDL
+        extra.append(ForeignKeyConstraint(local, [f"{ref_table}.{rc}" for rc in ref_cols]))
+    table = Table(name, md, *columns, *extra)
+    for ix_name, ix in spec["indexes"].items():
+        Index(ix_name, *[table.c[c] for c in ix["columns"]], unique=ix["unique"])
+    return table
+
+
 def _top_up(conn, diff: SchemaDiff, baseline: dict) -> list[str]:
     """Create the baseline tables, columns and indexes a legacy database is missing.
 
@@ -312,10 +348,7 @@ def _top_up(conn, diff: SchemaDiff, baseline: dict) -> list[str]:
     """
     done = []
     for name in diff.missing_tables:
-        table = Base.metadata.tables.get(name)
-        if table is None:
-            raise MigrationError(f"Table {name} is missing and no longer defined; adopt it with an older release.")
-        table.create(conn)
+        _baseline_table(name, baseline).create(conn)
         done.append(f"created table {name}")
     for name, col in diff.missing_columns:
         if not _baseline_column_matches(name, col, baseline):

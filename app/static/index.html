@@ -766,6 +766,17 @@
         <div class="nav-item nav-item-child" data-page="actions" data-section="Performance &amp; Governance" data-title="Actions" onclick="navigate('actions')"><span class="nav-item-label">Actions</span></div>
       </div>
 
+      <div class="nav-item nav-item-grouphead nav-item-top collapsible" id="pgvgrp-strategy" onclick="toggleSidebarSection('pgvgrp-strategy','pgvsec-strategy',event)">
+        <span class="nav-item-main"><svg class="nav-item-icon nav-item-icon-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span class="nav-item-label">Strategy &amp; M&amp;E</span></span>
+        <button type="button" class="nav-grp-toggle" aria-expanded="true" aria-label="Toggle Strategy section" onclick="toggleSidebarSection('pgvgrp-strategy','pgvsec-strategy',event)"><svg class="nav-grp-chevron" viewBox="0 0 10 10" fill="none"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+      <div class="nav-section" id="pgvsec-strategy">
+        <div class="nav-item nav-item-child" data-page="strategy" data-section="Strategy &amp; M&amp;E" data-title="Plans &amp; Indicators" onclick="navigate('strategy')"><span class="nav-item-label">Plans &amp; Indicators</span></div>
+        <div class="nav-item nav-item-child" data-page="cycles" data-section="Strategy &amp; M&amp;E" data-title="Reporting Cycles" onclick="navigate('cycles')"><span class="nav-item-label">Reporting Cycles</span></div>
+        <div class="nav-item nav-item-child" data-page="updates" data-section="Strategy &amp; M&amp;E" data-title="Progress Updates" onclick="navigate('updates')"><span class="nav-item-label">Progress Updates</span></div>
+        <div class="nav-item nav-item-child" data-page="evaluations" data-section="Strategy &amp; M&amp;E" data-title="Evaluations" onclick="navigate('evaluations')"><span class="nav-item-label">Evaluations</span></div>
+      </div>
+
       <div class="nav-item nav-item-grouphead nav-item-top collapsible" id="pgvgrp-setup" onclick="toggleSidebarSection('pgvgrp-setup','pgvsec-setup',event)">
         <span class="nav-item-main"><svg class="nav-item-icon nav-item-icon-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l8 4v5c0 4.4-3.4 8.5-8 9.5-4.6-1-8-5.1-8-9.5V7l8-4z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><span class="nav-item-label">Setup &amp; Assurance</span></span>
         <button type="button" class="nav-grp-toggle" aria-expanded="true" aria-label="Toggle Setup section" onclick="toggleSidebarSection('pgvgrp-setup','pgvsec-setup',event)"><svg class="nav-grp-chevron" viewBox="0 0 10 10" fill="none"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -1076,6 +1087,10 @@
     <div id="page-periods" class="db-page"><main class="mz-root" id="mz-periods" aria-label="Reporting periods"></main></div>
     <div id="page-access" class="db-page"><main class="mz-root" id="mz-access" aria-label="Access and scope"></main></div>
     <div id="page-audit-trail" class="db-page"><main class="mz-root" id="mz-audit-trail" aria-label="Audit trail"></main></div>
+    <div id="page-strategy" class="db-page"><main class="mz-root" id="mz-strategy" aria-label="Plans and indicators"></main></div>
+    <div id="page-cycles" class="db-page"><main class="mz-root" id="mz-cycles" aria-label="Reporting cycles"></main></div>
+    <div id="page-updates" class="db-page"><main class="mz-root" id="mz-updates" aria-label="Progress updates"></main></div>
+    <div id="page-evaluations" class="db-page"><main class="mz-root" id="mz-evaluations" aria-label="Evaluations"></main></div>
 
     <div id="page-board" class="db-page">
       <div class="pg-hdr">
@@ -3449,7 +3464,8 @@
 <script src="/static/assets/js/app-core.js?v=20260925-1"></script>
 <script src="/static/assets/js/department-tabs.js?v=20260925-1"></script>
 <script src="/static/assets/js/integration-hub.js?v=20260924-3"></script>
-<script src="/static/assets/js/mod-platform.js?v=20260925-1"></script>
+<script src="/static/assets/js/mod-platform.js?v=20260925-2"></script>
+<script src="/static/assets/js/mod-strategy.js?v=20260925-1"></script>
 
 <!-- ══ ATTRIBUTION FOOTER ════════════════════════════════════════════════ -->
 <div id="attr-footer">

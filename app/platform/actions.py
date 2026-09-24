@@ -73,6 +73,9 @@ def create(db: Session, scope: Scope, *, title: str, owner: str, org_unit_code: 
     a.ref = f"ACT-{a.id:04d}"
     audit.record(db, scope.username, "action.create", "action", a.id, after=audit.snapshot(a, AUDITED + ("ref",)),
                  org_unit_code=unit)
+    if source_type in entities.REGISTRY:
+        from app.platform import links
+        links.add_link(db, scope, "action", a.id, source_type, source_id, relation="responds_to", role="viewer")
     if owner != scope.username:
         notify(db, owner, "action_assigned", f"New action for you: {a.ref} {a.title}",
                body=f"Due {due_date.isoformat()}." if due_date else None, entity_type="action", entity_id=a.id)

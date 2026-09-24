@@ -23,7 +23,9 @@ class EntityType:
     model: Any
     unit_of: Callable[[Any], str | None]
     title_of: Callable[[Any], str]
-    # Extra visibility rule on top of unit scope (private HR records, restricted documents).
+    # Visibility rule that replaces the plain unit check, for records seen through several
+    # units (indicators) or with extra restrictions (private HR records, restricted documents).
+    # It must apply the scope itself.
     can_view: Callable[[Scope, Any], bool] | None = None
     # Valid version numbers, for records that can be pinned (documents, plans).
     versions_of: Callable[[Session, Any], set[int]] | None = None
@@ -56,9 +58,12 @@ def load(db: Session, scope: Scope, key: str, entity_id: Any, role: str = "viewe
     if obj is None:
         raise NotFound(f"{et.label} not found.")
     unit = et.unit_of(obj)
-    scope.require_see(unit, et.label)
-    if et.can_view and not et.can_view(scope, obj):
-        raise NotFound(f"{et.label} not found.")
+    # can_view, when a type defines it, replaces the plain unit check (it must apply scope itself).
+    if et.can_view is not None:
+        if not et.can_view(scope, obj):
+            raise NotFound(f"{et.label} not found.")
+    else:
+        scope.require_see(unit, et.label)
     if role != "viewer":
         scope.require(unit, role, et.label.lower())
     return obj, et

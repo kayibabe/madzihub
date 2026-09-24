@@ -157,6 +157,8 @@ class MetricTarget(Base):
     upper         = Column(Float, nullable=True)
     basis         = Column(String(40), nullable=False, default="strategic_plan")  # strategic_plan|budget|regulator|internal
     note          = Column(String(300), nullable=True)
+    # The strategic plan that set this target (strategy module); null for targets entered directly.
+    plan_id       = Column(Integer, ForeignKey("plans.id", name="fk_metric_targets_plan_id"), nullable=True, index=True)
     updated_at    = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     __table_args__ = (

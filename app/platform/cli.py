@@ -28,6 +28,8 @@ def main(argv: list[str] | None = None) -> int:
     except SchemaNotReady as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
+    from app.modules import load_all
+    load_all()   # registers every module's reminder producers
     db = SessionLocal()
     try:
         if args.cmd == "reminders":

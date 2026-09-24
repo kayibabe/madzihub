@@ -42,9 +42,10 @@ def _make_legacy(database, *statements: str) -> None:
     contain tables that later revisions introduced.
     """
     import app.migrate as migrate
-    baseline = set(migrate.load_baseline()["tables"])
-    database.Base.metadata.create_all(database.engine, tables=[t for name, t in database.Base.metadata.tables.items()
-                                                               if name in baseline])
+    baseline = migrate.load_baseline()
+    with database.engine.begin() as conn:
+        for name in baseline["tables"]:
+            migrate._baseline_table(name, baseline).create(conn)
     with database.engine.begin() as conn:
         for sql in statements:
             conn.execute(text(sql))
@@ -218,6 +219,19 @@ class AdoptTests(unittest.TestCase):
 
             with TestClient(main.app) as c:              # startup now passes the gate
                 self.assertEqual(c.get("/health").status_code, 200)
+
+    def test_missing_baseline_table_is_created_as_baseline_then_upgraded(self):
+        """A table later revisions extend (metric_targets gains plan_id in 0003) must be created
+        in its baseline shape, or the later revision's ALTER would fail on adoption."""
+        with TemporaryDirectory() as d:
+            _main, database, migrate = _boot(d)
+            _make_legacy(database, "DROP TABLE metric_targets")
+            result = migrate.adopt()
+            self.assertIn("created table metric_targets", result.actions)
+            self.assertEqual(migrate.database_state().kind, "current")
+            self.assertEqual(_model_drift(database), [])
+            cols = {c["name"] for c in inspect(database.engine).get_columns("metric_targets")}
+            self.assertIn("plan_id", cols)
 
     def test_mismatched_database_is_refused_and_left_untouched(self):
         with TemporaryDirectory() as d:

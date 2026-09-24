@@ -83,7 +83,60 @@ def _actions(db: Session) -> None:
         actions.create(db, scope, title=title, owner=owner, org_unit_code=unit, due_date=due, priority=priority)
 
 
-STEPS += [_tree, _users, _actions]
+def _admin_scope(db: Session):
+    from app.platform.scope import resolve_scope
+    return resolve_scope(db, db.query(User).filter_by(role="admin").order_by(User.id).first())
+
+
+def _as(db: Session, username: str):
+    from app.platform.scope import resolve_scope
+    return resolve_scope(db, db.query(User).filter_by(username=username).one())
+
+
+def _strategy(db: Session) -> None:
+    from app.modules.strategy import importer, service
+    from app.modules.strategy.models import Plan, PlanNode
+    from app.platform.models import Period
+
+    if db.query(Plan).count():
+        return
+    scope = _admin_scope(db)
+    out = importer.import_tenant_plan(db, scope)
+    plan = db.get(Plan, out["plan_id"])
+    obj = service.create_node(db, scope, plan.id, {"node_type": "objective", "code": "O1.1",
+                                                   "title": "Cut water losses in every region",
+                                                   "parent_id": db.query(PlanNode).filter_by(plan_id=plan.id,
+                                                                                            code="P1").one().id})
+    ind = service.create_indicator(db, scope, plan.id, {
+        "code": "Q-NRW", "name": "Quarterly non-revenue water", "node_id": obj.id, "unit": "%",
+        "polarity": "lower", "aggregation": "avg", "frequency": "quarter", "valid_min": 0, "valid_max": 100,
+        "reporting_units": ["north", "south"], "owner": "north.ops", "evidence_required": True,
+        "definition": "Water produced but not billed, as a share of production, for the quarter.",
+        "source": "Regional water balance workbook"})
+    init = service.create_node(db, scope, plan.id, {"node_type": "initiative", "code": "I-DMA",
+                                                    "title": "District metered areas in Hilltop", "org_unit_code": "north.hilltop",
+                                                    "owner": "north.mgr", "status": "on_track"})
+    from app.platform import links
+    links.add_link(db, scope, "plan_node", init.id, "plan_node", obj.id, relation="contributes_to")
+    service.transition_plan(db, scope, plan.id, "activate")
+    today = date.today()
+    quarter = db.query(Period).filter(Period.period_type == "quarter", Period.start_date <= today,
+                                      Period.end_date >= today).one()
+    service.set_targets(db, scope, ind.id, [
+        {"period_type": "quarter", "period_start": quarter.start_date, "value": 28, "org_unit_code": "north"},
+        {"period_type": "quarter", "period_start": quarter.start_date, "value": 30, "org_unit_code": "south"}])
+    cycle = service.create_cycle(db, scope, plan.id, period_id=quarter.id)
+    service.generate_assignments(db, scope, cycle.id)
+    service.transition_cycle(db, scope, cycle.id, "open")
+    north = next(a for a in db.query(service.CycleAssignment).filter_by(cycle_id=cycle.id, org_unit_code="north"))
+    service.submit_update(db, _as(db, "north.ops"), north.id, {
+        "value": 31.4, "narrative": "Two bulk meters were out of service for three weeks.",
+        "variance_reason": "Estimated consumption during the meter outage.",
+        "corrective_action": "Meters replaced; readings back from next month.",
+        "evidence_note": "Water balance workbook, sheet Q1, rows 4-18."})
+
+
+STEPS += [_tree, _users, _actions, _strategy]
 
 
 def run(db: Session) -> dict[str, str]:
@@ -119,7 +172,7 @@ def main() -> int:
         for user, pw in passwords.items():
             print(f"  {user:<12} {pw}")
     else:
-        print("Demo data already present; nothing added.")
+        print("Demo data is in place (no new accounts were needed).")
     return 0
 
 

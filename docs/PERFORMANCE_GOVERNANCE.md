@@ -84,3 +84,64 @@ Run it from the install folder (set "Start in" to the MadziHub folder) so it use
 
 `python -m app.demo_seed` adds fictional people, grants and records to the **demo** tenant
 only (it refuses any other tenant) and prints the demo passwords once.
+
+---
+
+## 2. Strategy and M&E
+
+**Pages:** Plans & Indicators · Reporting Cycles · Progress Updates · Evaluations. **API:** `/api/strategy/*`.
+
+### Plan structure
+
+- A plan has two trees: **results** (pillar → objective → outcome → output) and **delivery**
+  (programme → initiative → activity → milestone). Delivery work is *linked* to the results it
+  serves ("contributes to"); one initiative can serve several objectives.
+- Each plan can rename its levels (e.g. "Focus area") on **Level labels**; the underlying types
+  stay fixed so reports and permissions stay consistent. A level in use cannot be switched off.
+- Strategy managers (duty) shape plans. An item's owner, or an approver on its unit, may report
+  a delivery item's status. Plans move draft → active → archived (archiving needs a reason).
+- People limited to some units see the items for their units, plus the parent items as context
+  (titles only).
+- `Import configured plan` turns `strategic_plan` in `tenant.yaml` into a draft plan: a pillar per
+  focus area, an indicator per KPI, and the annual targets. It is idempotent.
+
+### Indicator reference sheet
+
+Name, definition, the result it measures, polarity (higher / lower / range / milestone / yes-no /
+key risk indicator), unit, formula, aggregation, frequency, collection (manual, or automatic from
+connected systems), source, owner, responsible and reporting units, baseline and date, target basis,
+evidence requirement, valid range and data-quality notes. **Changing a definition field needs a
+reason and creates a new version**; administrative fields (owner, notes, units) do not.
+
+Targets are stored with the catalogue targets (tagged with the plan), per unit and period, on the
+fiscal calendar. Changing an agreed target needs a reason. Values are never stored on the indicator:
+approved manual figures are published to the measure catalogue under the *strategy-updates* source,
+so every figure is read the same way as data from connected systems.
+
+### Reporting cycles and progress updates
+
+1. A strategy manager creates a cycle for a period, **generates** one assignment per indicator of
+   that frequency and per reporting unit, names who submits / verifies / approves (or leaves it to
+   anyone with the role on the unit) and **opens** it. Contributors are notified.
+2. The contributor submits a figure, forecast, narrative, variance reason, corrective action and
+   evidence. Every submission is a **new numbered revision**; revisions cannot be edited (database
+   triggers enforce it).
+3. Automatic data-quality checks run on submission and are recorded, never "fixed": timeliness,
+   valid range, completeness (off target without an explanation), evidence, and consistency with
+   the previous period and with any connected system reporting the same figure. Reviewers can add
+   their own assessments.
+4. A reviewer **verifies** (optional per cycle), an approver **approves**; nobody verifies or approves
+   their own submission. Returning needs a reason. Approval publishes the figure.
+5. An approved figure is corrected only by **reopening with a reason**; the next approval replaces
+   the published value and the audit trail keeps both.
+
+"No submission", **pending** (figure not yet available; cannot be approved), **not applicable**
+(needs an explanation; published as *n/a*, never zero) and a reported **zero** are always distinct.
+A locked period or a closed cycle refuses submissions and decisions.
+
+### Evaluations
+
+Mid-term, end-term and thematic evaluations record scope, method, optional criteria (the OECD DAC
+criteria are offered as a template, not required), findings and limitations. Every finding needs a
+**management response** before the evaluation can be completed; accepted and partially accepted
+recommendations create an owned, dated **action** linked back to the finding.
