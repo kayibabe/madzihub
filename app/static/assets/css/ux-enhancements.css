@@ -283,27 +283,36 @@
 
 
 /* ══════════════════════════════════════════════════════════════════════
-   4. THEME TOGGLE BUTTON (in topbar)
+   4. THEME TOGGLE BUTTON (sidebar nav-bottom)
    ══════════════════════════════════════════════════════════════════════ */
 
-.tb-theme-btn {
+/* Row that holds Sign out + theme toggle */
+.nav-bottom-actions {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.nav-bottom-actions .btn-logout { flex: 1 }
+
+/* Theme toggle in the sidebar */
+.nav-theme-btn {
   display: flex; align-items: center; justify-content: center;
-  width: 34px; height: 34px;
+  width: 36px;
   padding: 0;
+  flex-shrink: 0;
   border: 1.5px solid var(--ds-border);
   border-radius: 8px;
   background: var(--ds-surface);
   cursor: pointer;
   color: var(--ds-text-secondary);
-  flex-shrink: 0;
   transition: border-color .14s, color .14s, background .14s;
 }
-.tb-theme-btn:hover {
+.nav-theme-btn:hover {
   border-color: #1A8FD1;
   color: #1A8FD1;
   background: var(--ds-blue-bg);
 }
-.tb-theme-btn svg { width: 16px; height: 16px; display: block }
+.nav-theme-btn svg { width: 16px; height: 16px; display: block }
 
 /* In dark mode, show sun; in light, show moon */
 .theme-icon-sun  { display: none }
@@ -591,7 +600,7 @@
 @media print {
   #toast-rack,
   .nav-collapse-btn,
-  .tb-theme-btn  { display: none !important }
+  .nav-theme-btn  { display: none !important }
 }
 
 
@@ -1058,7 +1067,7 @@ table.zs.rc-sortable thead th:hover {
 
 @media print {
   /* Hide all UX chrome */
-  #toast-rack, .nav-collapse-btn, .tb-theme-btn,
+  #toast-rack, .nav-collapse-btn, .nav-theme-btn,
   #db-nav, #dept-tabs, #db-footer, #attr-footer,
   #alert-float, #alert-drawer, .exp-bar, .exp-btn,
   #upload-modal, #adm-modal-overlay,
