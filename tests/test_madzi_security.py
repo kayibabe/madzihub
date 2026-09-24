@@ -53,6 +53,51 @@ class LegacyEnvTests(unittest.TestCase):
             os.environ.pop("SRWB_SECRET_KEY")
 
 
+class TokenValidationTests(unittest.TestCase):
+    """PyJWT-backed token checks: only valid, unexpired HS256 tokens signed with our key pass."""
+
+    def test_token_validation(self):
+        import base64
+        import json
+        from datetime import datetime, timedelta
+
+        import jwt
+
+        with TemporaryDirectory() as d:
+            main, database, auth, _ = _boot(d)
+            with TestClient(main.app) as c:
+                db = database.SessionLocal()
+                db.add(database.User(username="tok", password_hash=auth.hash_password("x"), role="viewer"))
+                db.commit()
+                db.close()
+                url = "/api/catalogue/zones"
+
+                def status_for(token):
+                    return c.get(url, headers={"Authorization": f"Bearer {token}"}).status_code
+
+                good = auth.create_access_token("tok", "viewer")
+                self.assertEqual(status_for(good), 200)
+
+                now = datetime.utcnow()
+                expired = jwt.encode({"sub": "tok", "role": "viewer", "iat": now - timedelta(hours=9),
+                                      "exp": now - timedelta(hours=1)}, auth.SECRET_KEY, algorithm="HS256")
+                self.assertEqual(status_for(expired), 401)
+
+                forged = jwt.encode({"sub": "tok", "exp": now + timedelta(hours=1)},
+                                    "some-other-key-that-is-long-enough-32b", algorithm="HS256")
+                self.assertEqual(status_for(forged), 401)
+
+                def b64(obj):
+                    return base64.urlsafe_b64encode(json.dumps(obj).encode()).rstrip(b"=").decode()
+                unsigned = f'{b64({"alg": "none", "typ": "JWT"})}.{b64({"sub": "tok"})}.'
+                self.assertEqual(status_for(unsigned), 401)
+
+                head, body, sig = good.split(".")
+                tampered = f'{head}.{b64({"sub": "admin", "role": "admin"})}.{sig}'
+                self.assertEqual(status_for(tampered), 401)
+                self.assertEqual(status_for("not-a-jwt"), 401)
+
+
 class MustChangePasswordTests(unittest.TestCase):
     def test_bootstrap_admin_must_change_password_before_using_api(self):
         with TemporaryDirectory() as d:
