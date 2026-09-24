@@ -26,6 +26,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
+from app.core.tenant import tenant as _tenant
 from app.database import BudgetLine, get_db
 from app.routers.panels import (
     ZONE_COLORS,
@@ -45,8 +46,8 @@ from app.utils import MONTHS_ORDER as FY_MONTHS, csv_list
 
 router = APIRouter(prefix="/api/reports", tags=["Report Centre"])
 
-# SRWB NRW target percentage
-NRW_TARGET_PCT = 27.0
+# NRW target percentage (tenant configuration: targets.nrw_pct)
+NRW_TARGET_PCT = _tenant.target("nrw_pct", 25.0)
 
 
 # ── Internal helpers ───────────────────────────────────────────────────────────

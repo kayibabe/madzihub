@@ -33,13 +33,16 @@ from pathlib import Path
 import pandas as pd
 from openpyxl import Workbook, load_workbook
 
+from app.core.tenant import tenant as _tenant
 from app.core.config import BASE_DIR
+from app.utils import fy_calendar_year, fy_quarter
 
 DATAUPDATER_DIR = BASE_DIR / "dataupdater"
 MASTER_TEMPLATE = DATAUPDATER_DIR / "RawData.xlsx"          # DataEntry header layout
 OUTPUT_FILE = DATAUPDATER_DIR / "RawData_updated.xlsx"      # built workbook (Step 2 imports)
 
-ZONES = ["Liwonde", "Mangochi", "Mulanje", "Ngabu", "Zomba"]
+# One source workbook per zone, named "<zone>.xlsx" (tenant hierarchy.zones).
+ZONES = _tenant.zone_names
 
 # FY end-year → (sub-folder name, FY label).  end-year 2027 = FY Apr-2026 … Mar-2027.
 FY_FOLDERS: dict[int, tuple[str, str]] = {
@@ -128,7 +131,7 @@ class BuildError(RuntimeError):
 
 
 def _quarter(mn: int) -> str:
-    return "Q1" if mn in (4, 5, 6) else "Q2" if mn in (7, 8, 9) else "Q3" if mn in (10, 11, 12) else "Q4"
+    return fy_quarter(mn)
 
 
 def _num(v) -> float:
@@ -273,7 +276,7 @@ def build_rawdata(year: int | None = None, *, test_mode: bool = False,
                     rec[0] = zone
                     rec[1] = sheet
                     rec[2] = label
-                    rec[3] = end_year - 1 if mn >= 4 else end_year
+                    rec[3] = fy_calendar_year(end_year, mn)
                     rec[4] = mn
                     rec[5] = mname
                     rec[6] = _quarter(mn)

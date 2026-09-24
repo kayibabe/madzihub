@@ -157,7 +157,8 @@ def generate_narrative(db: Session, year: int = None) -> dict[str, Any]:
     if year is None:
         from datetime import date
         now = date.today()
-        year = now.year + 1 if now.month >= 4 else now.year
+        from app.utils import fy_end_year
+        year = fy_end_year(now.year, now.month)
 
     try:
         client  = _get_client()

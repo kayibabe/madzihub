@@ -24,7 +24,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.auth import require_admin
-from app.utils import fy_label
+from app.utils import fy_dates, fy_label
 from app.database import BudgetLine, BudgetZoneShare, FiscalYear, SpcLimit, get_db
 
 router = APIRouter(prefix="/api/fiscal-years", tags=["Fiscal Years"])
@@ -33,7 +33,7 @@ router = APIRouter(prefix="/api/fiscal-years", tags=["Fiscal Years"])
 
 
 def _fy_dates(year: int) -> tuple[str, str]:
-    return (f"{year-1}-04-01", f"{year}-03-31")
+    return fy_dates(year)
 
 def _fy_to_dict(fy: FiscalYear) -> dict:
     return {

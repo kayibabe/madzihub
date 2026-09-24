@@ -18,6 +18,7 @@ from app.auth import get_current_user
 from app.core.config import DATA_DIR, settings
 from app.core.limiter import limiter
 from app.core.logging import REQUEST_ID_CTX
+from app.utils import fy_label_for, fy_quarter
 from app.database import UploadLog, engine, get_db
 from app.services.audit_log import log_event
 from app.services.excel_parser import ExcelParser
@@ -123,22 +124,14 @@ def _delete_preview(token: str) -> None:
 
 
 def _derive_quarter(month_no: int) -> str:
-    if month_no in (4, 5, 6):
-        return "Q1"
-    if month_no in (7, 8, 9):
-        return "Q2"
-    if month_no in (10, 11, 12):
-        return "Q3"
-    if month_no in (1, 2, 3):
-        return "Q4"
-    raise ValueError(f"Invalid month number: {month_no}")
+    if not 1 <= month_no <= 12:
+        raise ValueError(f"Invalid month number: {month_no}")
+    return fy_quarter(month_no)
 
 
 def _derive_fiscal_year(year: int, month_no: int) -> str:
-    # SRWB fiscal year runs April → March
-    if month_no >= 4:
-        return f"FY{year}/{str(year + 1)[-2:]}"
-    return f"FY{year - 1}/{str(year)[-2:]}"
+    # Fiscal year start month comes from the tenant configuration.
+    return fy_label_for(year, month_no)
 
 
 def _month_name(month_no: int) -> str:

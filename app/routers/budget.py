@@ -25,7 +25,7 @@ from sqlalchemy import func, and_, or_
 from app.database import (
     BudgetLine, BudgetZoneShare, FiscalYear, Record, SpcLimit, get_db,
 )
-from app.utils import MONTHS_LBL
+from app.utils import FY_MONTH_NOS, MONTHS_LBL, fy_calendar_year, fy_month_index, fy_span_expr
 
 router = APIRouter(prefix="/api/budget", tags=["Budget"])
 
@@ -46,7 +46,7 @@ def safe_div(numerator, denominator, default=0.0):
     return numerator / denominator if denominator else default
 
 # ── Month helpers ─────────────────────────────────────────────────────────────
-FY_MNO     = [4,5,6,7,8,9,10,11,12,1,2,3]
+FY_MNO     = FY_MONTH_NOS
 MONTH_NAME_TO_NO = {
     "april": 4, "apr": 4,
     "may": 5,
@@ -62,7 +62,7 @@ MONTH_NAME_TO_NO = {
     "march": 3, "mar": 3,
 }
 
-def _fy_idx(yr, mno): return mno - 4 if mno >= 4 else mno + 8
+def _fy_idx(yr, mno): return fy_month_index(mno)
 
 def _csv_items(raw: str | None) -> list[str]:
     if not raw:
@@ -80,13 +80,11 @@ def _normalize_month_tokens(months_raw: str | None) -> list[int]:
 def _fy_scope_expr(year: int, selected_months: list[int] | None = None):
     months = selected_months or []
     if not months:
-        return or_(
-            and_(Record.year == year - 1, Record.month_no >= 4),
-            and_(Record.year == year, Record.month_no <= 3),
-        )
+        return fy_span_expr(year)
     parts = []
     for month_no in months:
-        scope_year = year - 1 if month_no >= 4 else year
+        # calendar year in which this fiscal month falls for FY-end `year`
+        scope_year = fy_calendar_year(year, month_no)
         parts.append(and_(Record.year == scope_year, Record.month_no == month_no))
     return or_(*parts)
 
@@ -308,7 +306,7 @@ def get_variance(
     f = n / 12.0
     last_idx = max(complete)
     last_lbl = MONTHS_LBL[last_idx]
-    last_yr  = year - 1 if FY_MNO[last_idx] >= 4 else year
+    last_yr  = fy_calendar_year(year, FY_MNO[last_idx])
     last_mno = FY_MNO[last_idx]
 
     def S(fld): return sum((getattr(by_idx[i], fld) or 0) for i in complete)

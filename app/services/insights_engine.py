@@ -12,35 +12,14 @@ from __future__ import annotations
 import statistics
 from typing import Any
 from sqlalchemy.orm import Session
+from app.core.tenant import tenant as _tenant
 from app.database import Record
 
 
 # ── Thresholds ─────────────────────────────────────────────────────────────
-# All derived from SRWB targets, IBNET/IWA benchmarks, and observed data.
-
-THRESHOLDS = {
-    # NRW
-    "nrw_target":        27.0,   # SRWB corporate target
-    "nrw_warn":          35.0,   # Action threshold
-    # Collection rate
-    "coll_good":         90.0,   # IBNET benchmark
-    "coll_warn":         75.0,   # Serious shortfall
-    # Days to connect
-    "dtc_warn":          30.0,   # World Bank SLA
-    "dtc_critical":      60.0,
-    # Stuck meter rate (% of active customers)
-    "stuck_pct_warn":    8.0,    # 8% unread = significant billing risk
-    # MoM change triggers (%)
-    "mom_bd_spike":      20.0,   # Pipe breakdowns rise >20%
-    "mom_nrw_rise":       5.0,   # NRW rate rises >5 percentage points
-    "mom_coll_drop":     15.0,   # Collection rate drops >15 pp
-    "mom_debtors_rise":  20.0,   # Debtors grow >20%
-    # Zone-level
-    "zone_coll_warn":    80.0,   # Zone collection rate below 80%
-    "zone_nrw_critical": 35.0,   # Zone NRW above action threshold
-    # Debtors (% of annual billing)
-    "debtors_pct_warn":  50.0,   # Debtors > 50% of annual billing = risk
-}
+# Alert thresholds and the NRW target come from the tenant configuration
+# (tenants/<name>/tenant.yaml → thresholds / targets.nrw_pct).
+THRESHOLDS = {**_tenant.thresholds, "nrw_target": _tenant.target("nrw_pct", 25.0)}
 
 
 def _nz_sum(rows, field):
@@ -80,15 +59,14 @@ def generate_alerts(db: Session, year: int = None) -> dict[str, Any]:
     from sqlalchemy import or_, and_
     from app.database import Record
 
+    from app.utils import fy_end_year, fy_span_expr
+
     if year is None:
         from datetime import date
         now = date.today()
-        year = now.year + 1 if now.month >= 4 else now.year
+        year = fy_end_year(now.year, now.month)
 
-    q = db.query(Record).filter(or_(
-        and_(Record.year == year - 1, Record.month_no >= 4),
-        and_(Record.year == year,     Record.month_no <= 3),
-    ))
+    q = db.query(Record).filter(fy_span_expr(year))
     rows = q.all()
 
     if not rows:
@@ -113,8 +91,7 @@ def generate_alerts(db: Session, year: int = None) -> dict[str, Any]:
     lv = _latest(rows)
 
     # ── Sort rows by month for MoM analysis ───────────────────────────────
-    FY_ORDER = ["April","May","June","July","August","September",
-                "October","November","December","January","February","March"]
+    from app.utils import MONTHS_ORDER as FY_ORDER
 
     from collections import defaultdict
     monthly_agg: dict[str, dict] = {}
