@@ -1,0 +1,63 @@
+# MadziHub Roadmap
+
+Checklist view of [BLUEPRINT.md §9](BLUEPRINT.md#9-delivery-stages-and-exit-gates). Tick items in the PR that completes them.
+
+## Stage 0: Protect and baseline
+- [x] Clean import of opsapp code without utility data or git history
+- [x] `.gitattributes`; `.gitignore` blocks spreadsheets, DBs and secrets
+- [x] Synthetic dataset + API parity snapshots (58 endpoints)
+- [x] Fictional demo tenant (Lakeside Water Utility)
+- [ ] **Owner:** written code/data ownership and licence position with SRWB
+- [ ] **Owner:** opsapp public repo: make private, or remove `dataupdater/` and rewrite history
+- [ ] Decide whether `tenants/srwb` stays here or moves to a private deployment repo
+
+## Stage 1: Extract configuration
+- [x] Tenant YAML + validated loader (`app/core/tenant.py`)
+- [x] Fiscal calendar from `fiscal_year.start_month` (tested Jan/Apr/Jul)
+- [x] Zone list and colours from tenant (Python + JS)
+- [x] Single NRW target (`targets.nrw_pct`); insights thresholds from tenant
+- [x] Strategic plan KPI matrix from tenant
+- [x] `/api/config`, `/api/config/public`, `/api/config/logo`; org profile overrides identity
+- [x] HTML and `app-core.js` branded server-side (name, currency, targets, months)
+- [x] AI narratives behind `ai.enabled`; model configurable
+- [x] Security: dev-preview opt-in, forced password change, safe admin reset, `MADZI_*` env
+- [ ] UI uses hierarchy labels (`Zone/Scheme` → tenant labels) in filters, tables, charts, exports
+- [ ] Remaining `TODO(madzi-config)`: SRWB spreadsheet header names in `excel_parser.COLUMN_MAP` / `main.HMAP`
+- [ ] Currency formatting via one `fmtMoney()` using `currency.decimals` and locale
+- [ ] API key `srwb_target_pct` in `/api/reports/nrw-analysis`: add `nrw_target_pct`, deprecate old key
+- [ ] Move SRWB budget zone-share seed (`scripts/seed_fiscal_years.py`) into `tenants/srwb`
+- [ ] Rewrite `docs/DEPLOYMENT_RUNBOOK.md` for MadziHub (tenant selection, production env)
+
+## Stage 2: Generalise data entry
+- [ ] Alembic migrations (baseline = current schema)
+- [ ] Hierarchy table: N levels, parent/child, codes, aliases, effective dates
+- [ ] Versioned targets: KPI × fiscal year × org scope, with benchmark provenance (fixes per-year SP NRW targets)
+- [ ] Metric catalogue: code, unit, aggregation (sum/avg/latest), formula, direction, valid range
+- [ ] Import mapping profiles: upload sample → map columns → validate → save a versioned profile
+- [ ] SRWB zone-workbook builder (`rawdata_builder.py`) becomes one import adapter
+- [ ] Per-tenant validation rules replace calculation-time data quirks (Mangochi days-to-connect, supply-hours units, stub rows)
+- [ ] Approval workflow: preparer → reviewer → publish; period locks; correction history and lineage
+- [ ] Distinct zero / missing / not-applicable / pending states
+
+## Stage 3: Package and harden
+- [ ] Vendor Chart.js, DOMPurify and SheetJS (no runtime CDN; offline installs)
+- [ ] Module toggles enforced in UI and API; hide pages without data
+- [ ] Setup wizard: identity → hierarchy → calendar → currency/units → mapping → targets → users
+- [ ] Docker image and compose file; `production` default in service scripts
+- [ ] Route-by-route authorization inventory and tests (roles; later org scope)
+- [ ] Backup/restore runbook + automated restore drill in CI
+- [ ] PostgreSQL validated in staging; documented migration from SQLite
+- [ ] `madzihub` CLI (`init-tenant`, `import`, `backup`, `restore`, `reset-admin`, `check`)
+- [ ] Version/installation endpoint; upgrade policy
+- [ ] Accessibility pass: keyboard access, colour-independent status, missing-data states
+
+## Stage 4: Extend (by funded demand)
+- [ ] Water-quality compliance and corrective actions
+- [ ] Outages and service interruptions
+- [ ] Customer complaints and service requests
+- [ ] Assets and planned maintenance; capital projects
+- [ ] GIS coverage and leak hotspots
+- [ ] Regulator packs (confirm the water regulator per market)
+- [ ] Connectors: billing, SCADA, LIMS, ERP/payroll
+- [ ] Forecasting and scenarios; climate/energy/ESG indicators
+- [ ] Offline field collection
