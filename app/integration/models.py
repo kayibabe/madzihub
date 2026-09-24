@@ -54,6 +54,8 @@ class Metric(Base):
     category    = Column(String(60), nullable=True)
     aggregation = Column(String(10), nullable=False, default="sum")
     direction   = Column(String(10), nullable=False, default="higher")
+    # Set for derived measures (see formulas.py): computed from components, never loaded.
+    formula     = Column(Text, nullable=True)
     description = Column(Text, nullable=True)
     is_active   = Column(Boolean, nullable=False, default=True)
     created_at  = Column(DateTime, default=datetime.utcnow)

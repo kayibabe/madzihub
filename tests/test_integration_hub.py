@@ -97,7 +97,9 @@ class MappingRuleTests(unittest.TestCase):
         self.assertEqual(d, date(2026, 1, 1))
 
 
-class HubApiTests(unittest.TestCase):
+class _HubFixture(unittest.TestCase):
+    """Running app with an admin, a viewer and a small org tree (org → north, south)."""
+
     def setUp(self):
         self._tmp = TemporaryDirectory()
         self.tmp = self._tmp.name
@@ -155,6 +157,8 @@ class HubApiTests(unittest.TestCase):
                         json=[{"kind": "org_unit", "external_key": "BR-N", "internal_code": "north"},
                               {"kind": "org_unit", "external_key": "BR-S", "internal_code": "south"}])
 
+
+class HubApiTests(_HubFixture):
     def test_sql_pull_is_incremental_and_idempotent(self):
         self._billing_db([("BR-N", "2026-01-03", 100, "2026-01-04T00:00"),
                           ("BR-N", "2026-01-20", 50, "2026-01-21T00:00"),
@@ -348,6 +352,120 @@ class HubApiTests(unittest.TestCase):
         self.assertEqual(f["billing"]["last_status"], "success")
 
 
+class FormulaEngineTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        with TemporaryDirectory() as d:
+            _boot(d)
+        from app.integration import formulas
+        cls.f = formulas
+
+    def test_evaluates_and_treats_missing_or_zero_division_as_missing(self):
+        self.assertAlmostEqual(self.f.evaluate("nrw / vol_produced * 100", {"nrw": 25, "vol_produced": 100}), 25.0)
+        self.assertAlmostEqual(self.f.evaluate("max(a, b) - abs(-c)", {"a": 1, "b": 4, "c": 2}), 2.0)
+        self.assertIsNone(self.f.evaluate("a / b", {"a": 1, "b": 0}))
+        self.assertIsNone(self.f.evaluate("a / b", {"a": 1}))
+        self.assertEqual(self.f.references("(a + b) / min(c, 2)"), {"a", "b", "c"})
+
+    def test_rejects_anything_but_arithmetic(self):
+        # Bare names are only ever looked up as catalogue codes, never executed.
+        for bad in ("__import__('os').system('x')", "a.real", "a ** 2", "a[0]", "lambda: 1", "'x'",
+                    "a if b else c", "a and b", "max(a, key=b)", "", "a +"):
+            with self.subTest(bad=bad), self.assertRaises(self.f.FormulaError):
+                self.f.parse(bad)
+
+    def test_validation_catches_unknown_and_circular_references(self):
+        with self.assertRaisesRegex(self.f.FormulaError, "unknown measure"):
+            self.f.validate("x", "a / zz", {"a", "x"}, {})
+        with self.assertRaisesRegex(self.f.FormulaError, "circular"):
+            self.f.check_catalogue({"x": "y + 1", "y": "x * 2"}, {"x", "y"})
+        self.f.check_catalogue({"x": "a / b", "y": "x * 100"}, {"a", "b", "x", "y"})  # chains are fine
+
+
+class FormulaPositionTests(_HubFixture):
+
+    def _load_water(self, rows):
+        self.post("/api/integration/metrics", [
+            {"code": "vol_produced", "name": "Produced", "unit": "m³"},
+            {"code": "nrw", "name": "NRW volume", "unit": "m³", "direction": "lower"},
+            {"code": "nrw_ratio", "name": "NRW", "unit": "%", "direction": "lower",
+             "formula": "nrw / vol_produced * 100"},
+        ])
+        existing = {s["code"] for s in self.client.get("/api/integration/sources", headers=self.admin).json()}
+        if "ops" not in existing:
+            self.post("/api/integration/sources", {
+                "code": "ops", "name": "Operations returns", "connector": "file", "system_type": "file",
+                "mapping": {"layout": "wide", "metrics": {"vol_produced": "Produced", "nrw": "NRW"},
+                            "period": {"field": "Month"}, "org_unit": {"field": "Region"}},
+            })
+        body = "Region,Month,Produced,NRW\n" + "".join(f"{r},{m},{p},{n}\n" for r, m, p, n in rows)
+        r = self.client.post("/api/integration/sources/ops/upload", headers=self.admin,
+                             files={"file": ("ops.csv", body.encode(), "text/csv")})
+        self.assertEqual(r.json()["status"], "success", r.text)
+
+    def test_formula_api_validation(self):
+        r = self.client.post("/api/integration/metrics", headers=self.admin,
+                             json=[{"code": "bad", "name": "Bad", "formula": "cash_collected / nothing"}])
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("unknown measure", r.text)
+        r = self.client.post("/api/integration/metrics", headers=self.admin, json=[
+            {"code": "p", "name": "P", "formula": "q + 1"}, {"code": "q", "name": "Q", "formula": "p + 1"}])
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("circular", r.text)
+        r = self.client.post("/api/integration/metrics", headers=self.admin,
+                             json=[{"code": "evil", "name": "E", "formula": "__import__('os')"}])
+        self.assertEqual(r.status_code, 400)
+
+    def test_formula_measures_cannot_be_loaded(self):
+        self._load_water([("north", "2026-01-01", 100, 10)])
+        self.post("/api/integration/sources", {
+            "code": "direct", "name": "x", "connector": "file",
+            "mapping": {"layout": "wide", "metrics": {"nrw_ratio": "Pct"}, "period": {"field": "M"},
+                        "org_unit": {"field": "R"}},
+        })
+        r = self.client.post("/api/integration/sources/direct/upload", headers=self.admin,
+                             files={"file": ("x.csv", b"R,M,Pct\nnorth,2026-01-01,12\n", "text/csv")})
+        self.assertEqual(r.json()["values_loaded"], 0)
+        self.assertIn("not in the catalogue", r.json()["rejects"][0]["reason"])
+
+    def test_ratio_rolls_up_volume_weighted(self):
+        # North 10% of 100 m³, South 30% of 300 m³. Organisation NRW is 100/400 = 25%, not the 20% average.
+        self._load_water([("north", "2026-01-01", 100, 10), ("south", "2026-01-01", 300, 90)])
+        p = self.client.get("/api/position/nrw_ratio", headers=self.viewer).json()
+        self.assertEqual(p["derived"], "formula")
+        self.assertTrue(p["rolled_up"])
+        self.assertAlmostEqual(p["where_we_are"]["value"], 25.0)
+        self.assertEqual(p["where_we_are"]["inputs"], {"nrw": 100.0, "vol_produced": 400.0})
+        north = self.client.get("/api/position/nrw_ratio?org_unit=north", headers=self.viewer).json()
+        self.assertAlmostEqual(north["where_we_are"]["value"], 10.0)
+
+    def test_fiscal_year_view_marks_year_to_date(self):
+        # Demo tenant: FY starts July. Two months of FY2026 (starting 2025-07-01) reported.
+        self._load_water([("north", "2025-07-01", 100, 20), ("north", "2025-08-01", 100, 30)])
+        self.post("/api/integration/targets", [
+            {"metric_code": "vol_produced", "org_unit_code": "north", "period_type": "year",
+             "period_start": "2025-07-01", "value": 1200},
+            {"metric_code": "nrw_ratio", "org_unit_code": "north", "period_type": "year",
+             "period_start": "2025-07-01", "value": 20},
+        ])
+        prod = self.client.get("/api/position/vol_produced?org_unit=north&period_type=year", headers=self.viewer).json()
+        self.assertEqual(prod["derived"], "from_month")
+        cur = prod["where_we_are"]
+        self.assertEqual((cur["period"], cur["value"], cur["months_reporting"], cur["months_expected"]),
+                         ("2025-07-01", 200.0, 2, 12))
+        # 200 against 1,200 is year-to-date, not a miss.
+        self.assertIsNone(prod["gap_to_target"]["on_track"])
+        self.assertFalse(prod["gap_to_target"]["period_complete"])
+        self.assertIn("year-to-date", prod["gap_to_target"]["note"])
+
+        ratio = self.client.get("/api/position/nrw_ratio?org_unit=north&period_type=year", headers=self.viewer).json()
+        self.assertAlmostEqual(ratio["where_we_are"]["value"], 25.0)  # 50 / 200
+        self.assertEqual(ratio["where_we_are"]["months_reporting"], 2)
+        self.assertFalse(ratio["gap_to_target"]["on_track"])  # a ratio YTD is still comparable
+        q = self.client.get("/api/position/nrw_ratio?org_unit=north&period_type=quarter", headers=self.viewer).json()
+        self.assertEqual(q["where_we_are"]["period"], "2025-07-01")
+
+
 class LegacyBridgeTests(unittest.TestCase):
     def test_existing_returns_become_history(self):
         from tests.fixtures.synthetic_dataset import build_records
@@ -366,6 +484,8 @@ class LegacyBridgeTests(unittest.TestCase):
 
                 created = c.post("/api/integration/bootstrap-legacy", headers=h).json()
                 self.assertEqual(created["org_units"], 4)  # org, north, north.alpha, north.beta
+                # Demo plan: NRW %, production and new connections, four years each.
+                self.assertEqual(created["targets"], 12)
                 self.assertTrue(c.post("/api/integration/bootstrap-legacy", headers=h).json()["org_units"] == 0)
 
                 run = c.post("/api/integration/sources/legacy-returns/run", headers=h).json()
@@ -376,6 +496,16 @@ class LegacyBridgeTests(unittest.TestCase):
                 self.assertAlmostEqual(p["where_we_are"]["value"], expected)
                 self.assertEqual(len(p["where_we_were"]), 24)
                 self.assertIsNotNone(p["trend"])
+
+                # Organisation NRW % is total NRW over total production, from the same records.
+                db = database.SessionLocal()
+                recs = db.query(database.Record).filter_by(year=2025, month_no=4).all()
+                want = sum(r.nrw for r in recs) / sum(r.vol_produced for r in recs) * 100
+                db.close()
+                nrw = c.get("/api/position/nrw_pct", headers=h).json()
+                self.assertAlmostEqual(nrw["where_we_are"]["value"], want)
+                going = c.get("/api/position/nrw_pct?period_type=year", headers=h).json()["where_we_are_going"]
+                self.assertEqual([t["period"] for t in going][:1], ["2025-07-01"])  # FY2026 in a July-start plan
 
                 again = c.post("/api/integration/sources/legacy-returns/run", headers=h).json()
                 self.assertEqual(again["values_loaded"], run["values_loaded"])

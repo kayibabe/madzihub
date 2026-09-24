@@ -5,9 +5,14 @@ Published value rule. When several sources report the same measure, unit and
 period, the source with the lowest ``priority`` wins. The others remain in
 ``metric_values`` for reconciliation (see ``reconciliation``).
 
-Roll-up rule. A unit with no value of its own gets the total of its children,
-but only for ``sum`` measures. Averages, latest values and ratios cannot be
-rolled up by adding and are returned as missing instead of wrong.
+Roll-up rules.
+- Across the organisation: a unit with no value of its own gets the total of its
+  leaf units, for ``sum`` measures only.
+- Across time: quarters and fiscal years are built from monthly values using
+  each measure's aggregation, with ``months_reporting`` so a year-to-date figure
+  is never mistaken for a full year.
+- Ratios are formula measures, computed from their rolled-up components at
+  every level. Averages of ratios are never taken.
 """
 from __future__ import annotations
 
@@ -16,6 +21,8 @@ from datetime import date, datetime
 
 from sqlalchemy.orm import Session
 
+from app.integration import formulas
+from app.integration.mapping import period_start
 from app.integration.models import DataSource, Metric, MetricTarget, MetricValue, OrgUnit
 
 
@@ -36,9 +43,8 @@ def descendants(db: Session, code: str) -> list[str]:
     return out
 
 
-def published_series(db: Session, metric: Metric, org_code: str, period_type: str,
-                     start: date | None = None, end: date | None = None) -> tuple[list[dict], bool]:
-    """Published values by period. Returns (series, rolled_up)."""
+def _stored_series(db: Session, metric: Metric, org_code: str, period_type: str) -> tuple[list[dict], bool]:
+    """Loaded values at one grain: the unit's own, else the sum of its leaf units. Returns (series, rolled_up)."""
     priorities = {s.id: (s.priority, s.code, s.name) for s in db.query(DataSource)}
 
     def best(units: list[str]) -> dict[tuple[str, date], MetricValue]:
@@ -46,10 +52,6 @@ def published_series(db: Session, metric: Metric, org_code: str, period_type: st
                                          MetricValue.period_type == period_type,
                                          MetricValue.org_unit_code.in_(units),
                                          MetricValue.value.isnot(None))
-        if start:
-            q = q.filter(MetricValue.period_start >= start)
-        if end:
-            q = q.filter(MetricValue.period_start <= end)
         chosen: dict[tuple[str, date], MetricValue] = {}
         for mv in q:
             key = (mv.org_unit_code, mv.period_start)
@@ -73,7 +75,7 @@ def published_series(db: Session, metric: Metric, org_code: str, period_type: st
     # Only leaf-level values are added, so a zone total and its schemes are never double counted.
     parents_with_children = {p for (p,) in db.query(OrgUnit.parent_id).filter(OrgUnit.parent_id.isnot(None))}
     leaf_codes = {u.code for u in db.query(OrgUnit).filter(OrgUnit.code.in_(kids))
-                if u.id not in parents_with_children}
+                  if u.id not in parents_with_children}
     totals: dict[date, dict] = {}
     for (_, p), mv in best(sorted(leaf_codes)).items():
         t = totals.setdefault(p, {"value": 0.0, "units": 0, "sources": set(), "loaded_at": None})
@@ -87,6 +89,94 @@ def published_series(db: Session, metric: Metric, org_code: str, period_type: st
                "loaded_at": t["loaded_at"].isoformat() if t["loaded_at"] else None}
               for p, t in sorted(totals.items())]
     return series, True
+
+
+_MONTHS_IN = {"quarter": 3, "year": 12}
+
+
+def _aggregate_in_time(monthly: list[dict], aggregation: str, period_type: str) -> list[dict]:
+    """Monthly series → quarters or fiscal years, with how many months reported."""
+    groups: dict[date, list[dict]] = defaultdict(list)
+    for item in monthly:
+        groups[period_start(date.fromisoformat(item["period"]), period_type)].append(item)
+    out = []
+    for p, items in sorted(groups.items()):
+        nums = [i["value"] for i in items]
+        if aggregation == "sum":
+            value = sum(nums)
+        elif aggregation == "avg":
+            value = sum(nums) / len(nums)
+        elif aggregation == "max":
+            value = max(nums)
+        elif aggregation == "min":
+            value = min(nums)
+        else:  # last: the latest month in the period
+            value = max(items, key=lambda i: i["period"])["value"]
+        loaded = [i["loaded_at"] for i in items if i.get("loaded_at")]
+        out.append({"period": p.isoformat(), "value": value,
+                    "source": ",".join(sorted({s for i in items for s in str(i["source"]).split(",")})),
+                    "months_reporting": len(items), "months_expected": _MONTHS_IN[period_type],
+                    "loaded_at": max(loaded) if loaded else None})
+    return out
+
+
+def _formula_series(db: Session, metric: Metric, org_code: str, period_type: str,
+                    stack: tuple[str, ...]) -> tuple[list[dict], bool]:
+    refs = sorted(formulas.references(metric.formula))
+    catalogue = {m.code: m for m in db.query(Metric).filter(Metric.code.in_(refs))}
+    if not refs or set(refs) - set(catalogue) or set(refs) & set(stack):
+        return [], False  # invalid or circular: validated on save, guarded here too
+    comps: dict[str, dict[str, dict]] = {}
+    rolled = False
+    for code in refs:
+        series, info = _series(db, catalogue[code], org_code, period_type, (*stack, metric.code))
+        comps[code] = {item["period"]: item for item in series}
+        rolled = rolled or info["rolled_up"]
+    out = []
+    for p in sorted(set.intersection(*(set(c) for c in comps.values()))):
+        inputs = {code: comps[code][p]["value"] for code in refs}
+        value = formulas.evaluate(metric.formula, inputs)
+        if value is None:
+            continue  # division by zero: missing, not zero
+        parts = [comps[code][p] for code in refs]
+        item = {"period": p, "value": value, "formula": metric.formula, "inputs": inputs,
+                "source": ",".join(sorted({s for i in parts for s in str(i["source"]).split(",")})),
+                "loaded_at": max((i["loaded_at"] for i in parts if i.get("loaded_at")), default=None)}
+        reporting = [i["months_reporting"] for i in parts if "months_reporting" in i]
+        if reporting:
+            item["months_reporting"] = min(reporting)
+            item["months_expected"] = _MONTHS_IN[period_type]
+        out.append(item)
+    return out, rolled
+
+
+def _series(db: Session, metric: Metric, org_code: str, period_type: str,
+            stack: tuple[str, ...] = ()) -> tuple[list[dict], dict]:
+    if metric.formula:
+        series, rolled = _formula_series(db, metric, org_code, period_type, stack)
+        return series, {"rolled_up": rolled, "derived": "formula"}
+    series, rolled = _stored_series(db, metric, org_code, period_type)
+    if not series and period_type in _MONTHS_IN:
+        monthly, rolled = _stored_series(db, metric, org_code, "month")
+        return _aggregate_in_time(monthly, metric.aggregation, period_type), {"rolled_up": rolled,
+                                                                            "derived": "from_month"}
+    return series, {"rolled_up": rolled, "derived": None}
+
+
+def published_series(db: Session, metric: Metric, org_code: str, period_type: str,
+                     start: date | None = None, end: date | None = None) -> tuple[list[dict], dict]:
+    """Published values by period, with how they were obtained.
+
+    Returns (series, info) where info["rolled_up"] says values were summed from
+    child units and info["derived"] is None, "from_month" (quarters/years built
+    from monthly values) or "formula".
+    """
+    series, info = _series(db, metric, org_code, period_type)
+    if start:
+        series = [s for s in series if s["period"] >= start.isoformat()]
+    if end:
+        series = [s for s in series if s["period"] <= end.isoformat()]
+    return series, info
 
 
 def _trend(series: list[dict], direction: str, window: int = 3) -> dict | None:
@@ -104,7 +194,7 @@ def _trend(series: list[dict], direction: str, window: int = 3) -> dict | None:
 
 def position(db: Session, metric: Metric, org_code: str, period_type: str = "month",
              start: date | None = None, end: date | None = None) -> dict:
-    series, rolled = published_series(db, metric, org_code, period_type, start, end)
+    series, info = published_series(db, metric, org_code, period_type, start, end)
     targets = [
         {"period": t.period_start.isoformat(), "period_type": t.period_type, "value": t.value,
          "lower": t.lower, "upper": t.upper, "basis": t.basis, "note": t.note}
@@ -132,16 +222,27 @@ def position(db: Session, metric: Metric, org_code: str, period_type: str = "mon
                 on_track = diff <= 0
             elif tgt["lower"] is not None and tgt["upper"] is not None:
                 on_track = tgt["lower"] <= current["value"] <= tgt["upper"]
+            complete = current.get("months_reporting", 0) >= current.get("months_expected", 0)
+            note = None
+            if not complete and not metric.formula and metric.aggregation == "sum":
+                # A year-to-date total against a full-year target is not a verdict.
+                on_track = None
+                note = (f"{current['months_reporting']} of {current['months_expected']} months reported; "
+                        "total is year-to-date")
             gap = {"target_period": tgt["period"], "target": tgt["value"], "actual": current["value"],
-                   "difference": diff, "on_track": on_track, "basis": tgt["basis"]}
+                   "difference": diff, "on_track": on_track, "basis": tgt["basis"],
+                   "period_complete": complete, "note": note}
 
-    future = [t for t in targets if current is None or t["period"] > current["period"]]
+    future = [t for t in targets if t["period_type"] == period_type
+              and (current is None or t["period"] > current["period"])]
     return {
         "metric": {"code": metric.code, "name": metric.name, "unit": metric.unit,
-                   "aggregation": metric.aggregation, "direction": metric.direction},
+                   "aggregation": metric.aggregation, "direction": metric.direction,
+                   "formula": metric.formula},
         "org_unit": org_code,
         "period_type": period_type,
-        "rolled_up": rolled,
+        "rolled_up": info["rolled_up"],
+        "derived": info["derived"],
         "where_we_were": series[:-1],
         "where_we_are": current,
         "where_we_are_going": future,

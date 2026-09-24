@@ -35,7 +35,7 @@ from sqlalchemy.orm import Session
 from app.auth import require_admin
 from app.core.config import settings
 from app.database import get_db
-from app.integration import connectors, pipeline
+from app.integration import connectors, formulas, pipeline
 from app.integration import position as pos
 from app.integration.models import (
     AGGREGATIONS, CONNECTORS, DIRECTIONS, PERIOD_TYPES, SYSTEM_TYPES,
@@ -105,6 +105,7 @@ class MetricIn(BaseModel):
     category: Optional[str] = None
     aggregation: str = "sum"
     direction: str = "higher"
+    formula: Optional[str] = None  # e.g. "nrw / vol_produced * 100"; computed, never loaded
     description: Optional[str] = None
     is_active: bool = True
 
@@ -322,13 +323,24 @@ def upsert_org_units(body: list[OrgUnitIn], db: Session = Depends(get_db), user=
 @admin_router.get("/metrics")
 def list_metrics(db: Session = Depends(get_db)):
     return [{"code": m.code, "name": m.name, "unit": m.unit, "category": m.category, "aggregation": m.aggregation,
-             "direction": m.direction, "description": m.description, "is_active": m.is_active}
+             "direction": m.direction, "formula": m.formula, "description": m.description,
+             "is_active": m.is_active}
             for m in db.query(Metric).order_by(Metric.category, Metric.code)]
 
 
 @admin_router.post("/metrics")
 def upsert_metrics(body: list[MetricIn], db: Session = Depends(get_db), user=Depends(require_admin)):
+    # Validate every formula against the catalogue as it will be after this request,
+    # so a batch can define components and the ratios that use them together.
+    current = {m.code: m.formula for m in db.query(Metric)}
     for item in body:
+        current[item.code] = (item.formula or "").strip() or None
+    try:
+        formulas.check_catalogue({c: f for c, f in current.items() if f}, current.keys())
+    except formulas.FormulaError as exc:
+        raise HTTPException(400, f"Invalid formula: {exc}")
+    for item in body:
+        item.formula = current[item.code]
         row = db.query(Metric).filter_by(code=item.code).first()
         if row is None:
             db.add(Metric(**item.model_dump()))
@@ -381,7 +393,7 @@ def overview(org_unit: str = "org", period_type: str = "month", db: Session = De
     for m in db.query(Metric).filter(Metric.is_active.is_(True)).order_by(Metric.category, Metric.code):
         p = pos.position(db, m, org_unit, period_type)
         out.append({"metric": p["metric"], "category": m.category, "where_we_are": p["where_we_are"],
-                    "gap_to_target": p["gap_to_target"], "trend": p["trend"], "rolled_up": p["rolled_up"],
+                    "gap_to_target": p["gap_to_target"], "trend": p["trend"], "rolled_up": p["rolled_up"], "derived": p["derived"],
                     "next_target": (p["where_we_are_going"] or [None])[0]})
     return {"org_unit": org_unit, "period_type": period_type, "measures": out}
 
