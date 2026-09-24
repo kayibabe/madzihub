@@ -53,7 +53,7 @@ Rules the pipeline enforces:
 - **Finer data is aggregated to the stored grain** using each measure's aggregation (hourly SCADA → daily or monthly).
 - **Roll-up only for additive measures.** A unit without its own value gets the sum of its leaf units for `sum` measures. Averages are never added up.
 - **Ratios are formula measures**, computed from their rolled-up components at every level (see §2.1). They are never averaged.
-- **Quarters and fiscal years are built from monthly values** using each measure's aggregation. They carry `months_reporting` / `months_expected`, so a year-to-date total is never judged against a full-year target (`gap_to_target.on_track` is `null` with a note).
+- **Quarters and fiscal years are built from monthly values** using each measure's aggregation. `avg` measures are time-weighted by days in each month (`time_weighting: days_in_month`); where observation weighting matters, define the measure as a formula over a total and a count. They carry `months_reporting` / `months_expected`, so a year-to-date total is never judged against a full-year target (`gap_to_target.on_track` is `null` with a note).
 - **Idempotent loads.** Re-running a source or re-dropping a file updates rows in place.
 - **The watermark only advances after a successful load.** A failed run retries from the same point.
 
@@ -64,9 +64,9 @@ A measure with a `formula` is computed, never loaded:
 ```json
 POST /api/integration/metrics
 [{"code": "nrw_pct", "name": "Non-revenue water", "unit": "%", "direction": "lower",
-  "formula": "nrw / vol_produced * 100"},
+  "aggregation": "avg", "formula": "nrw / vol_produced * 100"},
  {"code": "collection_efficiency", "name": "Collection efficiency", "unit": "%",
-  "formula": "cash_collected / amt_billed * 100"}]
+  "aggregation": "avg", "formula": "cash_collected / amt_billed * 100"}]
 ```
 
 - Evaluated per unit and period **after** components are rolled up, so organisation NRW % = total NRW ÷ total production (volume-weighted). With North at 10% of 100 m³ and South at 30% of 300 m³, the organisation is 25%, not the 20% an average would give.
@@ -74,6 +74,7 @@ POST /api/integration/metrics
 - Validated on save: unknown measures and circular references are rejected. Formulas may use other formulas.
 - A missing component or a division by zero gives **no value**, never zero.
 - Each computed value carries its `formula` and `inputs`, so anyone can check the arithmetic.
+- A formula's `aggregation` states what it means over a period. Use `avg` for ratios such as NRW %: they are comparable part-way through a year. Leave the default `sum` for results that accumulate, such as `vol_produced - revenue_water`: a year-to-date value is not judged against a full-year target.
 
 `bootstrap-legacy` creates `nrw_pct` and `collection_efficiency`. It also seeds annual **strategic-plan targets** for plan KPIs the catalogue can measure: NRW %, production, water sold, new connections and customer base.
 

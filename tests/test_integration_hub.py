@@ -388,8 +388,10 @@ class FormulaPositionTests(_HubFixture):
         self.post("/api/integration/metrics", [
             {"code": "vol_produced", "name": "Produced", "unit": "m³"},
             {"code": "nrw", "name": "NRW volume", "unit": "m³", "direction": "lower"},
-            {"code": "nrw_ratio", "name": "NRW", "unit": "%", "direction": "lower",
+            {"code": "nrw_ratio", "name": "NRW", "unit": "%", "direction": "lower", "aggregation": "avg",
              "formula": "nrw / vol_produced * 100"},
+            {"code": "billed_est", "name": "Billed (derived)", "unit": "m³",
+             "formula": "vol_produced - nrw"},  # default aggregation "sum": accumulates
         ])
         existing = {s["code"] for s in self.client.get("/api/integration/sources", headers=self.admin).json()}
         if "ops" not in existing:
@@ -464,6 +466,33 @@ class FormulaPositionTests(_HubFixture):
         self.assertFalse(ratio["gap_to_target"]["on_track"])  # a ratio YTD is still comparable
         q = self.client.get("/api/position/nrw_ratio?org_unit=north&period_type=quarter", headers=self.viewer).json()
         self.assertEqual(q["where_we_are"]["period"], "2025-07-01")
+
+    def test_accumulating_formula_is_not_judged_year_to_date(self):
+        self._load_water([("north", "2025-07-01", 100, 20), ("north", "2025-08-01", 100, 30)])
+        self.post("/api/integration/targets", [
+            {"metric_code": "billed_est", "org_unit_code": "north", "period_type": "year",
+             "period_start": "2025-07-01", "value": 1000}])
+        p = self.client.get("/api/position/billed_est?org_unit=north&period_type=year", headers=self.viewer).json()
+        self.assertEqual(p["where_we_are"]["value"], 150.0)
+        self.assertIsNone(p["gap_to_target"]["on_track"])
+        self.assertIn("year-to-date", p["gap_to_target"]["note"])
+
+    def test_average_measures_are_day_weighted_across_months(self):
+        self.post("/api/integration/metrics", [
+            {"code": "pressure_bar", "name": "Pressure", "unit": "bar", "aggregation": "avg"}])
+        self.post("/api/integration/sources", {
+            "code": "net", "name": "Network returns", "connector": "file",
+            "mapping": {"layout": "wide", "metrics": {"pressure_bar": "P"}, "period": {"field": "M"},
+                        "org_unit": {"field": "R"}},
+        })
+        r = self.client.post("/api/integration/sources/net/upload", headers=self.admin,
+                             files={"file": ("p.csv", b"R,M,P\nnorth,2026-01-01,10\nnorth,2026-02-01,20\n", "text/csv")})
+        self.assertEqual(r.json()["values_loaded"], 2, r.text)
+        q = self.client.get("/api/position/pressure_bar?org_unit=north&period_type=quarter", headers=self.viewer).json()
+        cur = q["where_we_are"]
+        self.assertEqual(cur["period"], "2026-01-01")  # July fiscal year: Q3 starts in January
+        self.assertAlmostEqual(cur["value"], (10 * 31 + 20 * 28) / 59)  # not the 15.0 simple mean
+        self.assertEqual(cur["time_weighting"], "days_in_month")
 
 
 class LegacyBridgeTests(unittest.TestCase):

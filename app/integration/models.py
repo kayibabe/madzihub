@@ -55,6 +55,8 @@ class Metric(Base):
     aggregation = Column(String(10), nullable=False, default="sum")
     direction   = Column(String(10), nullable=False, default="higher")
     # Set for derived measures (see formulas.py): computed from components, never loaded.
+    # For a formula, aggregation states its period meaning: "sum" = accumulates over the
+    # period (judged only on complete periods); other values = a ratio, comparable any time.
     formula     = Column(Text, nullable=True)
     description = Column(Text, nullable=True)
     is_active   = Column(Boolean, nullable=False, default=True)
