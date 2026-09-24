@@ -10,13 +10,13 @@ from __future__ import annotations
 
 import hashlib
 import secrets
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
 from app.integration import connectors
 from app.integration.mapping import Resolver, map_rows
-from app.integration.models import DataSource, KeyMapping, Metric, MetricValue, OrgUnit, SyncRun
+from app.integration.models import DataSource, KeyMapping, Metric, MetricTarget, MetricValue, OrgUnit, SyncRun
 
 STALE_RUN_AFTER = timedelta(hours=2)
 
@@ -30,7 +30,8 @@ def _resolver(db: Session, source: DataSource) -> tuple[Resolver, dict[str, str]
     metrics = db.query(Metric).filter(Metric.is_active.is_(True)).all()
     key_map = {(k.kind, k.external_key): k.internal_code
                for k in db.query(KeyMapping).filter(KeyMapping.source_id == source.id)}
-    return Resolver(org_codes, {m.code for m in metrics}, key_map), {m.code: m.aggregation for m in metrics}
+    loadable = [m for m in metrics if not m.formula]  # formula measures are computed, never loaded
+    return Resolver(org_codes, {m.code for m in loadable}, key_map), {m.code: m.aggregation for m in loadable}
 
 
 def _load(db: Session, source: DataSource, run: SyncRun, values) -> int:
@@ -149,6 +150,43 @@ LEGACY_METRICS = [
 ]
 
 
+# Ratios computed from the components above, at every level and period.
+LEGACY_FORMULAS = [
+    # code,                   name,                     unit, category,     direction, formula
+    ("nrw_pct",               "Non-revenue water",      "%",  "Operations", "lower",  "nrw / vol_produced * 100"),
+    ("collection_efficiency", "Collection efficiency",  "%",  "Finance",    "higher", "cash_collected / amt_billed * 100"),
+]
+
+# Strategic-plan actual_key → catalogue code, where the names differ.
+PLAN_KEY_ALIASES = {"production": "vol_produced", "water_sold": "revenue_water", "customer_base": "active_customers"}
+
+
+def _seed_plan_targets(db: Session, tenant) -> int:
+    """Annual strategic-plan targets for plan KPIs the catalogue can measure."""
+    from app.utils import FY_START_MONTH, fy_calendar_year
+
+    codes = {c for (c,) in db.query(Metric.code)}
+    seeded = 0
+    for kpi in tenant.strategic_plan.kpis:
+        code = PLAN_KEY_ALIASES.get(kpi.actual_key, kpi.actual_key) if kpi.actual_key else None
+        if code not in codes:
+            continue
+        for fy_end, value in kpi.targets.items():
+            if value is None:
+                continue
+            start = date(fy_calendar_year(int(fy_end), FY_START_MONTH), FY_START_MONTH, 1)
+            key = dict(metric_code=code, org_unit_code="org", period_type="year", period_start=start,
+                       basis="strategic_plan")
+            row = db.query(MetricTarget).filter_by(**key).first()
+            if row is None:
+                row = MetricTarget(**key)
+                db.add(row)
+                seeded += 1
+            row.value = float(value)
+            row.note = f"{tenant.strategic_plan.title}: {kpi.name}"[:300]
+    return seeded
+
+
 def bootstrap_legacy(db: Session) -> dict:
     """Create the org tree, core metrics and a legacy source from the existing records table.
 
@@ -157,7 +195,7 @@ def bootstrap_legacy(db: Session) -> dict:
     from app.core.tenant import tenant
     from app.database import Record
 
-    created = {"org_units": 0, "metrics": 0, "source": False}
+    created = {"org_units": 0, "metrics": 0, "source": False, "targets": 0}
     root_code = "org"
     root = db.query(OrgUnit).filter_by(code=root_code).first()
     if root is None:
@@ -189,6 +227,13 @@ def bootstrap_legacy(db: Session) -> dict:
             db.add(Metric(code=code, name=name, unit=tenant.currency.code if unit == "currency" else unit,
                           category=category, aggregation=agg, direction=direction))
             created["metrics"] += 1
+    for code, name, unit, category, direction, formula in LEGACY_FORMULAS:
+        if code not in known:
+            db.add(Metric(code=code, name=name, unit=unit, category=category, aggregation="avg",
+                          direction=direction, formula=formula))
+            created["metrics"] += 1
+    db.flush()
+    created["targets"] = _seed_plan_targets(db, tenant)
 
     if db.query(DataSource).filter_by(code="legacy-returns").first() is None:
         db.add(DataSource(

@@ -51,9 +51,31 @@ Rules the pipeline enforces:
 - **Blank is not zero.** Empty cells are skipped, so a missing return shows as missing, not as a collapse to zero.
 - **Unknown keys are rejected, not guessed.** An unmapped cost centre or tag is listed with its reason, never loaded to the wrong place. Use `ignore_unmapped_metrics` for feeds that send far more tags than you track.
 - **Finer data is aggregated to the stored grain** using each measure's aggregation (hourly SCADA → daily or monthly).
-- **Roll-up only for additive measures.** A unit without its own value gets the sum of its leaf units for `sum` measures. Averages and ratios are never added up. They return as missing until formula measures arrive (see §6).
+- **Roll-up only for additive measures.** A unit without its own value gets the sum of its leaf units for `sum` measures. Averages are never added up.
+- **Ratios are formula measures**, computed from their rolled-up components at every level (see §2.1). They are never averaged.
+- **Quarters and fiscal years are built from monthly values** using each measure's aggregation. They carry `months_reporting` / `months_expected`, so a year-to-date total is never judged against a full-year target (`gap_to_target.on_track` is `null` with a note).
 - **Idempotent loads.** Re-running a source or re-dropping a file updates rows in place.
 - **The watermark only advances after a successful load.** A failed run retries from the same point.
+
+### 2.1 Formula measures
+
+A measure with a `formula` is computed, never loaded:
+
+```json
+POST /api/integration/metrics
+[{"code": "nrw_pct", "name": "Non-revenue water", "unit": "%", "direction": "lower",
+  "formula": "nrw / vol_produced * 100"},
+ {"code": "collection_efficiency", "name": "Collection efficiency", "unit": "%",
+  "formula": "cash_collected / amt_billed * 100"}]
+```
+
+- Evaluated per unit and period **after** components are rolled up, so organisation NRW % = total NRW ÷ total production (volume-weighted). With North at 10% of 100 m³ and South at 30% of 300 m³, the organisation is 25%, not the 20% an average would give.
+- Allowed: numbers, catalogue codes, `+ - * /`, parentheses, `min()`, `max()`, `abs()`. Expressions are parsed with Python's `ast` against a whitelist and never passed to `eval`.
+- Validated on save: unknown measures and circular references are rejected. Formulas may use other formulas.
+- A missing component or a division by zero gives **no value**, never zero.
+- Each computed value carries its `formula` and `inputs`, so anyone can check the arithmetic.
+
+`bootstrap-legacy` creates `nrw_pct` and `collection_efficiency`. It also seeds annual **strategic-plan targets** for plan KPIs the catalogue can measure: NRW %, production, water sold, new connections and customer base.
 
 ---
 
@@ -157,7 +179,7 @@ Pulls run outside the web server on purpose. Several web workers can never start
 
 | Limit today | Next step |
 |---|---|
-| Ratios (NRW %, collection efficiency, cost per m³) cannot roll up | **Formula measures** (`nrw_pct = nrw / vol_produced × 100`), evaluated per unit and period from their components with a safe expression parser |
+| Measures with `avg`/`last` aggregation do not roll up across units | Weighted averages (e.g. pressure weighted by connections) as formulas over sum measures |
 | Existing dashboards still read the wide `records` table | Move panels to `metric_values` one at a time, with the parity snapshots guarding each move |
 | No approval step: loaded values publish immediately | Submit → review → publish states, period locks, correction history (ROADMAP Stage 2) |
 | No admin UI for sources and mappings; API only | Sources screen: create, test, run, view rejects, edit key mappings |

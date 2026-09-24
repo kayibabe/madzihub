@@ -37,7 +37,7 @@ All development happens in this repository; `kayibabe/opsapp` is frozen. The mar
 - [x] Source priority for the published value; reconciliation between sources; freshness/overdue per source
 - [x] Position API: where we were / are / are going, gap to target, trend; organisation-level roll-up of additive measures
 - [x] CLI for scheduled pulls (`python -m app.integration.cli sync --due`)
-- [ ] Formula measures (ratios computed from components at every level)
+- [x] Formula measures (ratios computed from components at every level); fiscal quarter/year roll-up with year-to-date flag; plan targets seeded
 - [ ] Admin UI: sources, mappings, rejects, freshness; position/scorecard pages on `metric_values`
 - [ ] Validate recipes against client sandboxes: SAP OData, Maximo, billing view, historian/PI, HR export
 - [ ] Unit registry and conversion at mapping time
@@ -47,7 +47,7 @@ All development happens in this repository; `kayibabe/opsapp` is frozen. The mar
 - [ ] Alembic migrations (baseline = current schema)
 - [ ] Hierarchy table: N levels, parent/child, codes ✅ (`org_units`); aliases via key mappings ✅; effective dates ⏳
 - [ ] Versioned targets: KPI × fiscal year × org scope, with benchmark provenance (fixes per-year SP NRW targets)
-- [ ] Metric catalogue: code, unit, aggregation, direction ✅ (`metrics`); formula, valid range ⏳
+- [ ] Metric catalogue: code, unit, aggregation, direction, formula ✅ (`metrics`); valid range ⏳
 - [ ] Import mapping profiles: upload sample → map columns → validate → save a versioned profile (per-source mappings ✅; versioning and UI ⏳) (targets metric codes, not DB columns; single-row and grouped headers; unit conversion)
 - [ ] SRWB zone-workbook builder (`rawdata_builder.py`) becomes one import adapter
 - [ ] Per-tenant validation rules replace calculation-time data quirks (Mangochi days-to-connect, supply-hours units, stub rows)
