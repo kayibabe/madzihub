@@ -54,7 +54,10 @@ function forcePasswordChange(token,user,currentPw,remember){
 }
 async function handleLogin(e){
   e.preventDefault();const username=document.getElementById('username').value.trim();const password=document.getElementById('password').value;const remember=document.getElementById('remember-me').checked;
-  if(!username||!password)return showError('Please enter your username and password.');setLoading(true);clearError();
+  // Name only what is missing, and point at that field.
+  const missing=[!username&&'username',!password&&'password'].filter(Boolean);
+  if(missing.length){showError(missing.length===2?'Please enter your username and password.':`Please enter your ${missing[0]}.`,missing);document.getElementById(missing[0]).focus();return;}
+  setLoading(true);clearError();
   try{let token=await tryLogin(username,password,'json');if(token===null)token=await tryLogin(username,password,'form');if(!token)throw new Error('Invalid username or password.');const d=decodeJwt(token);const user={username:d?.sub||username,role:d?.role||'user',full_name:d?.full_name||null};if(d?.pwc){setLoading(false);return forcePasswordChange(token,user,password,remember);}saveSession(token,user,remember);showApp(user,{forceRoleHome:true});}
   catch(err){showError(err.message||'Unable to sign in.')}finally{setLoading(false)}
 }
@@ -63,7 +66,7 @@ if(res.status===422&&isJ)return null;if(res.status===401||res.status===403)throw
 function showApp(user,opts={}){document.getElementById('login-view').style.display='none';document.getElementById('app-view').style.display='block';initDashboard(opts);setTimeout(updatePageMeta,0);}
 function logout(){clearSession();location.reload()}
 function setLoading(on){document.getElementById('login-btn').disabled=on;document.getElementById('spinner').style.display=on?'block':'none';document.getElementById('btn-label').textContent=on?'Signing in…':'Sign in';const arr=document.getElementById('btn-arrow');if(arr)arr.style.display=on?'none':'';}
-function showError(msg){document.getElementById('err-text').textContent=msg;const b=document.getElementById('err-box');b.classList.remove('shake');void b.offsetWidth;b.classList.add('show','shake');['username','password'].forEach(id=>document.getElementById(id).classList.add('err'));}
+function showError(msg,fields=['username','password']){document.getElementById('err-text').textContent=msg;const b=document.getElementById('err-box');b.classList.remove('shake');void b.offsetWidth;b.classList.add('show','shake');['username','password'].forEach(id=>document.getElementById(id).classList.toggle('err',fields.includes(id)));}
 function clearError(){document.getElementById('err-box').classList.remove('show');['username','password'].forEach(id=>document.getElementById(id).classList.remove('err'));}
 ['username','password'].forEach(id=>document.getElementById(id).addEventListener('input',clearError));
 function togglePwd(){const inp=document.getElementById('password');const vis=inp.type==='text';inp.type=vis?'password':'text';document.getElementById('eye-show').style.display=vis?'':'none';document.getElementById('eye-hide').style.display=vis?'none':'';}
