@@ -492,6 +492,7 @@ def get_db():
         db.close()
 
 def create_tables():
+    import app.integration.models  # noqa: F401  (registers integration tables on Base)
     Base.metadata.create_all(bind=engine)
     _ensure_record_columns()
     _ensure_table_columns(UploadLog)

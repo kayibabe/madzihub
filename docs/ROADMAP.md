@@ -30,12 +30,25 @@ All development happens in this repository; `kayibabe/opsapp` is frozen. The mar
 - [ ] Move SRWB budget zone-share seed (`scripts/seed_fiscal_years.py`) into `tenants/srwb`
 - [ ] Rewrite `docs/DEPLOYMENT_RUNBOOK.md` for MadziHub (tenant selection, production env)
 
+## Integration hub ([INTEGRATION_HUB.md](INTEGRATION_HUB.md))
+- [x] Org-unit tree of any depth; metric catalogue; `metric_values` with source lineage; targets by period and basis
+- [x] Connectors: SQL, REST/OData (paging, incremental), file drop/upload (CSV/Excel), push with per-source token, legacy records bridge
+- [x] Key mappings (cost centres, sites, tags → our codes); rejects with reasons; idempotent loads; watermarks
+- [x] Source priority for the published value; reconciliation between sources; freshness/overdue per source
+- [x] Position API: where we were / are / are going, gap to target, trend; organisation-level roll-up of additive measures
+- [x] CLI for scheduled pulls (`python -m app.integration.cli sync --due`)
+- [ ] Formula measures (ratios computed from components at every level)
+- [ ] Admin UI: sources, mappings, rejects, freshness; position/scorecard pages on `metric_values`
+- [ ] Validate recipes against client sandboxes: SAP OData, Maximo, billing view, historian/PI, HR export
+- [ ] Unit registry and conversion at mapping time
+- [ ] Move existing panels from `records` to `metric_values` (parity-guarded)
+
 ## Stage 2: Generalise data entry
 - [ ] Alembic migrations (baseline = current schema)
-- [ ] Hierarchy table: N levels, parent/child, codes, aliases, effective dates
+- [ ] Hierarchy table: N levels, parent/child, codes ✅ (`org_units`); aliases via key mappings ✅; effective dates ⏳
 - [ ] Versioned targets: KPI × fiscal year × org scope, with benchmark provenance (fixes per-year SP NRW targets)
-- [ ] Metric catalogue: code, unit, aggregation (sum/avg/latest), formula, direction, valid range
-- [ ] Import mapping profiles: upload sample → map columns → validate → save a versioned profile (targets metric codes, not DB columns; single-row and grouped headers; unit conversion)
+- [ ] Metric catalogue: code, unit, aggregation, direction ✅ (`metrics`); formula, valid range ⏳
+- [ ] Import mapping profiles: upload sample → map columns → validate → save a versioned profile (per-source mappings ✅; versioning and UI ⏳) (targets metric codes, not DB columns; single-row and grouped headers; unit conversion)
 - [ ] SRWB zone-workbook builder (`rawdata_builder.py`) becomes one import adapter
 - [ ] Per-tenant validation rules replace calculation-time data quirks (Mangochi days-to-connect, supply-hours units, stub rows)
 - [ ] Approval workflow: preparer → reviewer → publish; period locks; correction history and lineage
