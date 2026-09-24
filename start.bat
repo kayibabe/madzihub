@@ -39,17 +39,19 @@ if defined BUSY_PID (
         exit /b 0
     )
     call "%APP_DIR%\stop.bat" --silent --port %PORT%
-    timeout /t 2 /nobreak >nul
+    powershell -NoProfile -Command "Start-Sleep -Seconds 2"
 )
 
 rem -- Python: this folder's own virtual environment --------------------------
 echo  [1/5] Locating Python...
+rem A venv copied from another PC or user account still has python.exe but it
+rem points at a Python that isn't installed here, so check that it really runs.
 set "VENV_DIR="
-if exist "venv\Scripts\python.exe" set "VENV_DIR=%APP_DIR%\venv"
-if not defined VENV_DIR if exist ".venv\Scripts\python.exe" set "VENV_DIR=%APP_DIR%\.venv"
+call :try_venv "%APP_DIR%\venv"
+if not defined VENV_DIR call :try_venv "%APP_DIR%\.venv"
 
 if not defined VENV_DIR (
-    echo         No virtual environment here yet - creating venv\ ...
+    echo         No working virtual environment here - building venv\ ...
     set "BASE_PY="
     where py >nul 2>&1 && set "BASE_PY=py -3"
     if not defined BASE_PY where python >nul 2>&1 && set "BASE_PY=python"
@@ -58,7 +60,7 @@ if not defined VENV_DIR (
         pause
         exit /b 1
     )
-    !BASE_PY! -m venv venv
+    !BASE_PY! -m venv --clear venv
     if errorlevel 1 (
         echo  [ERROR] Could not create the virtual environment.
         pause
@@ -108,15 +110,10 @@ if errorlevel 1 (
 > "data\madzihub.port" echo %PORT%
 
 echo         Waiting for the server to be ready...
-set READY=0
-for /l %%i in (1,1,30) do (
-    if !READY!==0 (
-        timeout /t 1 /nobreak >nul
-        powershell -NoProfile -Command "try { Invoke-WebRequest -Uri 'http://localhost:%PORT%/health' -UseBasicParsing -TimeoutSec 1 -ErrorAction Stop | Out-Null; exit 0 } catch { exit 1 }" >nul 2>&1
-        if !errorlevel!==0 set READY=1
-    )
-)
-if !READY!==0 (
+rem 127.0.0.1, not localhost: localhost tries IPv6 first, and the server only
+rem listens on IPv4, so every check would stall ~2s and time out.
+powershell -NoProfile -Command "for ($i = 0; $i -lt 30; $i++) { Start-Sleep -Seconds 1; try { Invoke-WebRequest -Uri 'http://127.0.0.1:%PORT%/health' -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop | Out-Null; exit 0 } catch {} }; exit 1" >nul 2>&1
+if errorlevel 1 (
     echo  [WARN] The server did not respond within 30 seconds.
     echo         Check logs\madzihub-error.log for startup errors.
     pause
@@ -152,5 +149,24 @@ echo    Log:     logs\madzihub.log
 echo    Stop:    stop.bat
 echo  =====================================================
 echo.
-pause
+rem The server keeps running in the background, so this window can go away.
+rem Hold it open only when there is a first-run password to copy.
+if defined FIRST_PW (
+    pause
+) else (
+    echo  This window closes in 10 seconds...
+    timeout /t 10 >nul
+)
 endlocal
+exit /b 0
+
+rem ---------------------------------------------------------------------------
+:try_venv
+if not exist "%~1\Scripts\python.exe" exit /b 0
+"%~1\Scripts\python.exe" -c "import sys" >nul 2>&1
+if errorlevel 1 (
+    echo         Skipping %~1 - it was made on another PC and its Python is missing.
+    exit /b 0
+)
+set "VENV_DIR=%~1"
+exit /b 0

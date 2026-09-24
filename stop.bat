@@ -69,14 +69,15 @@ if %ALL%==1 (
 if %STOPPED%==0 (
     if %SILENT%==0 echo  [INFO] No running MadziHub server found for this folder.
 ) else (
-    timeout /t 1 /nobreak >nul
+    powershell -NoProfile -Command "Start-Sleep -Seconds 1"
 )
 
 if %SILENT%==0 (
     echo.
     echo  Done. Start again with:  start.bat
     echo.
-    pause
+    echo  This window closes in 5 seconds...
+    timeout /t 5 >nul
 )
 endlocal
 exit /b 0
