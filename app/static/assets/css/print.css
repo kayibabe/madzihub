@@ -34,14 +34,14 @@ button,input,select,textarea{
 
 #login-view,
 #app-view,
-#srwb-app,
+#madzi-app,
 #db-right-col{
   min-height:100vh;
 }
 @supports (min-height:100dvh){
   #login-view,
   #app-view,
-  #srwb-app,
+  #madzi-app,
   #db-right-col{
     min-height:100dvh;
   }
@@ -159,7 +159,7 @@ body.mobile-nav-open{
 
 /* ───────────────────────── TABLET / SMALL LAPTOP ───────────────────────── */
 @media (max-width:1024px){
-  #srwb-app{
+  #madzi-app{
     width:100%;
     min-width:0;
   }
@@ -356,7 +356,7 @@ body.mobile-nav-open{
 /* ───────────────────────── MOBILE / SMALL TABLET ───────────────────────── */
 @media (max-width:768px){
   body,
-  #srwb-app,
+  #madzi-app,
   #app-view,
   #login-view,
   #db-main,

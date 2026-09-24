@@ -168,7 +168,7 @@ Design rules:
 
 ## 5. Implementation sequence
 
-Every phase must keep the SRWB parity snapshots green, or document the diff.
+Every phase must keep the parity snapshots green, or document the diff.
 
 | Phase | Deliverables | Exit test |
 |---|---|---|

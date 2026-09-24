@@ -10,7 +10,7 @@
 (function(){
   'use strict';
 
-  var STORE_KEY = 'srwb.activeDepartment';
+  var STORE_KEY = 'madzi.activeDepartment';
 
   // Small inline SVG helpers (stroke-based, inherit currentColor).
   function ico(paths){

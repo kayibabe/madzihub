@@ -17,29 +17,29 @@
    "avg_tariff": 0.0,
    "bnm_pct": 20.0,
    "nrw_cost": 0.0,
-   "nrw_pct": 30.7,
+   "nrw_pct": 34.4,
    "nrw_per_conn_yr": 0.0,
-   "nrw_vol": 43204.0,
-   "vol_produced": 140955.0
+   "nrw_vol": 24637.0,
+   "vol_produced": 71610.0
   },
   "portfolio": {
-   "active_customers": 16021,
+   "active_customers": 8340,
    "months_with_data": 12,
-   "queries_received": 247382,
-   "schemes_covered": 13,
-   "supply_hours_avg": 23.4,
-   "total_breakdowns": 454543,
-   "zones_covered": 5
+   "queries_received": 125679,
+   "schemes_covered": 8,
+   "supply_hours_avg": 23.3,
+   "total_breakdowns": 230923,
+   "zones_covered": 3
   },
-  "record_count": 156,
+  "record_count": 96,
   "service": {
-   "complaints_1000": 15441,
+   "complaints_1000": 15070,
    "complaints_flag": "HIGH",
    "energy_intensity": 2.37,
    "meter_read_rate": -27.8,
-   "stuck_meters": 21996,
+   "stuck_meters": 11450,
    "stuck_pct": 127.8,
-   "supply_hours_avg": 23.4
+   "supply_hours_avg": 23.3
   },
   "trends": {
    "billed": [
@@ -71,9 +71,6 @@
     0
    ],
    "labels": [
-    "April",
-    "May",
-    "June",
     "July",
     "August",
     "September",
@@ -82,96 +79,63 @@
     "December",
     "January",
     "February",
-    "March"
+    "March",
+    "April",
+    "May",
+    "June"
    ],
    "nrw_pct": [
-    30.65,
-    30.65,
-    30.65,
-    30.65,
-    30.65,
-    30.65,
-    30.65,
-    30.65,
-    30.65,
-    30.65,
-    30.65,
-    30.65
+    34.4,
+    34.4,
+    34.4,
+    34.4,
+    34.4,
+    34.4,
+    34.4,
+    34.4,
+    34.4,
+    34.4,
+    34.4,
+    34.4
    ],
    "production": [
-    14325.7,
-    10232.6,
-    10488.5,
-    10744.3,
-    11000.1,
-    11255.9,
-    11511.7,
-    11767.5,
-    12023.4,
-    12279.2,
-    12535.0,
-    12790.8
+    5276.5,
+    5402.1,
+    5527.8,
+    5653.4,
+    5779.0,
+    5904.7,
+    6030.3,
+    6155.9,
+    6281.5,
+    6407.2,
+    6532.8,
+    6658.4
    ],
    "zone_nrw": [
     {
-     "color": "#0077b6",
-     "nrw_pct": 38.0,
-     "zone": "Liwonde"
-    },
-    {
-     "color": "#0d9488",
+     "color": "#0369a1",
      "nrw_pct": 35.0,
-     "zone": "Mangochi"
+     "zone": "Central"
     },
     {
-     "color": "#16a34a",
+     "color": "#0f766e",
+     "nrw_pct": 38.0,
+     "zone": "North"
+    },
+    {
+     "color": "#b45309",
      "nrw_pct": 32.0,
-     "zone": "Mulanje"
-    },
-    {
-     "color": "#d97706",
-     "nrw_pct": 29.0,
-     "zone": "Ngabu"
-    },
-    {
-     "color": "#7c3aed",
-     "nrw_pct": 26.0,
-     "zone": "Zomba"
+     "zone": "South"
     }
    ]
   },
   "zones": [
    {
-    "active_customers": 2232,
-    "breakdowns_total": 63327,
+    "active_customers": 1952,
+    "breakdowns_total": 54045,
     "collection_rate": 0,
-    "color": "#0077b6",
-    "dso": 0,
-    "nrw_pct": 38.0,
-    "nrw_trend": [
-     38.0,
-     38.0,
-     38.0,
-     38.0,
-     38.0,
-     38.0,
-     38.0,
-     38.0,
-     38.0,
-     38.0,
-     38.0,
-     38.0
-    ],
-    "op_ratio": 0,
-    "rev_per_conn": 0.0,
-    "schemes": 3,
-    "zone": "Liwonde"
-   },
-   {
-    "active_customers": 1841,
-    "breakdowns_total": 52245,
-    "collection_rate": 0,
-    "color": "#0d9488",
+    "color": "#0369a1",
     "dso": 0,
     "nrw_pct": 35.0,
     "nrw_trend": [
@@ -191,13 +155,39 @@
     "op_ratio": 0,
     "rev_per_conn": 0.0,
     "schemes": 2,
-    "zone": "Mangochi"
+    "zone": "Central"
    },
    {
-    "active_customers": 3794,
-    "breakdowns_total": 107655,
+    "active_customers": 2366,
+    "breakdowns_total": 65510,
     "collection_rate": 0,
-    "color": "#16a34a",
+    "color": "#0f766e",
+    "dso": 0,
+    "nrw_pct": 38.0,
+    "nrw_trend": [
+     38.0,
+     38.0,
+     38.0,
+     38.0,
+     38.0,
+     38.0,
+     38.0,
+     38.0,
+     38.0,
+     38.0,
+     38.0,
+     38.0
+    ],
+    "op_ratio": 0,
+    "rev_per_conn": 0.0,
+    "schemes": 3,
+    "zone": "North"
+   },
+   {
+    "active_customers": 4022,
+    "breakdowns_total": 111367,
+    "collection_rate": 0,
+    "color": "#b45309",
     "dso": 0,
     "nrw_pct": 32.0,
     "nrw_trend": [
@@ -217,59 +207,7 @@
     "op_ratio": 0,
     "rev_per_conn": 0.0,
     "schemes": 3,
-    "zone": "Mulanje"
-   },
-   {
-    "active_customers": 2796,
-    "breakdowns_total": 79334,
-    "collection_rate": 0,
-    "color": "#d97706",
-    "dso": 0,
-    "nrw_pct": 29.0,
-    "nrw_trend": [
-     29.0,
-     29.0,
-     29.0,
-     29.0,
-     29.0,
-     29.0,
-     29.0,
-     29.0,
-     29.0,
-     29.0,
-     29.0,
-     29.0
-    ],
-    "op_ratio": 0,
-    "rev_per_conn": 0.0,
-    "schemes": 2,
-    "zone": "Ngabu"
-   },
-   {
-    "active_customers": 5357,
-    "breakdowns_total": 151984,
-    "collection_rate": 0,
-    "color": "#7c3aed",
-    "dso": 0,
-    "nrw_pct": 26.0,
-    "nrw_trend": [
-     26.0,
-     26.0,
-     26.0,
-     26.0,
-     26.0,
-     26.0,
-     26.0,
-     26.0,
-     26.0,
-     26.0,
-     26.0,
-     26.0
-    ],
-    "op_ratio": 0,
-    "rev_per_conn": 0.0,
-    "schemes": 3,
-    "zone": "Zomba"
+    "zone": "South"
    }
   ]
  },

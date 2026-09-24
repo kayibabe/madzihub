@@ -33,7 +33,7 @@ class TestReleaseBundleValidator(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             zip_path = Path(tmpdir) / 'bad.zip'
             with zipfile.ZipFile(zip_path, 'w') as zf:
-                zf.writestr('madzihub/data/srwb.secret', 'secret')
+                zf.writestr('madzihub/data/madzihub.secret', 'secret')
                 zf.writestr('madzihub/app/main.py', 'print(1)')
                 zf.writestr('madzihub/requirements.txt', 'fastapi')
                 zf.writestr('madzihub/.env.example', 'KEY=VALUE')

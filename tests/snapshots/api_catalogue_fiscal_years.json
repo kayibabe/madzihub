@@ -2,36 +2,36 @@
  "json": [
   {
    "budget_line_count": 0,
-   "end_date": "2026-03-31",
+   "end_date": "2026-06-30",
    "has_budget": false,
    "has_data": true,
    "label": "FY2025/26",
    "notes": "Auto-detected from data; not in FY registry",
-   "start_date": "2025-04-01",
+   "start_date": "2025-07-01",
    "status": "historical",
    "tariff_per_m3": null,
    "year": 2026
   },
   {
    "budget_line_count": 0,
-   "end_date": "2025-03-31",
+   "end_date": "2025-06-30",
    "has_budget": false,
    "has_data": true,
    "label": "FY2024/25",
    "notes": "Auto-detected from data; not in FY registry",
-   "start_date": "2024-04-01",
+   "start_date": "2024-07-01",
    "status": "historical",
    "tariff_per_m3": null,
    "year": 2025
   },
   {
    "budget_line_count": 0,
-   "end_date": "2024-03-31",
+   "end_date": "2024-06-30",
    "has_budget": false,
    "has_data": true,
    "label": "FY2023/24",
    "notes": "Auto-detected from data; not in FY registry",
-   "start_date": "2023-04-01",
+   "start_date": "2023-07-01",
    "status": "historical",
    "tariff_per_m3": null,
    "year": 2024

@@ -1,25 +1,25 @@
 {
  "json": {
-  "active_customers": 16021,
+  "active_customers": 8340,
   "amt_billed": 0,
   "cash_collected": 0,
   "chem_cost": 0,
   "collection_rate": 0,
   "meter_rental": 0,
-  "new_connections": 264112,
-  "nrw_m3": 43203.9,
-  "nrw_pct": 30.65,
+  "new_connections": 134178,
+  "nrw_m3": 24636.7,
+  "nrw_pct": 34.4,
   "op_cost": 0,
-  "pop_supplied": 19606,
+  "pop_supplied": 10206,
   "power_cost": 0,
-  "revenue_water": 97750.8,
+  "revenue_water": 46973.0,
   "service_charge": 0,
-  "stuck_meters": 21996,
-  "supply_hours_avg": 1134.0,
+  "stuck_meters": 11450,
+  "supply_hours_avg": 936.2,
   "total_debtors": 0,
-  "total_records": 156,
+  "total_records": 96,
   "total_sales": 0,
-  "vol_produced": 140954.6
+  "vol_produced": 71609.7
  },
  "status": 200
 }

@@ -1,8 +1,8 @@
 """API parity snapshots.
 
-Seeds a deterministic synthetic dataset, calls a fixed set of read endpoints
-and compares the JSON to tests/snapshots/. The snapshots were recorded on the
-unmodified opsapp import, so any diff means a refactor changed behaviour.
+Seeds a deterministic synthetic dataset into the demo tenant, calls a fixed
+set of read endpoints and compares the JSON to tests/snapshots/. Any diff means
+a change altered API behaviour; review it, then re-record if it is intended.
 
 Re-record deliberately with:  MADZI_RECORD_SNAPSHOTS=1 python -m unittest tests.test_parity_snapshots
 """
@@ -81,14 +81,11 @@ def _slug(path: str) -> str:
     return re.sub(r"[^A-Za-z0-9]+", "_", path.strip("/")).strip("_") + ".json"
 
 
-def bootstrap(tmpdir: str, tenant: str | None = None):
-    os.environ["MADZI_ENV"] = os.environ["SRWB_ENV"] = "development"
+def bootstrap(tmpdir: str, tenant: str = "demo"):
+    os.environ["MADZI_ENV"] = "development"
     os.environ["DATABASE_URL"] = f"sqlite:///{Path(tmpdir) / 'parity.db'}"
-    os.environ["MADZI_SECRET_KEY"] = os.environ["SRWB_SECRET_KEY"] = "test-secret-key"
-    if tenant:
-        os.environ["MADZI_TENANT"] = tenant
-    else:
-        os.environ.pop("MADZI_TENANT", None)
+    os.environ["MADZI_SECRET_KEY"] = "test-secret-key"
+    os.environ["MADZI_TENANT"] = tenant
     main, database, auth, _ = fresh_app()
     return main, database, auth
 

@@ -1,7 +1,7 @@
 # Deployment Runbook
 
 ## Purpose
-This document defines the minimum safe deployment process for the SRWB Operations Dashboard.
+This document defines the minimum safe deployment process for MadziHub.
 
 ## Pre-deployment checklist
 - Confirm all required environment variables are present.
@@ -21,7 +21,7 @@ This document defines the minimum safe deployment process for the SRWB Operation
 Expected values include:
 - `SECRET_KEY`
 - `DATABASE_URL`
-- `SRWB_ALLOWED_ORIGINS`
+- `MADZI_ALLOWED_ORIGINS`
 - `UPLOAD_LIMIT_MB`
 - optional AI provider keys only if AI features are enabled
 
@@ -47,7 +47,7 @@ Expected values include:
 ## Backup and restore
 ### SQLite mode
 Back up:
-- `data/srwb.db`
+- `data/madzihub.db`
 - deployment package version
 - current environment configuration
 

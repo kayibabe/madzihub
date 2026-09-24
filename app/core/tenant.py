@@ -9,8 +9,8 @@ targets, thresholds, strategic-plan KPIs, enabled modules and AI policy — is
 read from ``tenants/<name>/tenant.yaml`` instead of being hardcoded.
 
 Select the tenant with ``MADZI_TENANT`` (a folder name under ``tenants/`` or a
-path to a YAML file). The default is ``srwb`` so the reference installation
-keeps working unchanged during the transition.
+path to a YAML file). The default is ``demo``, a fictional utility; copy
+``tenants/demo/tenant.yaml`` to start a new installation.
 """
 from __future__ import annotations
 

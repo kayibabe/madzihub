@@ -1,4 +1,4 @@
-# SRWB Dashboard — New-Data Schema & Migration Plan
+# MadziHub — New-Data Schema & Migration Plan
 
 Scaffolding plan to light up the four placeholder areas that currently lack
 underlying data:
@@ -244,7 +244,7 @@ currently loaded**, so every trend / YoY / SPC feature renders empty.
 1. Confirm the `fiscal_years` row exists (status `historical`). Seeded already; verify via `GET /api/catalogue/fiscal-years`.
 2. Import that year's `RawData.xlsx` through the existing pipeline:
    - UI: **Administration → Upload Data** (admin), or
-   - CLI: `python scripts/import_data.py --excel uploads/RawData_FY2024-25.xlsx --sheet DataEntry`
+   - UI: **Administration → Upload** (validate, then confirm the import)
    - Rows land in `records` with the correct `year`/`month_no`.
 3. (Optional, per FY) compute comparators via existing admin endpoints:
    - `POST /api/fiscal-years/{year}/budget`, `/zone-shares`, `/spc`.

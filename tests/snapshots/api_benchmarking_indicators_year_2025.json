@@ -394,7 +394,7 @@
    "code": "WUP042",
    "derivable": true,
    "field": "wup042",
-   "fmt": "mwk",
+   "fmt": "money",
    "label": "WUP042 · Total operating costs",
    "note": null
   },
@@ -403,7 +403,7 @@
    "code": "WUP043",
    "derivable": true,
    "field": "wup043",
-   "fmt": "mwk",
+   "fmt": "money",
    "label": "WUP043 · Total staff cost",
    "note": null
   },
@@ -412,7 +412,7 @@
    "code": "WUP044",
    "derivable": true,
    "field": "wup044",
-   "fmt": "mwk",
+   "fmt": "money",
    "label": "WUP044 · Total energy costs",
    "note": null
   },
@@ -421,7 +421,7 @@
    "code": "WUP045",
    "derivable": true,
    "field": "wup045",
-   "fmt": "mwk",
+   "fmt": "money",
    "label": "WUP045 · Total chemical costs",
    "note": null
   },
@@ -430,7 +430,7 @@
    "code": "WUP058",
    "derivable": true,
    "field": "wup058",
-   "fmt": "mwk",
+   "fmt": "money",
    "label": "WUP058 · Total maintenance of water works",
    "note": null
   },
@@ -448,7 +448,7 @@
    "code": "WUP073",
    "derivable": true,
    "field": "wup073",
-   "fmt": "mwk",
+   "fmt": "money",
    "label": "WUP073 · Total costs",
    "note": "Proxied by total operating cost"
   },
@@ -457,7 +457,7 @@
    "code": "WUP085",
    "derivable": true,
    "field": "wup085",
-   "fmt": "mwk",
+   "fmt": "money",
    "label": "WUP085 · Total W&WW operational expenses",
    "note": "Water-only; wastewater not yet tracked"
   },
@@ -475,7 +475,7 @@
    "code": "WUP096",
    "derivable": true,
    "field": "wup096",
-   "fmt": "mwk",
+   "fmt": "money",
    "label": "WUP096 · Total annual payroll",
    "note": null
   },
@@ -618,7 +618,7 @@
    "code": "WUP054",
    "derivable": true,
    "field": "wup054",
-   "fmt": "mwk",
+   "fmt": "money",
    "label": "WUP054 · Total Government debtors",
    "note": null
   },
@@ -636,7 +636,7 @@
    "code": "WUP056",
    "derivable": true,
    "field": "wup056",
-   "fmt": "mwk",
+   "fmt": "money",
    "label": "WUP056 · Total Private debtors",
    "note": null
   },
@@ -654,7 +654,7 @@
    "code": "WUP059",
    "derivable": true,
    "field": "wup059",
-   "fmt": "mwk",
+   "fmt": "money",
    "label": "WUP059 · Total sales (year 1)",
    "note": null
   },
@@ -690,7 +690,7 @@
    "code": "WUP063",
    "derivable": true,
    "field": "wup063",
-   "fmt": "mwk",
+   "fmt": "money",
    "label": "WUP063 · Cash collected",
    "note": null
   },
@@ -699,7 +699,7 @@
    "code": "WUP083",
    "derivable": true,
    "field": "wup083",
-   "fmt": "mwk",
+   "fmt": "money",
    "label": "WUP083 · Total W&WW cash income / collections",
    "note": "Water-only"
   },
@@ -708,7 +708,7 @@
    "code": "WUP084",
    "derivable": true,
    "field": "wup084",
-   "fmt": "mwk",
+   "fmt": "money",
    "label": "WUP084 · Total W&WW operating (billed) revenues",
    "note": "Water-only"
   },
@@ -717,7 +717,7 @@
    "code": "WUP086",
    "derivable": true,
    "field": "wup086",
-   "fmt": "mwk",
+   "fmt": "money",
    "label": "WUP086 · Cash collected (financial ratios)",
    "note": null
   },

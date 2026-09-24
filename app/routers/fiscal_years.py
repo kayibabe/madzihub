@@ -50,8 +50,7 @@ def _fy_to_dict(fy: FiscalYear) -> dict:
     }
 
 # Monetary unit keywords — used by copy-from to decide what to inflate
-# (the tenant currency, plus legacy "MWK" units stored before configuration existed)
-_CURRENCY_CODES = {_tenant.currency.code, "MWK"}
+_CURRENCY_CODES = {_tenant.currency.code}
 _MONETARY_UNITS = {u for c in _CURRENCY_CODES for u in (c, f"{c}/m3")}
 
 
@@ -179,8 +178,8 @@ def update_fiscal_year(
 def upsert_budget_lines(
     year: int,
     lines: list[dict] = Body(..., examples=[[
-        {"category": "water_sales", "value": 16_719_582_000, "unit": "MWK"},
-        {"category": "vol_produced", "value": 15_883_399, "unit": "m3"},
+        {"category": "water_sales", "value": 4_800_000, "unit": "USD"},
+        {"category": "vol_produced", "value": 4_200_000, "unit": "m3"},
     ]]),
     db: Session = Depends(get_db),
 ):
@@ -221,8 +220,8 @@ def upsert_budget_lines(
 def upsert_zone_shares(
     year: int,
     shares: list[dict] = Body(..., examples=[[
-        {"zone": "Zomba",    "rev_share": 0.5651, "vol_share": 0.5111, "conn_share": 0.3558},
-        {"zone": "Mangochi", "rev_share": 0.2115, "vol_share": 0.2077, "conn_share": 0.2881},
+        {"zone": "North",   "rev_share": 0.45, "vol_share": 0.42, "conn_share": 0.40},
+        {"zone": "Central", "rev_share": 0.35, "vol_share": 0.36, "conn_share": 0.35},
     ]]),
     db: Session = Depends(get_db),
 ):
@@ -300,7 +299,7 @@ def copy_budget_from(
     source_year: int,
     inflation_rate: float = Query(
         default=0.0,
-        description="Apply an inflation uplift to monetary MWK values (e.g. 0.08 = 8%). "
+        description="Apply an inflation uplift to monetary values (e.g. 0.08 = 8%). "
                     "Non-monetary values (m3, pct, hrs, km, count) are copied unchanged.",
     ),
     overwrite: bool = Query(
@@ -313,7 +312,7 @@ def copy_budget_from(
     Copy budget lines, zone shares, and SPC limits from `source_year` into `year`.
     Ideal for setting up a new FY budget as an inflation-adjusted starting point.
 
-    - `inflation_rate=0.08`  inflates all MWK budget lines by 8%
+    - `inflation_rate=0.08`  inflates all monetary budget lines by 8%
     - Non-monetary values (volumes, percentages, hours, km) are copied as-is
     - SPC limits and zone shares are always copied without adjustment
     - Use `overwrite=true` to replace existing target-year data

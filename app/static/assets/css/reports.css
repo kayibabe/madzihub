@@ -315,7 +315,7 @@
   /* ── 1. Reset layout so the whole page can flow freely ── */
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   html,body{height:auto!important;overflow:visible!important;background:#fff!important;margin:0!important;padding:0!important}
-  #app-view,#srwb-app,#db-right-col,#db-main{
+  #app-view,#madzi-app,#db-right-col,#db-main{
     display:block!important;height:auto!important;overflow:visible!important;
     width:100%!important;max-width:none!important;
   }
@@ -1498,17 +1498,8 @@
   background:#F8FAFC;color:#475569;
 }
 .fp-zone-grp-hdr:first-child{margin-top:0}
-.fp-zone-dot{width:8px;height:8px;border-radius:50%;flex:0 0 8px;display:inline-block}
-.fp-zone-grp-hdr[data-zone="Liwonde"]{background:#EFF6FF;border-color:#BFDBFE;color:#1D4ED8}
-.fp-zone-grp-hdr[data-zone="Liwonde"] .fp-zone-dot{background:#2563EB}
-.fp-zone-grp-hdr[data-zone="Mangochi"]{background:#F0FDFA;border-color:#99F6E4;color:#0F766E}
-.fp-zone-grp-hdr[data-zone="Mangochi"] .fp-zone-dot{background:#14B8A6}
-.fp-zone-grp-hdr[data-zone="Mulanje"]{background:#FAF5FF;border-color:#E9D5FF;color:#7C3AED}
-.fp-zone-grp-hdr[data-zone="Mulanje"] .fp-zone-dot{background:#8B5CF6}
-.fp-zone-grp-hdr[data-zone="Ngabu"]{background:#FFF7ED;border-color:#FED7AA;color:#C2410C}
-.fp-zone-grp-hdr[data-zone="Ngabu"] .fp-zone-dot{background:#F59E0B}
-.fp-zone-grp-hdr[data-zone="Zomba"]{background:#FFF1F2;border-color:#FECDD3;color:#BE123C}
-.fp-zone-grp-hdr[data-zone="Zomba"] .fp-zone-dot{background:#F43F5E}
+/* Dot colour comes from the tenant zone colours (hierarchy.zones) */
+.fp-zone-dot{width:8px;height:8px;border-radius:50%;flex:0 0 8px;display:inline-block;background:#64748b}
 
 /* Quarter buttons with distinct colour identity */
 #fp-quarters .fbtn[data-quarter="Q1"]{background:#EFF6FF;border-color:#BFDBFE;color:#1D4ED8}
@@ -2910,7 +2901,7 @@ table.rc-tbl td:not(.rc-row-label){
   body.printing-report-overlay,
   body.printing-report-overlay html{height:auto!important;overflow:visible!important}
   body.printing-report-overlay #app-view,
-  body.printing-report-overlay #srwb-app,
+  body.printing-report-overlay #madzi-app,
   body.printing-report-overlay #db-right-col,
   body.printing-report-overlay #db-main{
     height:auto!important;min-height:0!important;overflow:visible!important;
@@ -2973,17 +2964,17 @@ table.rc-tbl td:not(.rc-row-label){
   }
   body.printing-report-overlay canvas{display:block!important;max-width:100%!important}
   /* Hide every branch that is NOT on the overlay's ancestor chain, walking down
-     #app-view › #srwb-app › #db-right-col › #db-main › #report-output-overlay.
+     #app-view › #madzi-app › #db-right-col › #db-main › #report-output-overlay.
      The overlay is nested 4 levels deep, so a single `#app-view > *` selector
-     would (wrongly) hide #srwb-app and blank the whole page. Hiding off-chain
+     would (wrongly) hide #madzi-app and blank the whole page. Hiding off-chain
      siblings at each level keeps the overlay in normal flow so multi-page
      reports (e.g. board packs) paginate correctly.
      Also hide all body-level siblings of #app-view (#attr-footer, #alert-float,
      #alert-drawer, #login-view etc.) which are position:fixed or in-flow elements
      that bleed onto the print page as coloured strips if not explicitly hidden. */
   body.printing-report-overlay > *:not(#app-view){display:none!important}
-  body.printing-report-overlay #app-view > *:not(#srwb-app){display:none!important}
-  body.printing-report-overlay #srwb-app > *:not(#db-right-col){display:none!important}
+  body.printing-report-overlay #app-view > *:not(#madzi-app){display:none!important}
+  body.printing-report-overlay #madzi-app > *:not(#db-right-col){display:none!important}
   body.printing-report-overlay #db-right-col > *:not(#db-main){display:none!important}
   body.printing-report-overlay #db-main > *:not(#report-output-overlay){display:none!important}
 }
@@ -3000,15 +2991,15 @@ table.rc-tbl td:not(.rc-row-label){
   html:has(#report-output-overlay.open),
   body:has(#report-output-overlay.open){height:auto!important;overflow:visible!important;background:#fff!important}
   body:has(#report-output-overlay.open) #app-view,
-  body:has(#report-output-overlay.open) #srwb-app,
+  body:has(#report-output-overlay.open) #madzi-app,
   body:has(#report-output-overlay.open) #db-right-col,
   body:has(#report-output-overlay.open) #db-main{
     height:auto!important;min-height:0!important;overflow:visible!important;
     display:block!important;position:static!important;
   }
   body:has(#report-output-overlay.open) > *:not(#app-view){display:none!important}
-  body:has(#report-output-overlay.open) #app-view > *:not(#srwb-app){display:none!important}
-  body:has(#report-output-overlay.open) #srwb-app > *:not(#db-right-col){display:none!important}
+  body:has(#report-output-overlay.open) #app-view > *:not(#madzi-app){display:none!important}
+  body:has(#report-output-overlay.open) #madzi-app > *:not(#db-right-col){display:none!important}
   body:has(#report-output-overlay.open) #db-right-col > *:not(#db-main){display:none!important}
   body:has(#report-output-overlay.open) #db-main > *:not(#report-output-overlay){display:none!important}
   body:has(#report-output-overlay.open) #report-output-overlay{

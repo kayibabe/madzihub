@@ -3,8 +3,8 @@ from __future__ import annotations
 from concurrent.futures import Future, ThreadPoolExecutor
 import logging
 
-log = logging.getLogger("opsapp.jobs")
-executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="srwb-job")
+log = logging.getLogger("madzihub.jobs")
+executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="madzi-job")
 
 
 def run_async(func, *args, **kwargs) -> Future:

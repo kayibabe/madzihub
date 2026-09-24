@@ -467,7 +467,7 @@ html,body{height:100%;min-height:100%;font-family:var(--ds-font);font-weight:400
 }
 
 /* ═══════════ DASHBOARD ═══════════ */
-#srwb-app{display:flex;height:100vh;height:100dvh;min-height:100vh;min-height:100dvh;font-family:var(--ds-font);font-size:13px;color:var(--ds-text-primary);overflow:hidden}
+#madzi-app{display:flex;height:100vh;height:100dvh;min-height:100vh;min-height:100dvh;font-family:var(--ds-font);font-size:13px;color:var(--ds-text-primary);overflow:hidden}
 
 /* ── SIDEBAR — Light theme matching dashboard design system ── */
 #db-nav{
@@ -825,7 +825,7 @@ html,body{height:100%;min-height:100%;font-family:var(--ds-font);font-weight:400
 @media (max-width: 900px){
   html,body{overflow-x:hidden;overflow-y:auto}
   #app-view{height:auto;min-height:100vh;overflow:visible}
-  #srwb-app{height:auto;min-height:100vh;display:block;overflow:visible}
+  #madzi-app{height:auto;min-height:100vh;display:block;overflow:visible}
   #db-nav{height:auto;max-height:none;position:static}
   #db-right-col{height:auto;overflow:visible}
   #db-main{height:auto;overflow:visible}

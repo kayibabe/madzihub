@@ -4,9 +4,8 @@ routers/strategic.py — Strategic Plan KPI Scorecard
 Tracks the utility's strategic-plan Key Performance Indicators against actuals
 computed from the captured monthly returns.
 
-The target matrix comes from the tenant configuration (for SRWB: transcribed
-verbatim from the approved Strategic Plan 2023-2028). Targets are keyed by FY
-*end* year (2024 = FY2023/24 … 2028 = FY2027/28). KPIs whose data the system does not yet capture are
+The target matrix comes from the tenant configuration (``strategic_plan`` in
+tenant.yaml). Targets are keyed by FY *end* year (e.g. 2026 = FY2025/26). KPIs whose data the system does not yet capture are
 returned as "target only" with actual = null and status = "no_data", so the
 board can see exactly which strategic measures still need a data feed.
 

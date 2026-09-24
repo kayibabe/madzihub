@@ -1,0 +1,44 @@
+# MadziHub demo budget: fictional figures for the Lakeside Water Utility (Demo).
+# Loaded by scripts/seed_fiscal_years.py. Years are fiscal-year END years
+# (July start, so 2027 = July 2026 - June 2027). Monetary lines are in the
+# tenant currency (USD) unless a unit is given.
+fiscal_years:
+  first: 2022
+  current: 2027
+  last: 2030
+
+budgets:
+  2027:
+    tariff_per_m3: 1.40
+    lines:
+      # Revenue
+      - {category: water_sales,       value: 4116000}
+      - {category: service_charges,   value: 180000}
+      - {category: meter_rental,      value: 95000}
+      - {category: total_revenue,     value: 4520000}
+      # Operating costs
+      - {category: electricity,       value: 610000}
+      - {category: chemicals,         value: 240000}
+      - {category: fuel,              value: 130000}
+      - {category: pipeline_maint,    value: 175000}
+      - {category: plant_veh_total,   value: 1480000}
+      - {category: salaries,          value: 1350000}
+      - {category: wages,             value: 210000}
+      - {category: total_expenditure, value: 4390000}
+      - {category: field_opex_share,  value: 0.45,    unit: ratio, notes: "Operating-site share of plant, vehicle and salary budget"}
+      # Operational targets
+      - {category: vol_produced,      value: 4200000, unit: m3}
+      - {category: vol_sold,          value: 2940000, unit: m3}
+      - {category: nrw_pct,           value: 30.0,    unit: pct}
+      - {category: new_customers,     value: 1600,    unit: count}
+      - {category: active_customers,  value: 26000,   unit: count}
+      - {category: supply_hours,      value: 20.0,    unit: hrs}
+      - {category: coverage_pct,      value: 78.0,    unit: pct}
+      - {category: pipelines_km,      value: 18.5,    unit: km}
+    zone_shares:
+      - {zone: North,   rev_share: 0.45, vol_share: 0.42, conn_share: 0.40}
+      - {zone: Central, rev_share: 0.35, vol_share: 0.36, conn_share: 0.35}
+      - {zone: South,   rev_share: 0.20, vol_share: 0.22, conn_share: 0.25}
+    spc:
+      - {metric: nrw_pct,  mean: 31.5,   std: 1.2,   ucl2: 33.9,   lcl2: 29.1,   ucl3: 35.1,   lcl3: 27.9}
+      - {metric: vol_prod, mean: 350000, std: 18000, ucl2: 386000, lcl2: 314000, ucl3: 404000, lcl3: 296000}

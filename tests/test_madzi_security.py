@@ -11,7 +11,7 @@ from tests._app_loader import TemporaryDirectory, fresh_app
 
 
 def _boot(tmpdir: str, **env):
-    for k in ("MADZI_DEV_PREVIEW", "MADZI_ENV", "SRWB_ENV", "MADZI_SECRET_KEY", "SRWB_SECRET_KEY"):
+    for k in ("MADZI_DEV_PREVIEW", "MADZI_ENV", "MADZI_SECRET_KEY"):
         os.environ.pop(k, None)
     os.environ["DATABASE_URL"] = f"sqlite:///{Path(tmpdir) / 'sec.db'}"
     os.environ["MADZI_SECRET_FILE"] = str(Path(tmpdir) / "secret")
@@ -42,14 +42,23 @@ class DevPreviewTests(unittest.TestCase):
 
 
 class LegacyEnvTests(unittest.TestCase):
-    def test_srwb_prefixed_vars_still_work(self):
+    def test_srwb_prefixed_vars_are_ignored(self):
         with TemporaryDirectory() as d:
             _, _, _, config = _boot(d)
             os.environ.pop("MADZI_SECRET_KEY")
+            os.environ.pop("MADZI_SECRET_FILE")
+            os.environ.pop("MADZI_TENANT", None)
             os.environ["SRWB_SECRET_KEY"] = "legacy-key"
-            reload(config)
-            self.assertEqual(config.settings.secret_key, "legacy-key")
-            os.environ.pop("SRWB_SECRET_KEY")
+            os.environ["SRWB_TENANT"] = "srwb"
+            try:
+                reload(config)
+                self.assertEqual(config.settings.secret_key, "")
+                self.assertEqual(config.settings.tenant, "demo")
+                self.assertTrue(config.DEFAULT_SQLITE_URL.endswith("/data/madzihub.db"))
+                self.assertEqual(config.settings.secret_file_path.name, "madzihub.secret")
+            finally:
+                os.environ.pop("SRWB_SECRET_KEY")
+                os.environ.pop("SRWB_TENANT")
 
 
 class TokenValidationTests(unittest.TestCase):

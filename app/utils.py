@@ -20,7 +20,7 @@ from typing import Optional
 
 
 # ── Fiscal calendar (from the tenant configuration) ───────────────────────────
-# The fiscal year starts in ``FY_START_MONTH`` (SRWB: 4 = April). A fiscal year is
+# The fiscal year starts in ``FY_START_MONTH`` (e.g. 4 = April). A fiscal year is
 # identified by the calendar year in which it ENDS ("FY-end year"), e.g. for an
 # April start, 2026 = April 2025 → March 2026. For a January start the FY-end
 # year is simply the calendar year.

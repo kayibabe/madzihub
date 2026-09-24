@@ -121,8 +121,8 @@ def make_row(**overrides) -> dict:
     COLUMN_MAP (e.g. "Total Active Customers" → active_customers).
     """
     base = {
-        "Zone":                    "Blantyre North",
-        "Scheme":                  "Ndirande",
+        "Zone":                    "North",
+        "Scheme":                  "Northgate",
         "Month":                   1,
         "Year":                    2024,
         "Total Active Customers":  18000,
@@ -158,6 +158,50 @@ class TestHeaderNormalisation(unittest.TestCase):
 
     def test_none_returns_empty(self):
         self.assertEqual(self.p._normalize_header(None), "")
+
+
+class TestMoneyHeaders(unittest.TestCase):
+    """Money columns are currency-neutral; only the tenant's own code may suffix them."""
+
+    def _resolve(self, header):
+        from app.services.excel_parser import resolve_column
+        return resolve_column(ExcelParser._normalize_header(header))
+
+    def test_neutral_headers_map(self):
+        self.assertEqual(self._resolve("Cost of Chemicals"), "chem_cost")
+        self.assertEqual(self._resolve("TOTAL Operating Costs"), "op_cost")
+        self.assertEqual(self._resolve("TOTAL Sales"), "total_sales")
+        self.assertEqual(self._resolve("Private Debtors"), "private_debtors")
+
+    def test_tenant_currency_suffix_accepted(self):
+        from app.core.tenant import tenant
+        code = tenant.currency.code
+        self.assertEqual(self._resolve(f"Cost of Power {code}"), "power_cost")
+        self.assertEqual(self._resolve(f"Wages {code}"), "wages")
+
+    def test_other_currency_suffix_rejected(self):
+        from app.core.tenant import tenant
+        other = "EUR" if tenant.currency.code != "EUR" else "GBP"
+        self.assertIsNone(self._resolve(f"Cost of Power {other}"))
+        self.assertIsNone(self._resolve("TOTAL Sales MWK"))
+
+    def test_non_money_headers_unaffected(self):
+        self.assertEqual(self._resolve("Power Usage kWh"), "power_kwh")
+        self.assertIsNone(self._resolve("Totally Unknown Column"))
+
+    def test_foreign_currency_columns_are_reported(self):
+        from app.core.tenant import tenant
+        from app.services.excel_parser import foreign_currency_column
+        other = "EUR" if tenant.currency.code != "EUR" else "GBP"
+        self.assertTrue(foreign_currency_column(f"TOTAL Sales {other}"))
+        self.assertFalse(foreign_currency_column(f"TOTAL Sales {tenant.currency.code}"))
+        self.assertFalse(foreign_currency_column("Power Usage kWh"))
+        self.assertFalse(foreign_currency_column("Some Subtotal XYZ"))
+
+        result = ParseResult(unrecognised_columns=[f"Wages {other}", "Chem Subtotal"])
+        d = result.to_dict()
+        self.assertEqual(d["currency_mismatch_columns"], [f"Wages {other}"])
+        self.assertEqual(d["reporting_currency"], tenant.currency.code)
 
 
 class TestTypeCoercion(unittest.TestCase):
@@ -204,7 +248,7 @@ class TestParserHappyPath(unittest.TestCase):
 
     def test_multiple_rows_different_schemes(self):
         rows = [
-            make_row(Scheme="Ndirande"),
+            make_row(Scheme="Northgate"),
             make_row(Scheme="Chilomoni"),
         ]
         xlsx = build_xlsx(rows)
@@ -288,7 +332,7 @@ class TestValidationErrors(unittest.TestCase):
 
     def test_missing_required_dim_column_raises_valueerror(self):
         """If 'Zone' column is entirely absent from the sheet, raise."""
-        row = {"Scheme": "Ndirande", "Month": 1, "Year": 2024,
+        row = {"Scheme": "Northgate", "Month": 1, "Year": 2024,
                "Vol. Produced": 310000}
         xlsx = build_xlsx([row])
         with self.assertRaises(ValueError):
@@ -307,7 +351,7 @@ class TestAnomalyDetection(unittest.TestCase):
         ]
 
     def test_high_anomaly_flagged(self):
-        seed = self._seed("Blantyre North", "Ndirande", 100_000)
+        seed = self._seed("North", "Northgate", 100_000)
         db   = make_db(seed)
         # New value is 4× average → above ANOMALY_HIGH (3.0)
         xlsx = build_xlsx([make_row(**{"Vol. Produced": 400_000})])
@@ -318,7 +362,7 @@ class TestAnomalyDetection(unittest.TestCase):
         self.assertEqual(anomaly_issues[0].severity, "warning")
 
     def test_low_anomaly_flagged(self):
-        seed = self._seed("Blantyre North", "Ndirande", 300_000)
+        seed = self._seed("North", "Northgate", 300_000)
         db   = make_db(seed)
         # New value is 10% of average → below ANOMALY_LOW (0.33)
         xlsx = build_xlsx([make_row(**{"Vol. Produced": 30_000})])
@@ -328,7 +372,7 @@ class TestAnomalyDetection(unittest.TestCase):
         self.assertTrue(len(anomaly_issues) > 0)
 
     def test_within_range_not_flagged(self):
-        seed = self._seed("Blantyre North", "Ndirande", 310_000)
+        seed = self._seed("North", "Northgate", 310_000)
         db   = make_db(seed)
         # New value is 1.02× average → normal
         xlsx = build_xlsx([make_row(**{"Vol. Produced": 315_000})])
@@ -358,7 +402,7 @@ class TestConflictDetection(unittest.TestCase):
 
     def test_conflict_detected_for_existing_record(self):
         seed = [{
-            "zone": "Blantyre North", "scheme": "Ndirande",
+            "zone": "North", "scheme": "Northgate",
             "month_no": 1, "year": 2024,
             "active_customers": 17000, "vol_produced": 300_000,
             "pct_nrw": 31, "amt_billed": 330e6,
@@ -375,7 +419,7 @@ class TestConflictDetection(unittest.TestCase):
 
     def test_no_conflict_for_different_period(self):
         seed = [{
-            "zone": "Blantyre North", "scheme": "Ndirande",
+            "zone": "North", "scheme": "Northgate",
             "month_no": 12, "year": 2023,   # ← different month/year
             "active_customers": 17000, "vol_produced": 300_000,
             "pct_nrw": 31, "amt_billed": 330e6,
@@ -387,7 +431,7 @@ class TestConflictDetection(unittest.TestCase):
 
     def test_conflict_only_on_matching_zone_scheme(self):
         seed = [{
-            "zone": "Zomba", "scheme": "Mitengo",  # ← different zone/scheme
+            "zone": "South", "scheme": "Southport",  # ← different zone/scheme
             "month_no": 1, "year": 2024,
             "active_customers": 5000, "vol_produced": 80_000,
             "pct_nrw": 35, "amt_billed": 100e6,
@@ -445,7 +489,7 @@ class TestCommitLogic(unittest.TestCase):
 
     def _importable_row(self, **kw) -> dict:
         base = {
-            "zone": "Blantyre North", "scheme": "Ndirande",
+            "zone": "North", "scheme": "Northgate",
             "month": 1, "year": 2024,
             "status": "ok",
             "conflict": None,
@@ -476,7 +520,7 @@ class TestCommitLogic(unittest.TestCase):
 
     def test_replace_conflict(self):
         db = make_db([{
-            "zone": "Blantyre North", "scheme": "Ndirande",
+            "zone": "North", "scheme": "Northgate",
             "month_no": 1, "year": 2024,
             "active_customers": 17000, "vol_produced": 300_000,
             "pct_nrw": 31, "amt_billed": 330e6,
@@ -486,13 +530,13 @@ class TestCommitLogic(unittest.TestCase):
         stats = self._run(db, [row], global_mode="replace")
         self.assertEqual(stats["rows_replaced"], 1)
         updated = db.execute(
-            "SELECT active_customers FROM records WHERE zone='Blantyre North'"
+            "SELECT active_customers FROM records WHERE zone='North'"
         ).fetchone()
         self.assertEqual(updated[0], 18000)   # new value, not old 17000
 
     def test_skip_conflict(self):
         db = make_db([{
-            "zone": "Blantyre North", "scheme": "Ndirande",
+            "zone": "North", "scheme": "Northgate",
             "month_no": 1, "year": 2024,
             "active_customers": 17000, "vol_produced": 300_000,
             "pct_nrw": 31, "amt_billed": 330e6,
@@ -502,14 +546,14 @@ class TestCommitLogic(unittest.TestCase):
         stats = self._run(db, [row], global_mode="skip")
         self.assertEqual(stats["rows_skipped"], 1)
         unchanged = db.execute(
-            "SELECT active_customers FROM records WHERE zone='Blantyre North'"
+            "SELECT active_customers FROM records WHERE zone='North'"
         ).fetchone()
         self.assertEqual(unchanged[0], 17000)   # not overwritten
 
     def test_per_row_override_beats_global(self):
         """global=replace but per-row says skip for this specific row."""
         db = make_db([{
-            "zone": "Blantyre North", "scheme": "Ndirande",
+            "zone": "North", "scheme": "Northgate",
             "month_no": 1, "year": 2024,
             "active_customers": 17000, "vol_produced": 300_000,
             "pct_nrw": 31, "amt_billed": 330e6,
@@ -517,7 +561,7 @@ class TestCommitLogic(unittest.TestCase):
         }])
         row = self._importable_row(conflict={"existing": {}, "incoming": {}})
         # _row_resolution_key format: "{zone}|{scheme}|{year}|{month}"
-        per_row = {"Blantyre North|Ndirande|2024|1": "skip"}
+        per_row = {"North|Northgate|2024|1": "skip"}
         stats = self._run(db, [row], global_mode="replace", per_row_res=per_row)
         self.assertEqual(stats["rows_skipped"], 1)
 
@@ -539,7 +583,7 @@ class TestCommitLogic(unittest.TestCase):
         """
         db = make_db()
         rows = [
-            self._importable_row(scheme="Ndirande"),
+            self._importable_row(scheme="Northgate"),
             self._importable_row(scheme="Chilomoni"),
         ]
         stats = self._run(db, rows)

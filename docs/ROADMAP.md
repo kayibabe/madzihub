@@ -11,7 +11,7 @@ All development happens in this repository; `kayibabe/opsapp` is frozen. The mar
 - [x] Fictional demo tenant (Lakeside Water Utility)
 - [ ] **Owner:** written code/data ownership and licence position with SRWB
 - [ ] **Owner:** opsapp public repo: make private, or remove `dataupdater/` and rewrite history
-- [ ] Decide whether `tenants/srwb` stays here or moves to a private deployment repo
+- [x] Remove SRWB from the product: `tenants/srwb`, SRWB import tools and legacy `SRWB_*` settings removed (2026-09-24); last SRWB version preserved at tag `srwb-reference`
 
 ## Stage 1: Extract configuration
 - [x] Tenant YAML + validated loader (`app/core/tenant.py`)
@@ -24,10 +24,10 @@ All development happens in this repository; `kayibabe/opsapp` is frozen. The mar
 - [x] AI narratives behind `ai.enabled`; model configurable
 - [x] Security: dev-preview opt-in, forced password change, safe admin reset, `MADZI_*` env
 - [ ] UI uses hierarchy labels (`Zone/Scheme` → tenant labels) in filters, tables, charts, exports
-- [ ] Remaining `TODO(madzi-config)`: SRWB spreadsheet header names in `excel_parser.COLUMN_MAP` / `main.HMAP`
+- [x] Currency-neutral money headers in `excel_parser.COLUMN_MAP` / `main.HMAP` (tenant currency suffix accepted)
 - [ ] Currency formatting via one `fmtMoney()` using `currency.decimals` and locale
-- [ ] API key `srwb_target_pct` in `/api/reports/nrw-analysis`: add `nrw_target_pct`, deprecate old key
-- [ ] Move SRWB budget zone-share seed (`scripts/seed_fiscal_years.py`) into `tenants/srwb`
+- [x] API key `srwb_target_pct` renamed `nrw_target_pct`; `*_mk` budget keys renamed (no frontend used the old names)
+- [x] Budget seed reads `tenants/<tenant>/budget.yaml` (fictional demo budget included)
 - [ ] Rewrite `docs/DEPLOYMENT_RUNBOOK.md` for MadziHub (tenant selection, production env)
 
 ## Integration hub ([INTEGRATION_HUB.md](INTEGRATION_HUB.md))
@@ -54,8 +54,8 @@ All development happens in this repository; `kayibabe/opsapp` is frozen. The mar
 - [ ] Versioned targets: KPI × fiscal year × org scope, with benchmark provenance (fixes per-year SP NRW targets)
 - [ ] Metric catalogue: code, unit, aggregation, direction, formula ✅ (`metrics`); valid range ⏳
 - [ ] Import mapping profiles: upload sample → map columns → validate → save a versioned profile (per-source mappings ✅; versioning and UI ⏳) (targets metric codes, not DB columns; single-row and grouped headers; unit conversion)
-- [ ] SRWB zone-workbook builder (`rawdata_builder.py`) becomes one import adapter
-- [ ] Per-tenant validation rules replace calculation-time data quirks (Mangochi days-to-connect, supply-hours units, stub rows)
+- [x] SRWB zone-workbook builder (`rawdata_builder.py`) removed; source-specific formats belong in the integration hub as adapters
+- [ ] Per-tenant validation rules replace calculation-time data quirks (days-to-connect outliers, supply-hours units, stub rows)
 - [ ] Approval workflow: preparer → reviewer → publish; period locks; correction history and lineage
 - [ ] Distinct zero / missing / not-applicable / pending states
 

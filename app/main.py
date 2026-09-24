@@ -69,8 +69,8 @@ def _auto_import(db):
         + glob.glob(os.path.join(base, "data", "RawData*.xlsx"))
     )
     if not candidates:
-        print("[WARN] Records table is empty. Upload data via the dashboard or run:")
-        print("   python scripts/import_data.py --excel uploads/RawData.xlsx --sheet DataEntry")
+        print("[WARN] Records table is empty. Upload a RawData workbook from Administration > Upload,")
+        print("   or place RawData*.xlsx in uploads/ or data/ and restart.")
         return
 
     xlsx_path = candidates[0]
@@ -78,7 +78,7 @@ def _auto_import(db):
     try:
         import openpyxl
         from app.database import Record
-        from app.services.excel_parser import COLUMN_MAP, ExcelParser
+        from app.services.excel_parser import ExcelParser, resolve_column
 
         wb = openpyxl.load_workbook(xlsx_path, data_only=True)
         ws = wb["DataEntry"] if "DataEntry" in wb.sheetnames else wb.active
@@ -113,14 +113,14 @@ def _auto_import(db):
             "Chlorine kg": "chlorine_kg", "Alum Sulphate kg": "alum_kg",
             "Soda Ash kg": "soda_ash_kg", "Algae Floc litres": "algae_floc_litres",
             "Sud Floc litres": "sud_floc_litres", "Potassium Permanganate kg": "kmno4_kg",
-            "Cost of Chemicals MWK": "chem_cost", "Chem Cost per m³": "chem_cost_per_m3",
-            "Power Usage kWh": "power_kwh", "Cost of Power MWK": "power_cost",
+            "Cost of Chemicals": "chem_cost", "Chem Cost per m³": "chem_cost_per_m3",
+            "Power Usage kWh": "power_kwh", "Cost of Power": "power_cost",
             "Power Cost per m³": "power_cost_per_m3",
             "Distances Covered km": "distances_km", "Fuel Used litres": "fuel_used_litres",
-            "Cost of Fuel MWK": "fuel_cost", "Maintenance MWK": "maintenance",
-            "Staff Costs MWK": "staff_costs", "Wages MWK": "wages",
-            "Other Overhead MWK": "other_overhead",
-            "TOTAL Operating Costs MWK": "op_cost",
+            "Cost of Fuel": "fuel_cost", "Maintenance": "maintenance",
+            "Staff Costs": "staff_costs", "Wages": "wages",
+            "Other Overhead": "other_overhead",
+            "TOTAL Operating Costs": "op_cost",
             "OpCost per m³ Produced": "op_cost_per_m3_produced",
             "OpCost per m³ Billed": "op_cost_per_m3_billed",
             "Permanent Staff": "perm_staff", "Temporary Staff": "temp_staff",
@@ -160,9 +160,9 @@ def _auto_import(db):
             "TOTAL Amt Billed Prepaid": "amt_billed_prepaid",
             "TOTAL Amount Billed": "amt_billed",
             "TOTAL Service Charge": "service_charge", "TOTAL Meter Rental": "meter_rental",
-            "TOTAL Sales MWK": "total_sales",
-            "Private Debtors MWK": "private_debtors", "Public Debtors MWK": "public_debtors",
-            "TOTAL Debtors MWK": "total_debtors",
+            "TOTAL Sales": "total_sales",
+            "Private Debtors": "private_debtors", "Public Debtors": "public_debtors",
+            "TOTAL Debtors": "total_debtors",
             "OpCost per Sales": "op_cost_per_sales",
             "Cash Collection Rate": "collection_rate",
             "Collection per Total Sales": "collection_per_sales",
@@ -180,7 +180,7 @@ def _auto_import(db):
 
         col_map = {}
         for i, h in enumerate(headers):
-            parser_col = COLUMN_MAP.get(ExcelParser._normalize_header(h))
+            parser_col = resolve_column(ExcelParser._normalize_header(h))
             if parser_col in rec_cols:
                 col_map[i] = parser_col
             elif h in HMAP and HMAP[h] in rec_cols:
@@ -235,8 +235,8 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
 
 # ── CORS ──────────────────────────────────────────────────────
-# Set MADZI_ALLOWED_ORIGINS (legacy: SRWB_ALLOWED_ORIGINS) to a comma-separated list of origins in
-# production, e.g. "https://dashboard.srwb.mw,https://ops.srwb.mw"
+# Set MADZI_ALLOWED_ORIGINS to a comma-separated list of origins in
+# production, e.g. "https://hub.example-utility.org"
 # Restricted localhost defaults for development; production validation blocks '*'.
 _allowed_origins = settings.allowed_origins
 
@@ -311,10 +311,14 @@ def _brand_values() -> dict:
 
 
 def _js_text(value: str) -> str:
-    """Make a value safe inside any JS string literal ('', "", ``) and in innerHTML."""
+    """Make a value safe inside any JS string literal ('', "", ``) and in innerHTML.
+
+    "$" is escaped rather than dropped: currency symbols such as "$" and "US$" must
+    survive, and \\u0024 yields "$" without ever opening a ${...} substitution.
+    """
     import json
-    cleaned = "".join(ch for ch in (value or "") if ch not in "<>\"'`\\$")
-    return json.dumps(cleaned)[1:-1]
+    cleaned = "".join(ch for ch in (value or "") if ch not in "<>\"'`\\")
+    return json.dumps(cleaned)[1:-1].replace("$", "\\u0024")
 
 
 _JS_CACHE: dict = {}
@@ -334,6 +338,7 @@ def serve_app_core_js(request: Request):
         "__ORG_SHORT__": _js_text(brand["short_name"]),
         "__ORG_NAME_COUNTRY__": _js_text(" · ".join(v for v in (brand["name"], brand["country"]) if v)),
         "__ORG_NAME__": _js_text(brand["name"]),
+        "__PLAN_TITLE__": _js_text(brand["plan_title"]),
         "__CURRENCY__": _js_text(brand["currency"]),
         "__CUR_SYM__": _js_text(brand["currency_symbol"]),
         "__NRW_TARGET__": f"{tenant.target('nrw_pct', 25.0):g}",

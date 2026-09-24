@@ -32,25 +32,25 @@
     "id": "operations",
     "metrics": [
      {
-      "benchmark": "<27% (SRWB target)",
+      "benchmark": "<25% (LWU target)",
       "flag": "WATCH",
       "name": "NRW Rate",
-      "value": "30.7%"
+      "value": "34.4%"
      },
      {
       "benchmark": "≥20h/day",
       "flag": "GOOD",
       "name": "Supply Hours/Day",
-      "value": "23.4h"
+      "value": "23.3h"
      },
      {
       "benchmark": "YTD total",
       "flag": "",
       "name": "Vol Produced (m³)",
-      "value": "140,955"
+      "value": "71,610"
      }
     ],
-    "score": 89,
+    "score": 85,
     "title": "Water Operations"
    },
    {
@@ -61,7 +61,7 @@
       "benchmark": "<10 (IBNET)",
       "flag": "HIGH",
       "name": "Breakdowns/1k Cust",
-      "value": "28372.1"
+      "value": "27689.1"
      },
      {
       "benchmark": "<8% (target)",
@@ -81,7 +81,7 @@
       "benchmark": "YTD snapshot",
       "flag": "",
       "name": "Active Customers",
-      "value": "16,021"
+      "value": "8,340"
      },
      {
       "benchmark": "<30d (World Bank)",
@@ -90,7 +90,7 @@
       "value": "N/A"
      }
     ],
-    "score": 48,
+    "score": 44,
     "title": "Customer Service"
    },
    {
@@ -110,19 +110,19 @@
       "value": "2320.6"
      },
      {
-      "benchmark": "Perm: 17991, Temp: 19186",
+      "benchmark": "Perm: 9365, Temp: 9987",
       "flag": "",
       "name": "Total Staff",
-      "value": "37177"
+      "value": "19353"
      }
     ],
     "score": 0,
     "title": "Workforce"
    }
   ],
-  "nrw_target": 27.0,
-  "overall_grade": "D",
-  "overall_score": 40,
+  "nrw_target": 25.0,
+  "overall_grade": "F",
+  "overall_score": 39,
   "year": 2025,
   "zones_filter": null
  },

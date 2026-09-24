@@ -19,7 +19,7 @@ What it does
 
 Usage
 ─────
-    cd D:\\WebApps\\opsapp
+    cd <madzihub checkout>
     python scripts/migrate_data_integrity.py
 """
 from __future__ import annotations

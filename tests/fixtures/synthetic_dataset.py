@@ -1,8 +1,8 @@
 """Deterministic synthetic dataset for parity snapshot tests.
 
-Every value here is generated. The zone names mirror the reference tenant's
-hierarchy so the reference configuration can be exercised, but no figure is
-real utility data.
+Every value here is generated and every name is fictional. The default zones
+match the demo tenant's hierarchy (tenants/demo) so the shipped configuration
+is what the snapshots exercise.
 """
 from __future__ import annotations
 
@@ -13,28 +13,35 @@ MONTH_NAMES = [
     "July", "August", "September", "October", "November", "December",
 ]
 
-REFERENCE_ZONES = {
-    "Liwonde":  ["Liwonde", "Balaka", "Machinga"],
-    "Mangochi": ["Mangochi", "Monkey Bay"],
-    "Mulanje":  ["Mulanje", "Thyolo", "Phalombe"],
-    "Ngabu":    ["Ngabu", "Chikwawa"],
-    "Zomba":    ["Zomba", "Chinamwali", "Domasi"],
+DEMO_ZONES = {
+    "North":   ["Northgate", "Hillside", "Ridgeway"],
+    "Central": ["Central Works", "Riverside"],
+    "South":   ["Southport", "Lakeshore", "Valley"],
 }
 
-# FY-end years 2024 and 2025 (April 2023 .. March 2025), plus one month of FY2026.
-PERIODS = (
-    [(2023, m) for m in range(4, 13)]
-    + [(2024, m) for m in range(1, 13)]
-    + [(2025, m) for m in range(1, 5)]
-)
+DEMO_FY_START = 7   # tenants/demo: July - June
 
 
-def _quarter(month_no: int, fy_start: int = 4) -> str:
+def periods(fy_start: int = DEMO_FY_START) -> list[tuple[int, int]]:
+    """FY-end years 2024 and 2025 in full, plus the first month of FY2026."""
+    year = 2023 if fy_start > 1 else 2024
+    out, month = [], fy_start
+    for _ in range(25):
+        out.append((year, month))
+        month += 1
+        if month > 12:
+            year, month = year + 1, 1
+    return out
+
+
+def _quarter(month_no: int, fy_start: int) -> str:
     idx = (month_no - fy_start) % 12
     return f"Q{idx // 3 + 1}"
 
 
-def _fy_label(year: int, month_no: int, fy_start: int = 4) -> str:
+def _fy_label(year: int, month_no: int, fy_start: int) -> str:
+    if fy_start == 1:
+        return f"FY{year}"
     end = year + 1 if month_no >= fy_start else year
     return f"FY{end - 1}/{str(end)[-2:]}"
 
@@ -46,8 +53,8 @@ def _value(col_idx: int, z: int, s: int, year: int, month: int, integer: bool) -
     return float(int(v)) if integer else round(v, 2)
 
 
-def build_records(Record, zones=None, fy_start: int = 4):
-    zones = zones or REFERENCE_ZONES
+def build_records(Record, zones=None, fy_start: int = DEMO_FY_START):
+    zones = zones or DEMO_ZONES
     skip = {"id", "zone", "scheme", "fiscal_year", "year", "month_no", "month", "quarter"}
     numeric = [
         (i, c) for i, c in enumerate(Record.__table__.columns)
@@ -56,7 +63,7 @@ def build_records(Record, zones=None, fy_start: int = 4):
     rows = []
     for z, (zone, schemes) in enumerate(zones.items()):
         for s, scheme in enumerate(schemes):
-            for year, month in PERIODS:
+            for year, month in periods(fy_start):
                 data = {
                     "zone": zone, "scheme": scheme, "year": year, "month_no": month,
                     "month": MONTH_NAMES[month - 1],

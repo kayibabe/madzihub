@@ -1,6 +1,6 @@
 # RawData Dashboard Coverage Audit
 
-- Source workbook: `/D:/WebApps/OpsApp/uploads/RawData.xlsx`
+- Source workbook: a RawData workbook (DataEntry sheet) as uploaded in Administration → Upload
 - Authoritative sheet: `DataEntry`
 - Total `DataEntry` headers audited: 222
 - Parser-mapped headers: 222 / 222
@@ -44,20 +44,20 @@
 | TREATMENT CHEMICALS | Sud Floc per m³ | `sud_floc_per_m3` | Water Treatment & Energy |
 | TREATMENT CHEMICALS | Potassium Permanganate kg | `kmno4_kg` | Water Treatment & Energy |
 | TREATMENT CHEMICALS | KMnO4 per m³ | `kmno4_per_m3` | Water Treatment & Energy |
-| TREATMENT CHEMICALS | Cost of Chemicals MWK | `chem_cost` | Water Treatment & Energy |
+| TREATMENT CHEMICALS | Cost of Chemicals | `chem_cost` | Water Treatment & Energy |
 | TREATMENT CHEMICALS | Chem Cost per m³ | `chem_cost_per_m3` | Water Treatment & Energy |
 | POWER | Power Usage kWh | `power_kwh` | Water Treatment & Energy |
 | POWER | Power per m³ | `power_kwh_per_m3` | Water Treatment & Energy |
-| POWER | Cost of Power MWK | `power_cost` | Water Treatment & Energy |
+| POWER | Cost of Power | `power_cost` | Water Treatment & Energy |
 | POWER | Power Cost per m³ | `power_cost_per_m3` | Water Treatment & Energy |
 | TRANSPORT & OPERATIONS | Distances Covered km | `distances_km` | Workforce & Fleet Efficiency |
 | TRANSPORT & OPERATIONS | Fuel Used litres | `fuel_used_litres` | Workforce & Fleet Efficiency |
-| TRANSPORT & OPERATIONS | Cost of Fuel MWK | `fuel_cost` | Workforce & Fleet Efficiency |
-| TRANSPORT & OPERATIONS | Maintenance MWK | `maintenance` | Workforce & Fleet Efficiency |
-| TRANSPORT & OPERATIONS | Staff Costs MWK | `staff_costs` | Operating Expenses |
-| TRANSPORT & OPERATIONS | Wages MWK | `wages` | Operating Expenses |
-| TRANSPORT & OPERATIONS | Other Overhead MWK | `other_overhead` | Operating Expenses |
-| TRANSPORT & OPERATIONS | TOTAL Operating Costs MWK | `op_cost` | Operating Expenses |
+| TRANSPORT & OPERATIONS | Cost of Fuel | `fuel_cost` | Workforce & Fleet Efficiency |
+| TRANSPORT & OPERATIONS | Maintenance | `maintenance` | Workforce & Fleet Efficiency |
+| TRANSPORT & OPERATIONS | Staff Costs | `staff_costs` | Operating Expenses |
+| TRANSPORT & OPERATIONS | Wages | `wages` | Operating Expenses |
+| TRANSPORT & OPERATIONS | Other Overhead | `other_overhead` | Operating Expenses |
+| TRANSPORT & OPERATIONS | TOTAL Operating Costs | `op_cost` | Operating Expenses |
 | TRANSPORT & OPERATIONS | OpCost per m³ Produced | `op_cost_per_m3_produced` | Operating Expenses |
 | TRANSPORT & OPERATIONS | OpCost per m³ Billed | `op_cost_per_m3_billed` | Operating Expenses |
 | STAFFING | Permanent Staff | `perm_staff` | Workforce & Fleet Efficiency |
@@ -216,10 +216,10 @@
 | METER RENTAL | Meter Rental Institutions | `meter_rental_institutions` | Customer Segment Revenue |
 | METER RENTAL | Meter Rental Commercial | `meter_rental_commercial` | Customer Segment Revenue |
 | METER RENTAL | TOTAL Meter Rental | `meter_rental` | Ancillary Charges |
-| FINANCIAL KPIs | TOTAL Sales MWK | `total_sales` | Ancillary Charges |
-| FINANCIAL KPIs | Private Debtors MWK | `private_debtors` | Debtors |
-| FINANCIAL KPIs | Public Debtors MWK | `public_debtors` | Debtors |
-| FINANCIAL KPIs | TOTAL Debtors MWK | `total_debtors` | Debtors |
+| FINANCIAL KPIs | TOTAL Sales | `total_sales` | Ancillary Charges |
+| FINANCIAL KPIs | Private Debtors | `private_debtors` | Debtors |
+| FINANCIAL KPIs | Public Debtors | `public_debtors` | Debtors |
+| FINANCIAL KPIs | TOTAL Debtors | `total_debtors` | Debtors |
 | FINANCIAL KPIs | OpCost per Sales | `op_cost_per_sales` | Operating Expenses |
 | FINANCIAL KPIs | Cash Collection Rate | `collection_rate` | Covered in an existing summary/detail report |
 | FINANCIAL KPIs | Collection per Total Sales | `collection_per_sales` | Collections |

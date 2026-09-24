@@ -7,6 +7,8 @@ Working specification, version 1.0, 24 September 2026.
 Baseline: `kayibabe/opsapp` at `efa4a29`, imported into this repository with no utility data.
 This document merges two independent reviews (the `MadziHub_Product_Blueprint.docx` draft and a code-level review), fills gaps in both, and records what the first implementation pass actually changed.
 
+> **Status update (24 September 2026):** the "SRWB as reference tenant" decision below is superseded. MadziHub is now a utility-neutral template: `tenants/srwb`, the SRWB zone-workbook builder and import scripts, the SRWB budget seed and the `SRWB_*` settings were removed, and the demo tenant is the default. The last SRWB-specific version is preserved at the git tag `srwb-reference`. Parity snapshots now run on the demo tenant; a second fictional test tenant (`tests/fixtures/tenants/riverbend`, April start, EUR) covers configurability. The ownership and licence items in §10 remain open.
+
 ---
 
 ## 1. Decision summary
@@ -117,7 +119,7 @@ Implemented in this pass:
 - `must_change_password` for the bootstrap admin, admin-created users and admin resets. Every API route except `/api/auth/me` and `/api/auth/change-password` returns `403 password_change_required` until changed, and the login screen shows a blocking dialog.
 - New passwords must be ≥ 8 characters and differ from the current one.
 - `scripts/reset_admin.py` replaces the fixed-password reset script.
-- Environment variables are `MADZI_*`; `SRWB_*` are still honoured for existing installs.
+- Environment variables are `MADZI_*` only (the legacy `SRWB_*` fallback was removed on 2026-09-24).
 
 Still required before any second utility installs (Stage 3):
 - Route-by-route authorization inventory, including exports and downloads. Add tests for denied access by role and, later, by organisational scope.

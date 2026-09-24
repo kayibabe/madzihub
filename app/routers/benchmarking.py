@@ -1,7 +1,7 @@
 """
 routers/benchmarking.py
 ───────────────────────
-Serves the SRWB Benchmarking Tool (WUP001–WUP107) as a filtered report,
+Serves the utility Benchmarking Tool (WUP001–WUP107) as a filtered report,
 sourced live from the records table.
 
 GET /api/benchmarking/indicators  — ordered indicator metadata (+ sections)

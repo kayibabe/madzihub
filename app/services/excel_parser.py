@@ -1,7 +1,7 @@
 """
 services/excel_parser.py
 ========================
-Parses SRWB RawData Excel uploads. Produces a structured ParseResult
+Parses RawData (DataEntry) Excel uploads. Produces a structured ParseResult
 containing validated rows, type-coerced metrics, statistical anomaly
 flags, and conflict markers against the live database.
 
@@ -28,6 +28,8 @@ from dataclasses import dataclass, field
 from typing import Any, Optional
 
 import openpyxl
+
+from app.core.tenant import tenant as _tenant
 
 log = logging.getLogger(__name__)
 
@@ -78,8 +80,8 @@ COLUMN_MAP: dict[str, str] = {
     "sud_floc_litres":                   "sud_floc_litres",
     # "Potassium Permanganate kg"  →  "potassium_permanganate_kg"
     "potassium_permanganate_kg":         "kmno4_kg",
-    # "Cost of Chemicals MWK"  →  "cost_of_chemicals_mwk"
-    "cost_of_chemicals_mwk":             "chem_cost",
+    # "Cost of Chemicals"  →  "cost_of_chemicals"
+    "cost_of_chemicals":                 "chem_cost",
     # "Chem Cost per m³"  →  "chem_cost_per_m"
     "chem_cost_per_m":                   "chem_cost_per_m3",
     "chlorine_kg_per_m":                 "chlorine_kg_per_m3",
@@ -106,8 +108,8 @@ COLUMN_MAP: dict[str, str] = {
     # ── POWER ─────────────────────────────────────────────────────────────
     # "Power Usage kWh"  →  "power_usage_kwh"
     "power_usage_kwh":                   "power_kwh",
-    # "Cost of Power MWK"  →  "cost_of_power_mwk"
-    "cost_of_power_mwk":                 "power_cost",
+    # "Cost of Power"  →  "cost_of_power"
+    "cost_of_power":                     "power_cost",
     # "Power Cost per m³"  →  "power_cost_per_m"
     "power_cost_per_m":                  "power_cost_per_m3",
     "power_per_m":                       "power_kwh_per_m3",
@@ -116,18 +118,14 @@ COLUMN_MAP: dict[str, str] = {
     # "Distances Covered km"  →  "distances_covered_km"
     "distances_covered_km":              "distances_km",
     "fuel_used_litres":                  "fuel_used_litres",
-    # "Cost of Fuel MWK"  →  "cost_of_fuel_mwk"
-    "cost_of_fuel_mwk":                  "fuel_cost",
-    # "Maintenance MWK"  →  "maintenance_mwk"
-    "maintenance_mwk":                   "maintenance",
-    # "Staff Costs MWK"  →  "staff_costs_mwk"
-    "staff_costs_mwk":                   "staff_costs",
-    # "Wages MWK"  →  "wages_mwk"
-    "wages_mwk":                         "wages",
-    # "Other Overhead MWK"  →  "other_overhead_mwk"
-    "other_overhead_mwk":                "other_overhead",
-    # "TOTAL Operating Costs MWK"  →  "total_operating_costs_mwk"
-    "total_operating_costs_mwk":         "op_cost",
+    # "Cost of Fuel"  →  "cost_of_fuel"
+    "cost_of_fuel":                      "fuel_cost",
+    "maintenance":                       "maintenance",
+    "staff_costs":                       "staff_costs",
+    "wages":                             "wages",
+    "other_overhead":                    "other_overhead",
+    # "TOTAL Operating Costs"  →  "total_operating_costs"
+    "total_operating_costs":             "op_cost",
     # "OpCost per m³ Produced"  →  "opcost_per_m_produced"
     "opcost_per_m_produced":             "op_cost_per_m3_produced",
     # "OpCost per m³ Billed"  →  "opcost_per_m_billed"
@@ -321,8 +319,8 @@ COLUMN_MAP: dict[str, str] = {
     # ── SERVICE CHARGES & METER RENTAL ───────────────────────────────────
     "total_service_charge":              "service_charge",
     "total_meter_rental":                "meter_rental",
-    # "TOTAL Sales MWK"  →  "total_sales_mwk"
-    "total_sales_mwk":                   "total_sales",
+    # "TOTAL Sales"  →  "total_sales"
+    "total_sales":                       "total_sales",
     "svc_charge_individual":             "service_charge_individual",
     "svc_charge_cwp":                    "service_charge_cwp",
     "svc_charge_institutions":           "service_charge_institutions",
@@ -333,10 +331,9 @@ COLUMN_MAP: dict[str, str] = {
     "meter_rental_commercial":           "meter_rental_commercial",
 
     # ── DEBTORS ───────────────────────────────────────────────────────────
-    # "Private Debtors MWK"  →  "private_debtors_mwk"
-    "private_debtors_mwk":               "private_debtors",
-    "public_debtors_mwk":                "public_debtors",
-    "total_debtors_mwk":                 "total_debtors",
+    "private_debtors":                   "private_debtors",
+    "public_debtors":                    "public_debtors",
+    "total_debtors":                     "total_debtors",
 
     # ── FINANCIAL KPIs ────────────────────────────────────────────────────
     # "OpCost per Sales"  →  "opcost_per_sales"
@@ -366,7 +363,7 @@ COLUMN_MAP: dict[str, str] = {
     # ── WATER QUALITY / STATUTORY COMPLIANCE ──────────────────────────────
     # Fields are already in the records schema; add these mappings so that
     # once the monthly return template carries lab-sample columns, the data
-    # imports automatically and the Water Quality page + WHO/MBS Strategic
+    # imports automatically and the Water Quality page + WHO/national-standard Strategic
     # Plan KPI go live. Multiple header synonyms are accepted.
     "wq_samples_taken":                  "wq_samples_taken",
     "water_quality_samples_taken":       "wq_samples_taken",
@@ -402,6 +399,30 @@ COLUMN_MAP: dict[str, str] = {
     "ph_compliant":                      "wq_ph_compliant",
     "wq_ph_compliant":                   "wq_ph_compliant",
 }
+
+
+def resolve_column(normalised: str) -> Optional[str]:
+    """Map a normalised header to a DB column.
+
+    Money headers are currency-neutral ("Wages"), but a template may label them
+    with the installation's currency code ("Wages USD" → "wages_usd"); that
+    suffix is accepted too. Other currencies are not, so a workbook prepared for
+    a different currency is flagged instead of silently imported.
+    """
+    if normalised in COLUMN_MAP:
+        return COLUMN_MAP[normalised]
+    suffix = "_" + _tenant.currency.code.lower()
+    if normalised.endswith(suffix):
+        return COLUMN_MAP.get(normalised[: -len(suffix)])
+    return None
+
+
+def foreign_currency_column(header: Any) -> bool:
+    """True for a money header labelled with a currency other than the tenant's,
+    e.g. "TOTAL Sales EUR" in a USD installation."""
+    normalised = ExcelParser._normalize_header(header)
+    m = re.fullmatch(r"(.+)_([a-z]{3})", normalised)
+    return bool(m) and resolve_column(normalised) is None and m.group(1) in COLUMN_MAP
 
 # Columns that must be present and non-null on every row
 REQUIRED_DIMS: tuple[str, ...] = ("zone", "scheme", "month", "year")
@@ -514,6 +535,11 @@ class ParseResult:
     def conflict_rows(self) -> list[ParsedRow]:
         return [r for r in self.importable_rows if r.conflict is not None]
 
+    @property
+    def currency_mismatch_columns(self) -> list[str]:
+        """Unmapped headers that are money columns labelled with another currency."""
+        return [h for h in self.unrecognised_columns if foreign_currency_column(h)]
+
     def to_dict(self) -> dict:
         return {
             "total_rows":              len(self.rows),
@@ -524,6 +550,8 @@ class ParseResult:
             "period_month":            self.period_month,
             "period_year":             self.period_year,
             "unrecognised_columns":    self.unrecognised_columns,
+            "currency_mismatch_columns": self.currency_mismatch_columns,
+            "reporting_currency":      _tenant.currency.code,
             "missing_required_columns": self.missing_required_columns,
             "rows":                    [r.to_dict() for r in self.rows],
         }
@@ -653,8 +681,8 @@ class ExcelParser:
             if cell is None:
                 continue
             normalised = self._normalize_header(cell)
-            if normalised in COLUMN_MAP:
-                db_col = COLUMN_MAP[normalised]
+            db_col = resolve_column(normalised)
+            if db_col:
                 # Last mapping wins if duplicate headers exist
                 col_map[idx] = db_col
             else:

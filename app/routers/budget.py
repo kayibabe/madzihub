@@ -26,11 +26,20 @@ from app.core.tenant import tenant as _tenant
 from app.database import (
     BudgetLine, BudgetZoneShare, FiscalYear, Record, SpcLimit, get_db,
 )
-from app.utils import FY_MONTH_NOS, MONTHS_LBL, fy_calendar_year, fy_month_index, fy_span_expr
+from app.utils import FY_MONTH_NOS, MONTHS_LBL, MONTHS_ORDER, fy_calendar_year, fy_month_index, fy_span_expr
 
 router = APIRouter(prefix="/api/budget", tags=["Budget"])
 
 _SYM = _tenant.currency.symbol
+
+
+def _money(v: float) -> str:
+    """Compact money text scaled to the amount: '$ 1.25M', 'MK 4.20B'."""
+    a = abs(v)
+    for size, suffix in ((1e9, "B"), (1e6, "M"), (1e3, "K")):
+        if a >= size:
+            return f"{_SYM} {v / size:.2f}{suffix}"
+    return f"{_SYM} {v:,.0f}"
 
 
 def safe_div(numerator, denominator, default=0.0):
@@ -121,9 +130,11 @@ def _load_budget(year: int, db: Session) -> dict:
 
     bud: dict[str, float] = {r.category: (r.value if r.value is not None else 0.0) for r in rows}
 
-    # --- Derived composites (mirror the old constant relationships) ----------
+    # --- Derived composites ---------------------------------------------------
+    # Field plant & vehicle budget = total less any lines with no operating-site
+    # data (e.g. a separate business unit), budgeted as "plant_veh_excluded".
     bud.setdefault("plant_veh_field",
-                   bud.get("plant_veh_total", 0) - bud.get("bottled_prod", 0))
+                   bud.get("plant_veh_total", 0) - bud.get("plant_veh_excluded", 0))
 
     return bud
 
@@ -154,19 +165,19 @@ def _load_spc(year: int, db: Session) -> dict:
     }
 
 
-def _load_tariff(year: int, bud: dict, db: Session) -> float:
+def _load_tariff(year: int, bud: dict, db: Session) -> float | None:
     """
     Tariff resolution order:
     1. budget_lines.category='tariff_per_m3' for this year
     2. fiscal_years.tariff_per_m3
-    3. Hard fallback 1450 (base rate; log a warning)
+    3. None: the caller falls back to the realised amount billed per m³
     """
     if "tariff_per_m3" in bud:
         return bud["tariff_per_m3"]
     fy = db.query(FiscalYear).filter(FiscalYear.year == year).first()
     if fy and fy.tariff_per_m3:
         return fy.tariff_per_m3
-    return 1_450.0   # last-resort fallback
+    return None
 
 
 # ── Main variance endpoint ─────────────────────────────────────────────────────
@@ -324,6 +335,15 @@ def get_variance(
     act_nrw_pct  = act_nrw_vol / act_vp * 100 if act_vp else 0
     act_coll_rt  = act_collected / act_billed * 100 if act_billed else 0
     act_rev_m3   = act_sales / act_rw if act_rw else 0
+    # No configured tariff: use the realised average (amount billed per m³ of
+    # revenue water), the same basis the NRW report uses.
+    tariff_source = "configured"
+    if not tariff:
+        tariff = round(act_billed / act_rw, 2) if act_rw else 0.0
+        tariff_source = "realised_billed_per_m3"
+    tariff_txt = f"{tariff:,.0f}" if tariff >= 100 else f"{tariff:,.2f}"
+    tariff_note = (f"Fixed tariff {_SYM} {tariff_txt}/m³" if tariff_source == "configured"
+                   else f"No tariff configured; realised average {_SYM} {tariff_txt}/m³ billed")
 
     latest_scope_filters = [Record.year == last_yr, Record.month_no == last_mno]
     latest_cmp_filters   = [Record.year == last_yr, Record.month_no == last_mno]
@@ -395,7 +415,7 @@ def get_variance(
     revenue_rows = [
         _var("Water Sales (Tariff Revenue)", act_sales,
              B("water_sales") * f * revenue_share_factor,
-             note=f"Fixed tariff {_SYM} {tariff:,.0f}/m³. All variance = volume effect.",
+             note=f"{tariff_note}. All variance = volume effect.",
              iwa_pi="Fi1/IBNET Revenue"),
         _var("Service Charges", act_svc,
              B("service_charges") * f * customer_share_factor,
@@ -413,16 +433,16 @@ def get_variance(
         "budget_vol_sold_ytd_m3":   round(bud_rw_ytd),
         "actual_vol_sold_m3":       round(act_rw),
         "volume_variance_m3":       round(vol_var_m3),
-        "revenue_volume_effect_mk": round(rev_vol_effect),
+        "revenue_volume_effect": round(rev_vol_effect),
         "budget_nrw_vol_ytd_m3":    round(bud_nrw_vol_ytd),
         "actual_nrw_vol_m3":        round(act_nrw_vol),
         "nrw_vol_variance_m3":      round(nrw_var_vol),
-        "nrw_revenue_impact_mk":    round(nrw_rev_impact),
+        "nrw_revenue_impact":    round(nrw_rev_impact),
         "interpretation": (
-            f"At fixed tariff {_SYM} {tariff:,.0f}/m³, the {round(vol_var_m3/1e6, 2)}M m³ "
-            f"volume shortfall accounts for {_SYM} {abs(rev_vol_effect)/1e9:.2f}B of revenue loss. "
+            f"At tariff {_SYM} {tariff_txt}/m³, the {round(vol_var_m3/1e6, 2)}M m³ "
+            f"volume shortfall accounts for {_money(abs(rev_vol_effect))} of revenue loss. "
             f"Excess NRW ({act_nrw_pct:.1f}% vs {B('nrw_pct')}% target) represents an additional "
-            f"{_SYM} {abs(nrw_rev_impact)/1e9:.2f}B in unbilled production cost."
+            f"{_money(abs(nrw_rev_impact))} in unbilled production cost."
         ) if has_budget else "No approved budget loaded for this fiscal year.",
     }
 
@@ -457,28 +477,31 @@ def get_variance(
              note="Actual vs IBNET 90% benchmark.", iwa_pi="Fi9"),
     ]
 
+    # Share of the corporate plant/vehicle/salaries budget attributable to operating sites.
+    field_opex_share = B("field_opex_share", 0.45)
+
     # ── Cost variance rows ────────────────────────────────────────────────────
     cost_rows = [
         _var("Electricity / Power",  act_power,
              B("electricity") * f * volume_share_factor, invert=True,
-             note=f"Scheme power only. Budget {_SYM} {B('electricity')/1e9:.2f}B, excl. bottled water.",
+             note=f"Scheme power only. Budget {_money(B('electricity'))}.",
              iwa_pi="Op39/Ee1", scope="field"),
         _var("Water Treatment Chemicals", act_chems,
              B("chemicals") * f * volume_share_factor, invert=True,
-             note=f"Scheme chemicals only. Budget {_SYM} {B('chemicals')/1e9:.2f}B.",
+             note=f"Scheme chemicals only. Budget {_money(B('chemicals'))}.",
              iwa_pi="Op34", scope="field"),
         _var("Fuel", act_fuel,
              B("fuel") * f * volume_share_factor, invert=True,
-             note=f"Operating fuel only. Budget {_SYM} {B('fuel')/1e9:.2f}B. DB capture may be incomplete.",
+             note=f"Operating fuel only. Budget {_money(B('fuel'))}. DB capture may be incomplete.",
              scope="field"),
         _var("Employee Costs", act_employee,
              (B("salaries") + B("wages")) * f * volume_share_factor, invert=True,
              note="Database covers scheme staff only. Corporate budget includes full establishment.",
              scope="field"),
         _var("Operating Expenditure", act_opex,
-             (B("plant_veh_field") + B("salaries") + B("wages")) * f * volume_share_factor * 0.45,
+             (B("plant_veh_field") + B("salaries") + B("wages")) * f * volume_share_factor * field_opex_share,
              invert=True, scope="field",
-             note="Operating-site portion estimated at 45% of the corporate plant, vehicle, and salaries budget."),
+             note=f"Operating-site portion estimated at {field_opex_share:.0%} of the corporate plant, vehicle, and salaries budget (budget line field_opex_share)."),
     ]
 
     # ── Efficiency KPIs ───────────────────────────────────────────────────────
@@ -486,13 +509,13 @@ def get_variance(
         "operating_ratio":        round(act_opex / act_sales, 3) if act_sales else None,
         "opex_per_m3_produced":   round(act_opex / act_vp, 2)    if act_vp    else None,
         "revenue_per_connection": round(act_sales / act_active, 0) if act_active else None,
-        "nrw_financial_cost_mk":  round(act_nrw_vol * tariff),
+        "nrw_financial_cost":  round(act_nrw_vol * tariff),
         "chemical_cost_per_m3":   round(act_chems / act_vp, 2)   if act_vp    else None,
         "power_cost_per_m3":      round(act_power / act_vp, 2)   if act_vp    else None,
         "collection_rate_pct":    round(act_coll_rt, 2),
         "revenue_tariff_eff":     round(act_rev_m3, 1),
         "connections_per_month":  round(safe_div(act_conn, n), 1),
-        "budget_nrw_cost_mk":
+        "budget_nrw_cost":
             round(B("vol_produced") * f * volume_share_factor * B("nrw_pct") / 100 * tariff),
         "bpi_revenue":
             round(act_sales / (B("water_sales") * f * revenue_share_factor), 3)
@@ -573,10 +596,10 @@ def get_variance(
     # ── Zone monthly NRW for SPC visualisation ────────────────────────────────
     zone_monthly_q = (db.query(
             Record.zone, Record.year, Record.month_no,
-            func.sum(Record.vol_produced).label("vp"),
-            func.sum(Record.nrw).label("nrw_vol"),
-            func.sum(Record.total_sales).label("sales"),
-            func.sum(Record.new_connections).label("conn"),
+            _cs(Record.vol_produced).label("vp"),
+            _cs(Record.nrw).label("nrw_vol"),
+            _cs(Record.total_sales).label("sales"),
+            _cs(Record.new_connections).label("conn"),
          )
          .filter(*scope_filters, Record.vol_produced > 0)
          .group_by(Record.zone, Record.year, Record.month_no)
@@ -615,7 +638,7 @@ def get_variance(
 
     cust_sch_map = scheme_active_map
 
-    nrw_target = B("nrw_pct") or 27.0   # fallback if no budget loaded
+    nrw_target = B("nrw_pct") or _tenant.target("nrw_pct", 25.0)   # tenant target if no budget loaded
     scheme_rows = []
     for r in scheme_q:
         nrw_pct  = r.nrw_vol / r.vp * 100 if r.vp else 0
@@ -626,7 +649,7 @@ def get_variance(
         cust     = cust_sch_map.get(r.scheme, 0) or 0
         nrw_score  = max(0, min(100, (45 - nrw_pct) / (45 - 10) * 100)) if nrw_pct else 50
         coll_score = min(100, coll_rt) if coll_rt else 0
-        rev_score  = min(100, rev_m3 / tariff * 100) if rev_m3 else 0
+        rev_score  = min(100, rev_m3 / tariff * 100) if rev_m3 and tariff else 0
         conn_score = min(100, r.conn / max(1, r.n) * 10) if r.conn else 0
         composite  = round(nrw_score * 0.35 + coll_score * 0.35 +
                            rev_score * 0.20 + conn_score * 0.10, 1)
@@ -636,7 +659,7 @@ def get_variance(
             "vol_produced_m3":    round(r.vp),
             "nrw_pct":            round(nrw_pct, 2),
             "nrw_variance_pp":    round(nrw_pct - nrw_target, 2),
-            "revenue_mk":         round(r.sales),
+            "revenue":         round(r.sales),
             "revenue_per_m3":     round(rev_m3, 1),
             "collection_rate":    round(coll_rt, 1),
             "new_connections":    round(r.conn),
@@ -670,7 +693,7 @@ def get_variance(
         ]
 
     trend["actual_nrw_pct"] = [
-        round(by_idx[i].nrw_vol / by_idx[i].vp * 100, 2)
+        round((by_idx[i].nrw_vol or 0) / by_idx[i].vp * 100, 2)
         if i in by_idx and by_idx[i].vp and by_idx[i].vp > 0 else None
         for i in range(12)
     ]
@@ -701,12 +724,12 @@ def get_variance(
         "n_adverse":         sum(1 for r in all_rows if r["direction"] == "adverse"),
         "n_favourable":      sum(1 for r in all_rows if r["direction"] == "favourable"),
         "n_on_budget":       sum(1 for r in all_rows if r["direction"] == "on_budget"),
-        "revenue_variance_mk": round(act_sales - B("water_sales") * f * revenue_share_factor),
+        "revenue_variance": round(act_sales - B("water_sales") * f * revenue_share_factor),
         "nrw_pp_variance":     round(act_nrw_pct - B("nrw_pct"), 2),
         "conn_variance":       round(act_conn - B("new_customers") * f * connection_share_factor),
-        "cash_variance_mk":    round(act_collected - B("water_sales") * f * revenue_share_factor * 0.90),
-        "chem_overrun_mk":     round(act_chems - B("chemicals") * f * volume_share_factor),
-        "power_variance_mk":   round(act_power - B("electricity") * f * volume_share_factor),
+        "cash_variance":    round(act_collected - B("water_sales") * f * revenue_share_factor * 0.90),
+        "chem_overrun":     round(act_chems - B("chemicals") * f * volume_share_factor),
+        "power_variance":   round(act_power - B("electricity") * f * volume_share_factor),
         "nrw_financial_cost":  round(act_nrw_vol * tariff),
         "bpi_revenue":    efficiency_kpis["bpi_revenue"],
         "bpi_volume":     efficiency_kpis["bpi_volume"],
@@ -717,11 +740,12 @@ def get_variance(
         "meta": {
             "fiscal_year":       f"{year-1}/{str(year)[-2:]}",
             "data_months":       n,
-            "period":            f"April {year-1} – {last_lbl} {last_yr}",
+            "period":            f"{MONTHS_ORDER[0]} {fy_calendar_year(year, FY_MNO[0])} – {last_lbl} {last_yr}",
             "budget_factor":     round(f, 4),
             "has_budget":        has_budget,
             "framework":         "IWA/IBNET PI | IPSAS 18 | ISO 7870-2 SPC | EVM-adapted BPI",
-            "tariff_mk_m3":      tariff,
+            "tariff_per_m3":      tariff,
+            "tariff_source":      tariff_source,
             "zone_allocation":   "IPSAS 18 revenue-weighted proportional segment allocation",
             "budget_scope_mode":  budget_scope_mode,
             "budget_scope_label": budget_scope_label,

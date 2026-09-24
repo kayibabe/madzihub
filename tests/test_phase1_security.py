@@ -9,10 +9,10 @@ from fastapi.testclient import TestClient
 
 
 def _bootstrap_app(tmpdir: str):
-    os.environ["SRWB_ENV"] = "development"
+    os.environ["MADZI_ENV"] = "development"
     os.environ["DATABASE_URL"] = f"sqlite:///{Path(tmpdir) / 'test.db'}"
-    os.environ["SRWB_SECRET_KEY"] = "test-secret-key"
-    os.environ["SRWB_ALLOWED_ORIGINS"] = "http://localhost:8000"
+    os.environ["MADZI_SECRET_KEY"] = "test-secret-key"
+    os.environ["MADZI_ALLOWED_ORIGINS"] = "http://localhost:8000"
 
     import app.core.config as config
     reload(config)

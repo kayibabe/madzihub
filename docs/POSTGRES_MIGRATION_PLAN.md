@@ -1,7 +1,7 @@
 # PostgreSQL Migration Plan
 
 ## Objective
-Migrate the SRWB Operations Dashboard from SQLite to PostgreSQL without disrupting monthly reporting workflows.
+Migrate MadziHub from SQLite to PostgreSQL without disrupting monthly reporting workflows.
 
 ## Why migrate
 SQLite is acceptable for a small internal deployment, but PostgreSQL improves:

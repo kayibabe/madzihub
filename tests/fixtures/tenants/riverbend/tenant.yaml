@@ -1,0 +1,37 @@
+# Test-only tenant: a fictional April-start utility with a non-USD currency.
+# It proves the product renders any tenant's values, alongside tenants/demo.
+identity:
+  name: Riverbend Water Services
+  short_name: RWS
+  product_title: Riverbend Performance Hub
+  country: Test Country
+branding:
+  logo: null
+  primary_color: '#1d4ed8'
+  accent_color: '#0d9488'
+currency:
+  code: EUR
+  symbol: €
+  decimals: 0
+locale: en
+timezone: UTC
+fiscal_year:
+  start_month: 4          # April - March
+hierarchy:
+  levels:
+  - {key: zone, label: Zone, plural: Zones}
+  - {key: scheme, label: Scheme, plural: Schemes}
+  zones:
+  - {name: East, color: '#1d4ed8'}
+  - {name: West, color: '#0d9488'}
+targets:
+  nrw_pct: 27.0
+strategic_plan:
+  title: Riverbend Plan 2024-2028
+  years: [2025, 2026]
+  default_year: 2026
+  kpis:
+  - {focus_area: Operations, name: Non-Revenue Water, unit: '%', baseline: 30,
+     targets: {2025: 28, 2026: 27}, actual_key: nrw_pct, direction: low, capture: live}
+ai:
+  enabled: false

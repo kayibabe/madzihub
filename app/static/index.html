@@ -20,10 +20,10 @@
 <script src="/static/vendor/xlsx/xlsx.full.min.js?v=0.18.5"></script>
 <script src="/static/vendor/dompurify/purify.min.js?v=3.1.6"></script>
 <link rel="stylesheet" href="/static/vendor/fonts/fonts.css?v=5.3.0">
-<link rel="stylesheet" href="/static/assets/css/base.css?v=20260924-1">
+<link rel="stylesheet" href="/static/assets/css/base.css?v=20260924-2">
 
-<link rel="stylesheet" href="/static/assets/css/reports.css?v=20260613-8">
-<link rel="stylesheet" href="/static/assets/css/print.css">
+<link rel="stylesheet" href="/static/assets/css/reports.css?v=20260924-1">
+<link rel="stylesheet" href="/static/assets/css/print.css?v=20260924-1">
 <link rel="stylesheet" href="/static/assets/css/department-tabs.css?v=20260613-1">
 <link rel="stylesheet" href="/static/assets/css/integration-hub.css?v=20260924-3">
 </head>
@@ -186,78 +186,12 @@
     <!-- Body -->
     <div class="um-body">
 
-      <!-- Step indicator -->
-      <div class="um-steps" id="um-steps" style="display:flex;align-items:center;gap:8px;margin-bottom:14px;font-size:11.5px;font-weight:700">
-        <div class="um-step active" id="um-step-1" style="display:flex;align-items:center;gap:6px;color:#1A8FD1">
-          <span class="um-step-num" style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#1A8FD1;color:#fff;font-size:10px">1</span>
-          <span>Build RawData</span>
-        </div>
-        <div style="flex:1;height:2px;background:var(--ds-border,#e2e8f0);border-radius:2px" id="um-step-line"></div>
-        <div class="um-step" id="um-step-2" style="display:flex;align-items:center;gap:6px;color:var(--ds-text-muted,#94a3b8)">
-          <span class="um-step-num" style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--ds-border,#e2e8f0);color:var(--ds-text-muted,#64748b);font-size:10px">2</span>
-          <span>Import to database</span>
-        </div>
-      </div>
-
-      <!-- Step 1: Build RawData from the 5 zone workbooks (dataupdater) -->
-      <div id="um-stage-build">
-        <div style="font-size:12px;color:var(--ds-text-muted);line-height:1.5;margin-bottom:12px">
-          Builds <strong>RawData_updated.xlsx</strong> from the five zone workbooks
-          (Liwonde, Mangochi, Mulanje, Ngabu, Zomba) for the selected fiscal year —
-          each year has its own <code>dataupdater/FY&hellip;</code> sub-folder. The
-          chosen year's data is compiled with the correct year and full billing/customer totals.
-        </div>
-
-        <!-- Fiscal year selector -->
-        <label style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-          <span style="font-size:12px;font-weight:650;color:var(--ds-text-secondary)">Fiscal year</span>
-          <select id="um-fy-select" onchange="umFyChange()" style="flex:1;max-width:240px;padding:7px 10px;border:1px solid var(--ds-border);border-radius:8px;font-family:var(--ds-font);font-size:13px;background:var(--ds-surface);color:var(--ds-text-primary)">
-            <option value="">Loading…</option>
-          </select>
-          <span id="um-fy-ready" style="font-size:11px;font-weight:600;color:var(--ds-text-muted);white-space:nowrap"></span>
-        </label>
-
-        <!-- Zone source files status -->
-        <div class="um-zone-status" id="um-zone-status" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"></div>
-
-        <!-- Build mode -->
-        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:6px">
-          <div class="um-mode-label">Build mode:</div>
-          <div class="um-mode-grid">
-            <label class="um-mode-opt selected" id="um-bmode-fill">
-              <input type="radio" name="um-bmode" value="fill" checked onchange="umBuildModeChange(this)">
-              <span>Fill missing only</span>
-            </label>
-            <label class="um-mode-opt" id="um-bmode-force">
-              <input type="radio" name="um-bmode" value="force" onchange="umBuildModeChange(this)">
-              <span>Force full refresh</span>
-            </label>
-          </div>
-        </div>
-
-        <!-- Build result summary (shown after building) -->
-        <div id="um-build-result" style="display:none;margin-top:14px">
-          <div class="um-preview-hdr">
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke="#16a34a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <span class="um-preview-hdr-title">Build Summary</span>
-          </div>
-          <div class="um-stat-row">
-            <div class="um-stat"><div class="um-stat-val" id="um-bstat-files">—</div><div class="um-stat-lbl">Zone Files</div></div>
-            <div class="um-stat"><div class="um-stat-val green" id="um-bstat-filled">—</div><div class="um-stat-lbl">Filled</div></div>
-            <div class="um-stat"><div class="um-stat-val green" id="um-bstat-added">—</div><div class="um-stat-lbl">Added</div></div>
-            <div class="um-stat"><div class="um-stat-val" id="um-bstat-skipped">—</div><div class="um-stat-lbl">Already Done</div></div>
-            <div class="um-stat"><div class="um-stat-val red" id="um-bstat-err">—</div><div class="um-stat-lbl">Errors</div></div>
-          </div>
-          <div class="um-issues" id="um-build-issues"></div>
-        </div>
-      </div><!-- /#um-stage-build -->
-
-      <!-- Stage 2: Drop zone + mode selector -->
-      <div id="um-stage-pick" style="display:none">
+      <!-- Drop zone + mode selector -->
+      <div id="um-stage-pick">
 
         <div style="font-size:12px;color:var(--ds-text-muted);line-height:1.5;margin-bottom:12px" id="um-step2-note">
-          The file built in Step 1 has been validated and is ready to import below.
-          To import a different workbook instead, drop it on the zone below.
+          Choose a RawData workbook (DataEntry sheet). It is validated first;
+          nothing is written until you confirm the import.
         </div>
 
         <!-- Drop zone -->
@@ -351,15 +285,6 @@
     <!-- Footer -->
     <div class="um-footer">
       <button class="um-btn um-btn-cancel" id="um-btn-cancel" onclick="closeUploadModal()">Cancel</button>
-      <button class="um-btn um-btn-cancel" id="um-btn-back" style="display:none" onclick="umBackToBuild()">← Back</button>
-      <button class="um-btn um-btn-primary" id="um-btn-build" onclick="umBuildRawData()">
-        <div class="um-spinner" id="um-spinner-build"></div>
-        <span id="um-build-label">Build RawData</span>
-      </button>
-      <button class="um-btn um-btn-primary" id="um-btn-continue" style="display:none" onclick="umContinueToImport()">
-        <div class="um-spinner" id="um-spinner-continue"></div>
-        <span id="um-continue-label">Continue to Import →</span>
-      </button>
       <button class="um-btn um-btn-primary" id="um-btn-upload" onclick="umUploadAndPreview()" disabled>
         <div class="um-spinner" id="um-spinner"></div>
         <span id="um-btn-label">Upload &amp; Validate</span>
@@ -568,7 +493,7 @@
 <div id="filter-overlay" onclick="closeFilter()"></div>
 
 <div id="app-view" style="display:none">
-<div id="srwb-app">
+<div id="madzi-app">
 
   <!-- Sidebar nav -->
   <nav id="db-nav">
@@ -607,7 +532,7 @@
       <div class="nav-section" id="brdsec-main">
         <div class="nav-item nav-item-child" data-page="board" data-section="Board View" data-title="Consolidated Executive Summary" onclick="navigate('board')"><span class="nav-item-label">Consolidated Summary</span></div>
         <div class="nav-item nav-item-child" data-page="overview" data-section="Executive Dashboard" data-title="Executive Dashboard" onclick="navigate('overview')"><span class="nav-item-label">Executive Dashboard</span></div>
-        <div class="nav-item nav-item-child" data-page="strategic" data-section="Board View" data-title="Strategic Plan 2023–2028 Scorecard" onclick="navigate('strategic')"><span class="nav-item-label">Strategic Plan Scorecard</span></div>
+        <div class="nav-item nav-item-child" data-page="strategic" data-section="Board View" data-title="__PLAN_TITLE__ Scorecard" onclick="navigate('strategic')"><span class="nav-item-label">Strategic Plan Scorecard</span></div>
         <div class="nav-item nav-item-child" data-page="position" data-section="Board View" data-title="Strategic Position" onclick="navigate('position')"><span class="nav-item-label">Strategic Position</span></div>
         <div class="nav-item nav-item-child nav-item-soon"><span class="nav-item-label">Risk Dashboard</span><span class="nav-soon">Soon</span></div>
         <div class="nav-item nav-item-child nav-item-soon"><span class="nav-item-label">Budget Performance</span><span class="nav-soon">Soon</span></div>
@@ -1056,11 +981,11 @@
   <div id="db-main">
 
     <!-- Board View — Consolidated cross-department executive roll-up -->
-    <!-- Strategic Plan 2023-2028 Scorecard -->
+    <!-- Strategic Plan Scorecard -->
     <div id="page-strategic" class="db-page report-page-standard">
       <div class="pg-hdr">
         <div class="pg-hdr-left">
-          <div class="pg-title">Strategic Plan 2023–2028 Scorecard</div>
+          <div class="pg-title">__PLAN_TITLE__ Scorecard</div>
           <div class="pg-meta" id="pg-meta-strategic">FY — · KPI tracking against approved targets</div>
           <div class="pg-sub">Official __PLAN_TITLE__ KPIs vs annual targets · live actuals are computed from captured returns; operational and gap measures flag where a data feed is still needed</div>
         </div>
@@ -2228,7 +2153,7 @@
       <!-- Page Header -->
       <div class="pg-hdr">
         <div class="pg-hdr-left">
-          <div class="pg-title">Annual Budget 2025/26</div>
+          <div class="pg-title" id="pg-title-budget">Annual Budget</div>
           <div class="pg-meta" id="pg-meta-budget">Loading…</div>
           <div class="pg-sub">Budget execution, operational variance, and segment performance presented in a board-ready monitoring format.</div>
         </div>
@@ -2238,11 +2163,11 @@
       <div class="bgt-framework-box" role="note" aria-label="Budget methodology and scope">
         <div class="bgt-framework-title">How to read this page</div>
         <div class="bgt-framework-copy">
-          This page compares results with the <strong>approved board budget dated 22 Feb 2025</strong>. Zone budgets are used for comparison only, and costs cover operating-site data in the database, not head-office overheads, depreciation, or finance costs. Revenue uses a fixed tariff of <strong>MK 1,450/m³</strong>. The budget score is <strong>Actual ÷ Budget</strong>; above 1.0 means ahead of budget.
+          This page compares results with the <strong>approved budget</strong> loaded for the selected fiscal year. Zone budgets are used for comparison only, and costs cover operating-site data in the database, not head-office overheads, depreciation, or finance costs. Revenue uses the fiscal-year tariff per m³ (Admin → Fiscal Years). The budget score is <strong>Actual ÷ Budget</strong>; above 1.0 means ahead of budget.
         </div>
       </div>
       <div class="bgt-chip-row" aria-label="Budget assumptions and scope highlights">
-        <span class="bgt-chip bgt-chip-blue">Approved budget basis · 22 Feb 2025</span>
+        <span class="bgt-chip bgt-chip-blue">Approved budget basis</span>
         <span class="bgt-chip bgt-chip-indigo">Zone budgets · IPSAS 18 proportional allocation</span>
         <span class="bgt-chip bgt-chip-amber">Costs shown · field operations only</span>
         <span class="bgt-chip bgt-chip-slate">Control method · ISO 7870-2 SPC</span>
@@ -2257,7 +2182,7 @@
         <div class="ex-hdr">
           <span class="ex-dot" style="background:#1A8FD1"></span>
           <span class="ex-title">Revenue Performance</span>
-          <span class="ex-sub">IWA Fi1 · Fixed tariff MK 1,450/m³ · All revenue variance = volume effect</span>
+          <span class="ex-sub">IWA Fi1 · Fiscal-year tariff per m³ · All revenue variance = volume effect</span>
         </div>
         <div id="bgt-rev-table"></div>
 
@@ -2346,7 +2271,7 @@
           <span class="ex-sub">IWA Op34 (chemicals) · Ee1 (energy) · Field scope only — see note</span>
         </div>
         <div class="bgt-scope-warn">
-          <strong>Field scope:</strong> DB captures scheme-level costs only. Corporate MK 9.38B Plant/Vehicle OpEx includes MK 3.54B bottled water production (not yet operational). Comparable field OpEx budget = MK 5.84B. Chemical and power budget estimates use 2023/24 ratios applied to the approved line items.
+          <strong>Field scope:</strong> the database captures scheme-level costs only, so corporate budget lines with no operating-site data are excluded from the comparison. Chemical and power budget estimates apply recent cost ratios to the approved line items.
         </div>
         <div id="bgt-cost-table"></div>
         <div class="chart-row chart-row-budget-split" style="margin-top:14px">
@@ -3110,7 +3035,7 @@
                   </div>
                   <div>
                     <label style="font-size:11px;font-weight:600;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em">Regulatory Body</label>
-                    <input type="text" id="org-regulator" class="adm-input" style="margin-top:4px;width:100%" placeholder="e.g. NWRA, MERA">
+                    <input type="text" id="org-regulator" class="adm-input" style="margin-top:4px;width:100%" placeholder="e.g. National Water Regulator">
                   </div>
                   <div>
                     <label style="font-size:11px;font-weight:600;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em">Country</label>
@@ -3136,7 +3061,7 @@
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
                   <div>
                     <label style="font-size:11px;font-weight:600;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em">Email</label>
-                    <input type="email" id="org-email" class="adm-input" style="margin-top:4px;width:100%" placeholder="admin@srwb.mw">
+                    <input type="email" id="org-email" class="adm-input" style="margin-top:4px;width:100%" placeholder="admin@example-utility.org">
                   </div>
                   <div>
                     <label style="font-size:11px;font-weight:600;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em">Phone</label>
@@ -3144,7 +3069,7 @@
                   </div>
                   <div style="grid-column:1/-1">
                     <label style="font-size:11px;font-weight:600;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em">Website</label>
-                    <input type="url" id="org-website" class="adm-input" style="margin-top:4px;width:100%" placeholder="https://srwb.mw">
+                    <input type="url" id="org-website" class="adm-input" style="margin-top:4px;width:100%" placeholder="https://example-utility.org">
                   </div>
                 </div>
                 <div id="org-profile-msg" style="display:none;font-size:12px;padding:8px 12px;border-radius:8px"></div>
@@ -3232,7 +3157,7 @@
                     <div class="adm-field"><label class="adm-label" for="ih-map-ext">Source key</label>
                       <input class="adm-input" id="ih-map-ext" placeholder="e.g. CC-1001"></div>
                     <div class="adm-field"><label class="adm-label" for="ih-map-int">MadziHub code</label>
-                      <input class="adm-input" id="ih-map-int" placeholder="e.g. north.zomba"></div>
+                      <input class="adm-input" id="ih-map-int" placeholder="e.g. north.central-works"></div>
                     <button class="adm-btn-secondary" onclick="ihSaveMapping()">Add mapping</button>
                   </div>
                 </div>
@@ -3375,7 +3300,7 @@
             <div class="adm-section-hdr" style="margin-top:2rem">
               <div>
                 <div class="adm-section-title" style="font-size:1rem">Register a New Fiscal Year</div>
-                <div class="adm-section-sub">Create the DB entry for a future FY. The zone data folder <code style="font-size:11px;background:var(--ds-border);padding:1px 4px;border-radius:3px">dataupdater/FY<em>XXYY</em>/</code> must be created separately with the five zone workbooks before running the build step.</div>
+                <div class="adm-section-sub">Create the database entry for a future fiscal year, then load its budget and monthly data.</div>
               </div>
             </div>
             <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;padding:.75rem 0;border-top:1px solid var(--border)">
@@ -3472,11 +3397,11 @@
   </div>
 
   </div><!-- /db-right-col -->
-</div><!-- /srwb-app -->
+</div><!-- /madzi-app -->
 </div><!-- /app-view -->
 
-<script src="/static/assets/js/app-core.js?v=20260924-3"></script>
-<script src="/static/assets/js/department-tabs.js?v=20260613-1"></script>
+<script src="/static/assets/js/app-core.js?v=20260924-8"></script>
+<script src="/static/assets/js/department-tabs.js?v=20260924-1"></script>
 <script src="/static/assets/js/integration-hub.js?v=20260924-3"></script>
 
 <!-- ══ ATTRIBUTION FOOTER ════════════════════════════════════════════════ -->
