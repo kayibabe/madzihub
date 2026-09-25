@@ -40,6 +40,17 @@ function ihNum(v, unit){
   const n = v.toLocaleString('en-GB', opts);
   return u ? `${n} ${u}` : n;
 }
+// Actual minus target, stated with its direction. A difference between two percentages
+// is in percentage points (31.4% vs 28% is 3.4 pp, not 3.4%).
+function ihGapText(diff, unit){
+  if(diff === null || diff === undefined || Number.isNaN(diff)) return 'gap not assessed';
+  if(Math.abs(diff) < 1e-9) return 'on target';
+  const side = diff > 0 ? 'above' : 'below';
+  const size = unit === '%'
+    ? `${Math.abs(diff).toLocaleString('en-GB',{maximumFractionDigits:1})} pp`
+    : ihNum(Math.abs(diff), unit);
+  return `${size} ${side} target`;
+}
 function ihPeriodLabel(iso, type){
   if(!iso) return '—';
   const d = new Date(iso + 'T00:00:00');
@@ -80,7 +91,9 @@ function ihStatus(src){
   if(src.last_status === 'partial') return {cls:'warn', label:'Has rejects'};
   if(src.last_status === 'success') return {cls:'ok', label:'Healthy'};
   if(src.last_status === 'running') return {cls:'user', label:'Running'};
-  return {cls:'viewer', label:'Never run'};
+  if(src.feed === 'approved_updates' && src.values) return {cls:'user', label:'Approved updates'};
+  if(src.values) return {cls:'user', label:'Values received'};
+  return {cls:'viewer', label:'No ingestion recorded'};
 }
 
 async function ihLoadSources(){
@@ -420,10 +433,48 @@ async function loadPosition(){
   await ihRenderPosition();
 }
 
+// Freshness is claimed only for scheduled sources that are on schedule; approved updates,
+// uploads and never-ingested sources are described, not called current.
+function ihSourceState(s){
+  switch(s.freshness){
+    case 'current': return `current · updated ${ihAgo(s.last_success_at)}`;
+    case 'overdue': return `overdue · last success ${ihAgo(s.last_success_at)}`;
+    case 'failed': return 'last run failed';
+    case 'disabled': return 'disabled';
+    case 'no_ingestion': return 'no ingestion recorded';
+    default: return s.feed === 'approved_updates'
+      ? `approved updates · last published ${ihAgo(s.last_value_at)}`
+      : `no schedule · last value ${ihAgo(s.last_value_at)}`;
+  }
+}
+function ihFreshnessBanner(fresh){
+  const enabled = fresh.filter(s => s.freshness !== 'disabled');
+  const attention = enabled.filter(s => s.freshness === 'overdue' || s.freshness === 'failed');
+  if(attention.length) return {cls:'warn', icon:'!', label:`${attention.length} source${attention.length > 1 ? 's' : ''} need attention`};
+  const empty = enabled.filter(s => s.freshness === 'no_ingestion');
+  const unscheduled = enabled.filter(s => s.freshness === 'not_scheduled');
+  if(!enabled.length) return {cls:'viewer', icon:'–', label:'No enabled data sources; freshness not assessed'};
+  if(!empty.length && !unscheduled.length) return {cls:'ok', icon:'✓', label:'All scheduled sources current'};
+  const why = [empty.length ? `${empty.length} with no ingestion recorded` : '',
+               unscheduled.length ? `${unscheduled.length} without a schedule` : ''].filter(Boolean).join(', ');
+  return {cls:'viewer', icon:'–', label:`Freshness not fully assessed (${why})`};
+}
+
+// Comparator provenance: what the value is assessed against, from where, for which unit and
+// period, and which version of the target.
+function ihUnitName(code){ return (IHP.units.find(u => u.code === code) || {}).name || code; }
+function ihComparatorLine(c, ptype){
+  return `${c.source} · ${ihUnitName(c.org_unit)} · ${ihPeriodLabel(c.period, c.period_type || ptype)}`;
+}
+function ihComparatorTitle(c){
+  return `Comparator: ${c.label}\nSource: ${c.source}\nUnit of measure: ${c.unit || '—'}\nOrganisational unit: ${ihUnitName(c.org_unit)}\n`
+       + `Period: ${ihPeriodLabel(c.period, c.period_type)}\nVersion: ${c.version}`;
+}
+
 function ihPosStatus(m){
   const g = m.gap_to_target;
   if(!m.where_we_are) return {cls:'viewer', icon:'○', label:'No data'};
-  if(!g) return {cls:'viewer', icon:'–', label:'No target'};
+  if(!g) return {cls:'viewer', icon:'–', label:m.target_note ? 'No target for period' : 'No target'};
   if(g.on_track === true) return {cls:'ok', icon:'✓', label:'On track'};
   if(g.on_track === false) return {cls:'danger', icon:'✕', label:'Off track'};
   if(g.period_complete === false) return {cls:'user', icon:'◔', label:'Year to date'};
@@ -441,11 +492,11 @@ async function ihRenderPosition(){
       ihApi('/api/position/sources/freshness', {fallback:[]}),
     ]);
     IHP.data = data;
-    const stale = fresh.filter(s => s.enabled && (s.overdue || s.last_status === 'failed'));
+    const fb = ihFreshnessBanner(fresh);
     ihSet(document.getElementById('pos-fresh'), fresh.length
-      ? `<span class="ih-badge ${stale.length ? 'warn' : 'ok'}">${stale.length ? '!' : '✓'} ${stale.length ? `${stale.length} source${stale.length > 1 ? 's' : ''} need attention` : 'All sources current'}</span>
-         ${fresh.map(s => `<span class="pos-src" title="${ihEsc(s.name)}">${ihEsc(s.code)}: ${ihEsc(ihAgo(s.last_success_at))}</span>`).join('')}`
-      : '');
+      ? `<span class="ih-badge ${fb.cls}">${fb.icon} ${ihEsc(fb.label)}</span>
+         ${fresh.map(s => `<span class="pos-src" title="${ihEsc(s.name)}">${ihEsc(s.code)}: ${ihEsc(ihSourceState(s))}</span>`).join('')}`
+      : '<span class="ih-badge viewer">– No data sources connected; freshness not assessed</span>');
     const withData = data.measures.filter(m => m.where_we_are);
     if(!withData.length){
       ihSet(grid, `<div class="pos-empty">No measures have data for this unit and period yet.
@@ -481,8 +532,11 @@ async function ihRenderPosition(){
             : (!m.metric.formula && m.metric.aggregation !== 'sum'
                ? 'Not added up across units (a latest or average value); select a single unit'
                : 'no data')}${extra ? ' · ' + extra : ''}</div>
-          ${g ? `<div class="pos-target">Target ${ihEsc(ihNum(g.target, unitLbl))} · gap ${ihEsc(ihNum(g.difference, unitLbl))}</div>`
+          ${g ? `<div class="pos-target" title="${ihEsc(ihComparatorTitle(g.comparator))}">${ihEsc(g.comparator.label)} ${ihEsc(ihNum(g.target, unitLbl))} · ${ihEsc(ihGapText(g.difference, unitLbl))}</div>
+                 <div class="pos-note">${ihEsc(ihComparatorLine(g.comparator, data.period_type))}</div>`
               : (m.next_target ? `<div class="pos-target">Next target ${ihEsc(ihNum(m.next_target.value, unitLbl))} (${ihEsc(ihPeriodLabel(m.next_target.period, m.next_target.period_type))})</div>` : '')}
+          ${!g && m.target_note ? `<div class="pos-note">${ihEsc(m.target_note)}</div>` : ''}
+          ${(m.other_comparators || []).map(o => `<div class="pos-note" title="${ihEsc(ihComparatorTitle(o.comparator))}">${ihEsc(o.comparator.label)} ${ihEsc(ihNum(o.target, unitLbl))} · ${ihEsc(ihGapText(o.difference, unitLbl))}</div>`).join('')}
           ${g && g.note ? `<div class="pos-note">${ihEsc(g.note)}</div>` : ''}
           ${trend}
         </button>`;
@@ -516,10 +570,13 @@ async function ihOpenMeasure(code){
             <td class="ih-cell-meta" title="${ihEsc(s.source_ref || '')}">${ihEsc(s.source)}${s.inputs ? ' · ' + ihEsc(Object.entries(s.inputs).map(([k, v]) => `${k}=${ihNum(v)}`).join(', ')) : ''}</td></tr>`).join('')}
           </tbody></table></div></div>
         <div><div class="adm-sys-card-title">Where we are going</div>
-          ${p.where_we_are_going.length ? `<div class="adm-table-wrap"><table class="adm-table"><thead><tr><th>Period</th><th style="text-align:right">Target</th><th>Basis</th></tr></thead><tbody>
+          ${p.where_we_are_going.length ? `<div class="adm-table-wrap"><table class="adm-table"><thead><tr><th>Period</th><th style="text-align:right">Target</th><th>Comparator</th><th>Source and version</th></tr></thead><tbody>
           ${p.where_we_are_going.map(t => `<tr><td>${ihEsc(ihPeriodLabel(t.period, t.period_type))}</td>
-            <td style="text-align:right" class="ih-mono">${ihEsc(ihNum(t.value, u))}</td><td class="ih-cell-meta" title="${ihEsc(t.note || '')}">${ihEsc(t.basis.replace('_', ' '))}</td></tr>`).join('')}
+            <td style="text-align:right" class="ih-mono">${ihEsc(ihNum(t.value, u))}</td><td class="ih-cell-meta" title="${ihEsc(t.note || '')}">${ihEsc(t.comparator.label)}</td>
+            <td class="ih-cell-meta">${ihEsc(t.comparator.source)} · ${ihEsc(t.comparator.version)}</td></tr>`).join('')}
           </tbody></table></div>` : '<div class="adm-empty">No future targets set for this unit and period type.</div>'}
+          ${p.gap_to_target ? `<div class="pos-how">Current period assessed against ${ihEsc(p.gap_to_target.comparator.label.toLowerCase())} ${ihEsc(ihNum(p.gap_to_target.target, u))}: ${ihEsc(ihGapText(p.gap_to_target.difference, u))}. ${ihEsc(ihComparatorLine(p.gap_to_target.comparator, p.period_type))} · ${ihEsc(p.gap_to_target.comparator.version)}.</div>`
+            : (p.target_note ? `<div class="pos-how">${ihEsc(p.target_note)}.</div>` : '')}
         </div>
       </div>`);
     ihDrawChart(p, series);
@@ -533,13 +590,14 @@ function ihDrawChart(p, series){
   const css = getComputedStyle(document.documentElement);
   const tok = (name, fallback) => (css.getPropertyValue(name) || '').trim() || fallback;
   const blue = tok('--ds-blue', '#2563EB'), muted = tok('--ds-text-muted', '#64748b'), border = tok('--ds-border', '#e2e8f0');
+  // One target line: the primary (strategic plan) comparator; other bases are not merged into it.
   const targets = [...(p.gap_to_target ? [{period:p.gap_to_target.target_period, value:p.gap_to_target.target}] : []),
-                   ...p.where_we_are_going].filter(t => t);
+                   ...p.where_we_are_going.filter(t => t.basis === 'strategic_plan')].filter(t => t);
   const labels = [...new Set([...series.map(s => s.period), ...targets.map(t => t.period)])].sort();
   const byPeriod = (rows) => labels.map(l => { const r = rows.find(x => x.period === l); return r ? r.value : null; });
   const datasets = [{label:'Actual', data:byPeriod(series), borderColor:blue, backgroundColor:blue,
                      borderWidth:2, pointRadius:4, pointHoverRadius:6, tension:0, spanGaps:true}];
-  if(targets.length) datasets.push({label:'Target', data:byPeriod(targets), borderColor:muted, backgroundColor:muted,
+  if(targets.length) datasets.push({label:'Strategic plan target', data:byPeriod(targets), borderColor:muted, backgroundColor:muted,
                      borderWidth:2, borderDash:[6, 4], pointRadius:4, pointStyle:'rectRot', spanGaps:true});
   IHP.chart = new Chart(canvas, {
     type:'line',

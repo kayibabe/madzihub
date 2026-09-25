@@ -378,6 +378,7 @@ def serve_app_core_js(request: Request):
     import hashlib
     import json
     from app.core.tenant import tenant
+    from app.services import comparators
     from app.utils import MONTHS_ORDER
 
     brand = _brand_values()
@@ -395,6 +396,7 @@ def serve_app_core_js(request: Request):
         "__COLL_GOOD__": f"{tenant.thresholds.get('coll_good', 90):g}",
         "__COLL_WARN__": f"{tenant.thresholds.get('coll_warn', 75):g}",
         "__ZONE_COLL_WARN__": f"{tenant.thresholds.get('zone_coll_warn', 80):g}",
+        "__COMPARATORS__": json.dumps(comparators.rules()),
         "__FY_MONTHS__": json.dumps(MONTHS_ORDER),
         "__ZONE_COLORS__": json.dumps(tenant.zone_colors),
     }

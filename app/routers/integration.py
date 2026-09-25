@@ -506,7 +506,8 @@ def overview(org_unit: str = "org", period_type: str = "month", db: Session = De
     for m in db.query(Metric).filter(Metric.is_active.is_(True)).order_by(Metric.category, Metric.code):
         p = pos.position(db, m, org_unit, period_type)
         out.append({"metric": p["metric"], "category": m.category, "where_we_are": p["where_we_are"],
-                    "gap_to_target": p["gap_to_target"], "trend": p["trend"], "rolled_up": p["rolled_up"], "derived": p["derived"],
+                    "gap_to_target": p["gap_to_target"], "other_comparators": p["other_comparators"],
+                    "target_note": p["target_note"], "trend": p["trend"], "rolled_up": p["rolled_up"], "derived": p["derived"],
                     "next_target": (p["where_we_are_going"] or [None])[0]})
     return {"org_unit": org_unit, "period_type": period_type, "measures": out}
 

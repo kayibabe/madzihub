@@ -116,6 +116,33 @@ def _variance_blocks(data: dict) -> list[dict]:
                        s["variance_reason"] or "Not explained", s["corrective_action"] or "—"] for s in subs]}]
 
 
+_FRESHNESS_TEXT = {"overdue": "Overdue", "failed": "Last run failed", "no_ingestion": "No ingestion recorded",
+                   "not_scheduled": "No schedule; freshness not assessed"}
+
+
+def _source_blocks(data: dict) -> list[dict]:
+    sources = data.get("sources", [])
+    head = {"t": "h", "level": 2, "text": "Stale or failing data sources"}
+    if data.get("sources_contract", 1) < 2:
+        # Frozen before sources carried an explicit freshness state: render exactly as approved.
+        stale = [s for s in sources if s["overdue"] or s["last_status"] == "failed"]
+        return [head, {"t": "table", "caption": "Connected sources that are overdue or failed",
+                       "columns": ["Source", "Last success", "Last run"], "num": [],
+                       "rows": [[s["name"], s["last_success_at"] or "never", _label(s["last_status"])] for s in stale]}
+                if stale else {"t": "p", "tone": "note", "text": "All connected sources are current."}]
+    head = {**head, "text": "Data source freshness"}
+    listed = [s for s in sources if s["freshness"] in _FRESHNESS_TEXT]
+    current = [s for s in sources if s["freshness"] == "current"]
+    if not listed:
+        text = ("All enabled sources are scheduled and current." if current
+                else "No enabled sources are connected; freshness is not assessed.")
+        return [head, {"t": "p", "tone": "note", "text": text}]
+    return [head, {"t": "table", "caption": "Sources that are not confirmed current",
+                   "columns": ["Source", "State", "Last success", "Last value received"], "num": [],
+                   "rows": [[s["name"], _FRESHNESS_TEXT[s["freshness"]], s["last_success_at"] or "never",
+                             s["last_value_at"] or "never"] for s in listed]}]
+
+
 def _action_blocks(data: dict, overdue_only: bool) -> list[dict]:
     acts = [a for a in data.get("actions", []) if a["overdue"] or not overdue_only]
     names = data.get("unit_names", {})
@@ -194,10 +221,6 @@ def build(meta: dict, data: dict, commentary: dict | None) -> list[dict]:
                    {"t": "table", "caption": "Submissions without required evidence", "columns": ["Indicator", "Unit", "Revision"],
                     "num": [2], "rows": [[s["indicator"], names.get(s["org_unit_code"], s["org_unit_code"]), str(s["revision"])] for s in evid]}
                    if evid else {"t": "p", "tone": "note", "text": "None."}]
-        stale = [s for s in data.get("sources", []) if s["overdue"] or s["last_status"] == "failed"]
-        blocks += [{"t": "h", "level": 2, "text": "Stale or failing data sources"},
-                   {"t": "table", "caption": "Connected sources that are overdue or failed", "columns": ["Source", "Last success", "Last run"],
-                    "num": [], "rows": [[s["name"], s["last_success_at"] or "never", _label(s["last_status"])] for s in stale]}
-                   if stale else {"t": "p", "tone": "note", "text": "All connected sources are current."}]
+        blocks += _source_blocks(data)
         blocks += _action_blocks(data, overdue_only=True) + _risk_blocks(data)
     return blocks

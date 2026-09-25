@@ -140,7 +140,9 @@ def freeze(db: Session, scope: Scope, kind: str, plan_id: int | None, period: Pe
         data["actions"] = actions_section(db, scope, units)
     if kind == "exceptions":
         data["sources"] = [{"code": s["code"], "name": s["name"], "last_success_at": s["last_success_at"],
-                            "overdue": s["overdue"], "last_status": s["last_status"]} for s in freshness(db)]
+                            "overdue": s["overdue"], "last_status": s["last_status"],
+                            "freshness": s["freshness"], "last_value_at": s["last_value_at"]} for s in freshness(db)]
+        data["sources_contract"] = 2   # explicit freshness states; older frozen reports render as approved
         if plan_id:
             data["score"] = score_section(db, scope, plan_id, period, unit)
     ctx = {"kind": kind, "plan_id": plan_id, "period": period, "unit": unit, "units": units}

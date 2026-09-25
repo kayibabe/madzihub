@@ -19,10 +19,11 @@
   ],
   "kpi": {
    "continuity_pct": 97.1,
-   "gap_to_target": 2.3,
+   "gap_to_target": 3.3,
    "power_fail_hours": 96565,
+   "supply_flag": "GOOD",
    "supply_hours": 23.3,
-   "target_hours": 21
+   "target_hours": 20.0
   },
   "monthly": [
    {

@@ -707,6 +707,12 @@ html,body{height:100%;min-height:100%;font-family:var(--ds-font);font-weight:400
   background:var(--ds-surface);outline:none;cursor:pointer;transition:border-color .14s;
 }
 .tb-fy-select:focus{border-color:#0E7C7B}
+/* Page scope (applyPageScope): hide controls that do not govern the page and state its scope. */
+.tb-scope-note{display:flex;align-items:center;padding:6px 10px;border:1px dashed var(--ds-border);border-radius:8px;font-size:12px;font-weight:600;color:var(--ds-text-secondary);line-height:1.35;max-width:560px}
+.tb-scope-note[hidden]{display:none}
+body.scope-no-fy .tb-fy-wrap,body.scope-no-fy #db-topbar>.tb-divider{display:none}
+body.scope-no-filters #tb-quickfilters,body.scope-no-filters #tb-clear-filters-btn,
+body.scope-no-filters #tb-filter-btn,body.scope-no-filters #filter-context{display:none!important}
 .tb-quickfilters{display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0}
 .tb-qf{display:flex;align-items:center;gap:7px;padding:4px 10px;border:1.5px solid var(--ds-border);border-radius:10px;background:var(--ds-surface);min-height:40px}
 .tb-qf-label{font-size:10px;font-weight:700;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.09em;white-space:nowrap}

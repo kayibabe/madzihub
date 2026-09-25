@@ -119,8 +119,7 @@
 .mz-tree-indent{display:inline-block}
 .mz-pill-list{display:flex;flex-wrap:wrap;gap:6px}
 
-/* The dashboard zone/period filters do not apply to module pages, which have their own selectors. */
-body.mz-module-page #tb-quickfilters,body.mz-module-page #tb-clear-filters-btn,body.mz-module-page #tb-filter-btn{display:none!important}
+/* Which top-bar filters govern a page is decided by applyPageScope() in app-core.js (PAGE_SCOPE). */
 
 /* Scoped (region-limited) users only get this workspace; the org-wide departments are hidden. */
 body.mz-scoped #dept-tabs .dept-tab:not([data-dept="performance"]){display:none}

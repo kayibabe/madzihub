@@ -97,6 +97,13 @@ def _assert_valid_js(test: unittest.TestCase, js: str):
         test.assertEqual(r.returncode, 0, r.stderr[:500])
 
 
+def _comparators(js: str) -> dict:
+    """The governed comparator rules injected into app-core.js (app/services/comparators.py)."""
+    import json
+    import re
+    return json.loads(re.search(r"const CMP=(\{.*?\});\s", js).group(1))
+
+
 class RenderedAssetTests(unittest.TestCase):
     def tearDown(self):
         os.environ.pop("MADZI_TENANT", None)
@@ -115,7 +122,7 @@ class RenderedAssetTests(unittest.TestCase):
         js = self._render(RIVERBEND)
         for p in PLACEHOLDERS:
             self.assertNotIn(p, js)
-        self.assertIn("nrw:27,", js)
+        self.assertEqual(_comparators(js)["nrw_pct"]["good"], 27.0)
         self.assertIn("'RWS <27%'", js)
         self.assertIn("'\\u20ac '", js)  # symbol is JSON-escaped into the JS literal
         self.assertIn('const ALL_FY_MONTHS=["April",', js)
@@ -128,7 +135,7 @@ class RenderedAssetTests(unittest.TestCase):
             self.assertNotIn(p, js)
         for legacy in LEGACY_NAMES:
             self.assertNotIn(legacy, js)
-        self.assertIn("nrw:27,", js)
+        self.assertEqual(_comparators(js)["nrw_pct"]["good"], 27.0)
         self.assertIn('const ALL_FY_MONTHS=["July",', js)
         self.assertIn('"North": "#0f766e"', js)
         # The USD "$" symbol survives, escaped so it can never open a ${...} substitution.

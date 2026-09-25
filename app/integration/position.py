@@ -202,48 +202,82 @@ def _trend(series: list[dict], direction: str, window: int = 3) -> dict | None:
             "change_pct": None if change is None else round(change, 2), "improving": improving}
 
 
+# Comparator types a target row can carry, kept distinct: a plan target is never read as a
+# regulatory benchmark or a budget figure. The strategic plan is the primary comparator.
+BASIS_LABELS = {"strategic_plan": "Strategic plan target", "budget": "Budget",
+                "regulator": "Regulatory target", "internal": "Internal target"}
+PRIMARY_BASIS = "strategic_plan"
+
+
+def _comparator(t: MetricTarget, metric: Metric, org_code: str, plans: dict[int, str]) -> dict:
+    """A target with its provenance: type, source, unit, scope, period and version."""
+    return {"period": t.period_start.isoformat(), "period_type": t.period_type, "value": t.value,
+            "lower": t.lower, "upper": t.upper, "basis": t.basis, "note": t.note,
+            "comparator": {"type": t.basis, "label": BASIS_LABELS.get(t.basis, t.basis),
+                           "source": plans.get(t.plan_id) or "Entered in Data Sources → Targets",
+                           "unit": metric.unit, "org_unit": org_code,
+                           "period": t.period_start.isoformat(), "period_type": t.period_type,
+                           "version": f"target #{t.id}"
+                                      + (f", updated {t.updated_at.date().isoformat()}" if t.updated_at else "")}}
+
+
+def _gap(metric: Metric, current: dict, tgt: dict) -> dict:
+    diff = current["value"] - tgt["value"]
+    on_track = None
+    if metric.direction == "higher":
+        on_track = diff >= 0
+    elif metric.direction == "lower":
+        on_track = diff <= 0
+    elif tgt["lower"] is not None and tgt["upper"] is not None:
+        on_track = tgt["lower"] <= current["value"] <= tgt["upper"]
+    complete = current.get("months_reporting", 0) >= current.get("months_expected", 0)
+    note = None
+    if not complete and metric.aggregation == "sum":
+        # A year-to-date total against a full-year target is not a verdict. For a formula,
+        # aggregation declares its period meaning: "sum" accumulates over the period
+        # (e.g. produced - billed), anything else is a ratio comparable at any point.
+        on_track = None
+        note = (f"{current['months_reporting']} of {current['months_expected']} months reported; "
+                "total is year-to-date")
+    return {"target_period": tgt["period"], "target": tgt["value"], "actual": current["value"],
+            "difference": diff, "on_track": on_track, "basis": tgt["basis"],
+            "period_complete": complete, "note": note, "comparator": tgt["comparator"]}
+
+
 def position(db: Session, metric: Metric, org_code: str, period_type: str = "month",
              start: date | None = None, end: date | None = None) -> dict:
+    from app.modules.strategy.models import Plan
+
     series, info = published_series(db, metric, org_code, period_type, start, end)
+    plans = {p.id: f"{p.code}: {p.title}" for p in db.query(Plan)}
     targets = [
-        {"period": t.period_start.isoformat(), "period_type": t.period_type, "value": t.value,
-         "lower": t.lower, "upper": t.upper, "basis": t.basis, "note": t.note}
+        _comparator(t, metric, org_code, plans)
         for t in db.query(MetricTarget).filter(MetricTarget.metric_code == metric.code,
                                               MetricTarget.org_unit_code == org_code)
-                                       .order_by(MetricTarget.period_start)
+                                       .order_by(MetricTarget.period_start, MetricTarget.basis)
     ]
     current = series[-1] if series else None
     if current and current.get("loaded_at"):
         age = datetime.utcnow() - datetime.fromisoformat(current["loaded_at"])
         current = {**current, "data_age_days": age.days}
 
-    gap = None
+    # Only a target for exactly this period and grain assesses it: an earlier period's target is
+    # never carried forward silently. Each basis is resolved on its own; the strategic plan is primary.
+    gap, other_gaps, target_note = None, [], None
     if current:
-        cur_date = date.fromisoformat(current["period"])
-        applicable = [t for t in targets if date.fromisoformat(t["period"]) <= cur_date]
-        same_grain = [t for t in applicable if t["period_type"] == period_type]
-        tgt = same_grain[-1] if same_grain else None
-        if tgt:
-            diff = current["value"] - tgt["value"]
-            on_track = None
-            if metric.direction == "higher":
-                on_track = diff >= 0
-            elif metric.direction == "lower":
-                on_track = diff <= 0
-            elif tgt["lower"] is not None and tgt["upper"] is not None:
-                on_track = tgt["lower"] <= current["value"] <= tgt["upper"]
-            complete = current.get("months_reporting", 0) >= current.get("months_expected", 0)
-            note = None
-            if not complete and metric.aggregation == "sum":
-                # A year-to-date total against a full-year target is not a verdict. For a formula,
-                # aggregation declares its period meaning: "sum" accumulates over the period
-                # (e.g. produced - billed), anything else is a ratio comparable at any point.
-                on_track = None
-                note = (f"{current['months_reporting']} of {current['months_expected']} months reported; "
-                        "total is year-to-date")
-            gap = {"target_period": tgt["period"], "target": tgt["value"], "actual": current["value"],
-                   "difference": diff, "on_track": on_track, "basis": tgt["basis"],
-                   "period_complete": complete, "note": note}
+        same = [t for t in targets if t["period_type"] == period_type and t["period"] == current["period"]]
+        for tgt in same:
+            g = _gap(metric, current, tgt)
+            if tgt["basis"] == PRIMARY_BASIS:
+                gap = g
+            else:
+                other_gaps.append(g)
+        if gap is None:
+            earlier = [t for t in targets if t["period_type"] == period_type and t["basis"] == PRIMARY_BASIS
+                       and t["period"] < current["period"]]
+            target_note = ("No strategic-plan target for this period; not assessed"
+                           + (f" (latest target {earlier[-1]['value']:g} is for the period from {earlier[-1]['period']})"
+                              if earlier else ""))
 
     future = [t for t in targets if t["period_type"] == period_type
               and (current is None or t["period"] > current["period"])]
@@ -259,6 +293,8 @@ def position(db: Session, metric: Metric, org_code: str, period_type: str = "mon
         "where_we_are": current,
         "where_we_are_going": future,
         "gap_to_target": gap,
+        "other_comparators": other_gaps,
+        "target_note": target_note,
         "trend": _trend(series, metric.direction),
     }
 
@@ -281,8 +317,35 @@ def reconciliation(db: Session, metric_code: str, org_code: str, period_type: st
     return sorted(out, key=lambda r: -r["spread"])
 
 
+APPROVED_UPDATES_SOURCE = "strategy-updates"   # app.modules.strategy.service.MANUAL_SOURCE
+
+
+def freshness_state(s: dict) -> str:
+    """One explicit state per source, so absence of a problem is never read as "current".
+
+    current       scheduled, and succeeded within twice its interval
+    overdue       scheduled, and has not succeeded within twice its interval
+    failed        the last run failed
+    disabled      switched off
+    no_ingestion  enabled but no run has succeeded and no value has ever been received
+    not_scheduled receives values without a schedule (uploads, pushes, approved updates):
+                  freshness is not judged against a schedule; see last_value_at
+    """
+    if not s["enabled"]:
+        return "disabled"
+    if s["last_status"] == "failed":
+        return "failed"
+    if s["overdue"]:
+        return "overdue"
+    if not s["values"] and not s["last_success_at"]:
+        return "no_ingestion"
+    return "current" if s["feed"] == "scheduled" else "not_scheduled"
+
+
 def freshness(db: Session) -> list[dict]:
     """Per source: when it last ran, last succeeded, and whether it is overdue. Trust starts here."""
+    from sqlalchemy import func
+
     from app.integration.models import SyncRun
 
     now = datetime.utcnow()
@@ -293,6 +356,9 @@ def freshness(db: Session) -> list[dict]:
         if s.schedule_minutes and s.enabled:
             ref = s.last_success_at
             overdue = ref is None or (now - ref).total_seconds() > s.schedule_minutes * 60 * 2
+        last_value_at = db.query(func.max(MetricValue.loaded_at)).filter(MetricValue.source_id == s.id).scalar()
+        feed = ("approved_updates" if s.code == APPROVED_UPDATES_SOURCE
+                else "scheduled" if s.schedule_minutes else "unscheduled")
         out.append({
             "code": s.code, "name": s.name, "system_type": s.system_type, "connector": s.connector,
             "enabled": s.enabled, "priority": s.priority, "owner": s.owner,
@@ -302,5 +368,8 @@ def freshness(db: Session) -> list[dict]:
             "last_error": last.error if last and last.status == "failed" else None,
             "overdue": overdue,
             "values": db.query(MetricValue).filter_by(source_id=s.id).count(),
+            "feed": feed,
+            "last_value_at": last_value_at.isoformat() if last_value_at else None,
         })
+        out[-1]["freshness"] = freshness_state(out[-1])
     return out

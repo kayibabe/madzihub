@@ -20,13 +20,13 @@
 <script src="/static/vendor/xlsx/xlsx.full.min.js?v=0.18.5"></script>
 <script src="/static/vendor/dompurify/purify.min.js?v=3.1.6"></script>
 <link rel="stylesheet" href="/static/vendor/fonts/fonts.css?v=5.3.0">
-<link rel="stylesheet" href="/static/assets/css/base.css?v=20260924-4">
+<link rel="stylesheet" href="/static/assets/css/base.css?v=20260925-1">
 
 <link rel="stylesheet" href="/static/assets/css/reports.css?v=20260924-2">
 <link rel="stylesheet" href="/static/assets/css/print.css?v=20260924-2">
 <link rel="stylesheet" href="/static/assets/css/department-tabs.css?v=20260613-1">
 <link rel="stylesheet" href="/static/assets/css/integration-hub.css?v=20260924-3">
-<link rel="stylesheet" href="/static/assets/css/mod-platform.css?v=20260925-1">
+<link rel="stylesheet" href="/static/assets/css/mod-platform.css?v=20260925-2">
 </head>
 <body>
 
@@ -961,8 +961,11 @@
     <!-- Financial Year selector (moved from sidebar) -->
     <div class="tb-fy-wrap">
       <span class="tb-fy-label">FY</span>
-      <select class="tb-fy-select" id="fy-select" onchange="onFyChange(this.value)"><option value="">Loading…</option></select>
+      <select class="tb-fy-select" id="fy-select" aria-label="Financial year" onchange="onFyChange(this.value)"><option value="">Loading…</option></select>
     </div>
+
+    <!-- Scope of the current page when the global filters do not govern it (set by applyPageScope) -->
+    <div class="tb-scope-note" id="tb-scope-note" aria-live="polite" hidden></div>
 
     <div class="tb-divider"></div>
 
@@ -3488,9 +3491,9 @@
 </div><!-- /madzi-app -->
 </div><!-- /app-view -->
 
-<script src="/static/assets/js/app-core.js?v=20260925-2"></script>
+<script src="/static/assets/js/app-core.js?v=20260925-3"></script>
 <script src="/static/assets/js/department-tabs.js?v=20260925-2"></script>
-<script src="/static/assets/js/integration-hub.js?v=20260924-3"></script>
+<script src="/static/assets/js/integration-hub.js?v=20260925-2"></script>
 <script src="/static/assets/js/mod-platform.js?v=20260925-3"></script>
 <script src="/static/assets/js/mod-strategy.js?v=20260925-2"></script>
 <script src="/static/assets/js/mod-scorecard.js?v=20260925-2"></script>

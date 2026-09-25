@@ -610,7 +610,7 @@ function updatePageMeta(){
   const stamp=new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
   ['board','finance','hra','infrastructure','overview','operations','commercial','production','wt-ei','customers','connections','stuck','connectivity','breakdowns','pipelines','billed','collections','charges','expenses','debtors','segment-revenue','workforce','class-connections','stuck-classes','pipe-materials','budget','compliance','benchmarking','report-centre','metering','disconnections','profitability','staff-productivity','strategic'].forEach(page=>{
     const el=document.getElementById(`pg-meta-${page}`);
-    if(el)el.innerHTML= DOMPurify.sanitize(`${buildCompactFilterSummary()} <span class="meta-sep">·</span> Updated ${stamp}`);
+    if(el)el.innerHTML= DOMPurify.sanitize(`${pageScopeSummary(page)} <span class="meta-sep">·</span> Updated ${stamp}`);
   });
   const sc=document.getElementById('rc-scope-val');
   if(sc) sc.innerHTML= DOMPurify.sanitize(buildCompactFilterSummary());
@@ -634,7 +634,7 @@ function exportMetaLines(page,cfg){
   const generated=new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
   const governance=exportGovernancePage(page)||{};
   return {
-    scope: buildFilterSummary(),
+    scope: pageScopeSummary(page,{long:true}),
     generated,
     orientation: (cfg?.orientation||'landscape').replace(/^./,c=>c.toUpperCase()),
     fileStem: buildExportFileStem(page,cfg),
@@ -1562,21 +1562,65 @@ const ICON={
 };
 
 /* ── IWA / IBNET / World Bank benchmark constants ── */
+/* Governed comparators (app/services/comparators.py), injected by the server: one rule per
+   measure, with the type, source and version of each boundary. Cards and reports assess
+   through cmpFlag() so the same measure gets the same verdict everywhere. */
+const CMP=__COMPARATORS__;
+function cmpFlag(key,v){
+  const r=CMP[key]; if(!r||v==null||!Number.isFinite(Number(v))) return null;
+  const lo=r.direction==='lower';
+  if(lo?v<=r.good:v>=r.good) return 'GOOD';
+  if(lo?v<=r.warn:v>=r.warn) return 'WATCH';
+  return 'HIGH';
+}
+function cmpCls(key,v){ return {GOOD:'kc-up',WATCH:'kc-nt',HIGH:'kc-dn'}[cmpFlag(key,v)]||''; }
+function cmpBm(key){ const r=CMP[key]; return `${r.good_comparator.source} ${r.direction==='lower'?'≤':'≥'}${r.good}`; }
+function cmpHelp(key){
+  const r=CMP[key];
+  const b=n=>{const c=r[n+'_comparator'];return `${n==='good'?'Good':'Watch'} boundary ${r[n]}: ${c.type.replace('_',' ')}, ${c.source} (${c.origin})`;};
+  const ctx=r.context.map(c=>` Context only, ${c.type}: ${c.source} ${c.value}.`).join('');
+  return `${r.measure} (${r.unit}). ${b('good')}. ${b('warn')}.${ctx} Applies to every unit and period in scope. ${r.version}.`;
+}
+// Cards whose label names a governed measure get its comparator in their definition tooltip.
+const CMP_BY_LABEL={'NRW Rate':'nrw_pct','Collection Rate':'collection_rate','Operating Ratio':'op_ratio',
+  'Days Sales Outstanding':'dso','Supply Hours / Day':'supply_hours','Energy Intensity':'energy_intensity'};
+/* Cards that appear on more than one page, built once so every page assesses them identically. */
+function staffRatioCard(label,v){
+  const f=cmpFlag('staff_per_1000_conn',v), r=CMP.staff_per_1000_conn;
+  return {l:label, v:v!=null?Number(v).toFixed(1):'—',
+    s:f==='GOOD'?`Within ${r.good_comparator.source.toLowerCase()}`:f?`Above ${r.good_comparator.source.toLowerCase()}`:'Staffing efficiency',
+    cls:cmpCls('staff_per_1000_conn',v), icon:ICON.people, badgeLabel:f||'INFO', help:cmpHelp('staff_per_1000_conn'),
+    bm:`${cmpBm('staff_per_1000_conn')} / 1k conn`, bmPct:v!=null?Math.min(100,r.good/Math.max(v,0.1)*100):null, bmOk:v!=null?f==='GOOD':null};
+}
+function breakdownRateCard(label,v){
+  const f=cmpFlag('breakdowns_per_1k',v);
+  return {l:label, v:v!=null?Number(v).toFixed(1):'—',
+    s:f==='GOOD'?'Within reliability band':f?'Above reliability band':'Network reliability',
+    cls:cmpCls('breakdowns_per_1k',v), icon:ICON.gauge, badgeLabel:f||'INFO', help:cmpHelp('breakdowns_per_1k'),
+    bm:`${cmpBm('breakdowns_per_1k')} / 1k conn`};
+}
+function activeRatioCard(v){
+  const f=cmpFlag('active_conn_ratio',v);
+  return {l:'Active Conn. Ratio', v:v!=null?`${Number(v).toFixed(1)}%`:'—',
+    s:f==='GOOD'?'Most meters active':f==='WATCH'?'Inactive share to watch':f?'High disconnected share':'Meter activity',
+    cls:cmpCls('active_conn_ratio',v), icon:ICON.meter, badgeLabel:f||'INFO', help:cmpHelp('active_conn_ratio'),
+    bm:`${cmpBm('active_conn_ratio')}%`};
+}
 const IWA={
-  nrw:__NRW_TARGET__, // tenant NRW target (targets.nrw_pct)
-  nrw_iwa:20,        // IWA international benchmark <20%
-  nrw_warn:__NRW_WARN__,      // Warning threshold (action zone target–35%)
-  coll_rate:__COLL_GOOD__,
-  coll_warn:__COLL_WARN__,
-  zone_coll_warn:__ZONE_COLL_WARN__,     // IBNET collection rate >90%
-  op_ratio:0.80,    // World Bank operating ratio <0.80
-  dso:60,           // IBNET DSO <60 days
-  energy:0.5,       // IWA energy intensity <0.5 kWh/m³
+  nrw:CMP.nrw_pct.good,                 // corporate NRW target (targets.nrw_pct)
+  nrw_iwa:CMP.nrw_pct.context[0].value, // IWA international reference (context only)
+  nrw_warn:CMP.nrw_pct.warn,            // NRW action threshold
+  coll_rate:CMP.collection_rate.good,
+  coll_warn:CMP.collection_rate.warn,
+  zone_coll_warn:__ZONE_COLL_WARN__,     // zone-level collection alert band
+  op_ratio:CMP.op_ratio.good,
+  dso:CMP.dso.good,
+  energy:CMP.energy_intensity.good,
   meter_read:95,    // Meter read rate >95%
   days_quote:7,     // WB quotation <7 working days
   days_connect:30,  // WB connection <30 days
   query_res:5,      // Query resolution <5 days
-  bd_per_1k:5,      // Breakdown rate <5/1000 connections/yr
+  bd_per_1k:CMP.breakdowns_per_1k.good,
   repair_rate:80,   // Repair rate >80%
 };
 /* Helper: benchmark progress % (hi-good: higher=better; lo-good: lower=better) */
@@ -1961,7 +2005,8 @@ function kpis(cid,scope,cards){
     </div>`:'';
 
     const governedKpi=governanceKpi(c.l);
-    const helpText=(c.help||getKpiHint(c.l)).replace(/"/g,'&quot;');
+    const cmpKey=!c.help&&CMP_BY_LABEL[c.l];
+    const helpText=((c.help||getKpiHint(c.l))+(cmpKey?` Comparator: ${cmpHelp(cmpKey)}`:'')).replace(/"/g,'&quot;');
     const evidenceShort=governedKpi?.evidence_short||'';
     const evidenceClass=governedKpi?.evidence_class||'';
     const evidenceHtml=governedKpi?`<span class="kc-help-badge kc-help-badge-${evidenceClass}" title="${helpText}">${evidenceShort}</span>`:'';
@@ -2241,6 +2286,56 @@ function renderOverviewActions(actions=[]){
   host.innerHTML = DOMPurify.sanitize(`<div class="ov-action-stack">${actions.map(a=>`<div class="ov-action-item"><span class="ov-action-dot"></span><div><strong>${a.title}</strong><div>${a.text}</div></div></div>`).join('')}</div>`);
 }
 
+/* Page scope contract: which top-bar controls govern each page (fiscal-filter policy in
+   docs/GUI_UX_REVIEW_2026-09-25.md, Slice 1b). A control a page ignores is hidden, and the
+   page's real scope is stated, so no filter appears to apply when it does not.
+   fy: the global fiscal year governs the page. filters: zone, period and advanced filters do. */
+const PAGE_SCOPE_KIND={
+  dashboard:{fy:true,filters:true,note:''},
+  year_only:{fy:true,filters:false,note:'Fiscal year applies. Zone and period filters do not apply to this page.'},
+  latest:{fy:false,filters:false,note:'Latest assessed dataset. Not filtered by fiscal year, zone or period.'},
+  queue:{fy:false,filters:false,note:'Cross-year work queue: items from every fiscal year. Not filtered by the fiscal-year selector.'},
+  strategy:{fy:false,filters:false,note:'Plan, unit and period are chosen on this page. The fiscal-year selector does not apply.'},
+  governed:{fy:false,filters:false,note:'Each report keeps the period and unit fixed in its record. The fiscal-year selector does not apply.'},
+  setup:{fy:false,filters:false,note:''},
+};
+// Every page is classified; tests/test_page_scope.py fails when a new page is not.
+const PAGE_SCOPE={
+  board:'dashboard', overview:'dashboard', finance:'dashboard', hra:'dashboard', infrastructure:'dashboard',
+  operations:'dashboard', commercial:'dashboard', production:'dashboard', 'wt-ei':'dashboard', customers:'dashboard',
+  connections:'dashboard', stuck:'dashboard', connectivity:'dashboard', breakdowns:'dashboard', pipelines:'dashboard',
+  billed:'dashboard', collections:'dashboard', charges:'dashboard', expenses:'dashboard', debtors:'dashboard',
+  'segment-revenue':'dashboard', workforce:'dashboard', 'class-connections':'dashboard', 'pipe-materials':'dashboard',
+  nrw:'dashboard', 'supply-continuity':'dashboard', disconnections:'dashboard', profitability:'dashboard',
+  'staff-productivity':'dashboard', benchmarking:'dashboard', budget:'dashboard', 'report-centre':'dashboard',
+  strategic:'year_only', compliance:'latest', 'water-quality':'latest',
+  'my-work':'queue', updates:'queue', actions:'queue', risks:'queue', 'audit-findings':'queue', meetings:'queue',
+  strategy:'strategy', 'strategy-map':'strategy', scorecard:'strategy', position:'strategy', cycles:'strategy', evaluations:'strategy',
+  'reports-hub':'governed', regulatory:'governed',
+  admin:'setup', access:'setup', people:'setup', periods:'setup', schemes:'setup', documents:'setup', 'audit-trail':'setup', soon:'setup',
+};
+function pageScopeKind(page){
+  if(PAGE_SCOPE[page]) return PAGE_SCOPE[page];
+  // Module pages fetch without the global filters; an unlisted one must not appear filtered.
+  return window.MZ?.pages?.has(page) ? 'setup' : 'dashboard';
+}
+function pageScope(page){ return PAGE_SCOPE_KIND[pageScopeKind(page)]; }
+function applyPageScope(page){
+  const s=pageScope(page);
+  document.body.classList.toggle('scope-no-fy',!s.fy);
+  document.body.classList.toggle('scope-no-filters',!s.filters);
+  const note=document.getElementById('tb-scope-note');
+  if(note){ note.textContent=s.note; note.hidden=!s.note; }
+}
+/* Scope text for page meta lines and exports: only the filters that govern the page. */
+function pageScopeSummary(page,{long=false}={}){
+  const kind=pageScopeKind(page);
+  if(kind==='dashboard') return long?buildFilterSummary():buildCompactFilterSummary();
+  const fy=document.getElementById('fy-select')?.options[document.getElementById('fy-select').selectedIndex]?.text||dbState.year||'—';
+  if(kind==='year_only') return long?`FY ${fy} | All zones and months (not filterable on this page)`:`${fy} · All zones and months`;
+  return PAGE_SCOPE_KIND[kind].note||'Not filtered by fiscal year, zone or period';
+}
+
 function navigate(page,options={}){
   const user=getUser()||{};
   const isAdmin=String(user.role||'').toLowerCase()==='admin';
@@ -2296,6 +2391,7 @@ function navigate(page,options={}){
   }
 
   currentPage=page;
+  applyPageScope(page);
   saveLastPage(page);
   updateBreadcrumb(page);
   syncReportDensityToolbar(page);
@@ -2488,8 +2584,8 @@ async function loadBoard(){
     const prRatio=h.payroll_cost_ratio;
     kpis('bv-hr-kpis',hd,[
       {l:'Total Staff', v:F.num(h.total_staff||0), s:`${F.num(h.perm_staff||0)} perm · ${F.num(h.temp_staff||0)} temp`, icon:ICON.people, badgeLabel:'INFO'},
-      {l:'Staff / 1k Conn.', v:sp1k!=null?Number(sp1k).toFixed(1):'—', s:sp1k!=null?(sp1k<=13?'Within IBNET norm':sp1k<=20?'Above IBNET norm':'High staffing ratio'):'Staffing efficiency', cls:sp1k!=null?(sp1k<=13?'kc-up':sp1k<=20?'kc-nt':'kc-dn'):'', icon:ICON.people, badgeLabel:sp1k!=null?(sp1k<=13?'GOOD':sp1k<=20?'WATCH':'HIGH'):'INFO', bm:'IBNET ≤13 / 1k conn', bmPct:sp1k!=null?Math.min(100,13/Math.max(sp1k,0.1)*100):null, bmOk:sp1k!=null&&sp1k<=13},
-      {l:'Total Payroll', v:F.money((h.staff_costs||0)+(h.wages||0)), s:prRatio!=null?`${Number(prRatio).toFixed(1)}% of revenue`:'Wages & staff costs', icon:ICON.cash, cls:prRatio!=null?(prRatio<=35?'kc-up':prRatio<=50?'kc-nt':'kc-dn'):'', badgeLabel:prRatio!=null?(prRatio<=35?'GOOD':prRatio<=50?'WATCH':'HIGH'):'INFO'},
+      staffRatioCard('Staff / 1k Conn.', sp1k),
+      {l:'Total Payroll', v:F.money((h.staff_costs||0)+(h.wages||0)), s:prRatio!=null?`${Number(prRatio).toFixed(1)}% of revenue`:'Wages & staff costs', icon:ICON.cash, cls:cmpCls('payroll_cost_ratio',prRatio), badgeLabel:cmpFlag('payroll_cost_ratio',prRatio)||'INFO', bm:prRatio!=null?cmpBm('payroll_cost_ratio')+'% of revenue':'', help:cmpHelp('payroll_cost_ratio')},
       {l:'Labour Productivity', v:h.m3_per_staff!=null?F.m3(h.m3_per_staff):'—', s:`m³ produced per staff · fleet ${F.money(h.fuel_cost||0)}`, icon:ICON.people, badgeLabel:'INFO'},
     ]);
   }catch(e){ console.error('board-hra',e); errMsg('bv-hr-kpis', e.message||'Unable to load HR data.'); } })();
@@ -2501,9 +2597,9 @@ async function loadBoard(){
     const acr=x.active_conn_ratio;
     kpis('bv-infra-kpis',xd,[
       {l:'Breakdowns', v:x.total_breakdowns!=null?F.num(x.total_breakdowns):'—', s:x.total_breakdowns!=null?`${F.num(x.pipe_breakdowns||0)} pipe · ${F.num(x.pump_breakdowns||0)} pump`:'No breakdown data for period', icon:ICON.wrench, badgeLabel:x.total_breakdowns!=null?'INFO':'DATA'},
-      {l:'Per 1k Customers', v:bd1k!=null?Number(bd1k).toFixed(1):'—', s:bd1k==null?'Reliability norm':bd1k<=IWA.bd_per_1k?'Within reliability norm':'Above reliability norm', cls:bd1k==null?'':bd1k<=IWA.bd_per_1k?'kc-up':bd1k<=IWA.bd_per_1k*2?'kc-nt':'kc-dn', icon:ICON.gauge, badgeLabel:bd1k==null?'INFO':bd1k<=IWA.bd_per_1k?'GOOD':bd1k<=IWA.bd_per_1k*2?'WATCH':'HIGH'},
-      {l:'Active Conn. Ratio', v:acr!=null?`${Number(acr).toFixed(1)}%`:'—', s:acr!=null?(acr>=90?'Most meters active':acr>=75?'Inactive share to watch':'High disconnected share'):'Meter activity', cls:acr!=null?(acr>=90?'kc-up':acr>=75?'kc-nt':'kc-dn'):'', icon:ICON.meter, badgeLabel:acr!=null?(acr>=90?'GOOD':acr>=75?'WATCH':'HIGH'):'INFO'},
-      {l:'Stuck Meters', v:F.num(x.stuck_meters||0), s:x.stuck_pct!=null?`${Number(x.stuck_pct).toFixed(1)}% of metered`:'Meter exceptions', icon:ICON.meter, badgeLabel:x.stuck_pct!=null?(x.stuck_pct<5?'GOOD':x.stuck_pct<8?'WATCH':'HIGH'):'INFO'},
+      breakdownRateCard('Per 1k Customers', bd1k),
+      activeRatioCard(acr),
+      {l:'Stuck Meters', v:F.num(x.stuck_meters||0), s:x.stuck_pct!=null?`${Number(x.stuck_pct).toFixed(1)}% of metered`:'Meter exceptions', icon:ICON.meter, badgeLabel:cmpFlag('stuck_pct',x.stuck_pct)||'INFO', bm:x.stuck_pct!=null?cmpBm('stuck_pct')+'%':'', help:cmpHelp('stuck_pct')},
     ]);
   }catch(e){ console.error('board-infra',e); errMsg('bv-infra-kpis', e.message||'Unable to load infrastructure data.'); } })();
 
@@ -2513,10 +2609,10 @@ async function loadBoard(){
 
     const nrwPct=n.nrw_pct, collRate=f.collection_rate, opRatio=f.op_ratio, dso=f.dso, supply=p.supply_hours_avg;
     const nrwCls=nrwPct==null?'':nrwPct<=IWA.nrw?'kc-up':nrwPct<=IWA.nrw_warn?'kc-nt':'kc-dn';
-    const collCls=collRate==null?'':collRate>=IWA.coll_rate?'kc-up':collRate>=80?'kc-nt':'kc-dn';
+    const collCls=collRate==null?'':collRate>=IWA.coll_rate?'kc-up':collRate>=IWA.coll_warn?'kc-nt':'kc-dn';
     const opCls=opRatio==null||opRatio===0?'':opRatio<IWA.op_ratio?'kc-up':opRatio<1?'kc-nt':'kc-dn';
     const dsoCls=dso==null?'':dso<=IWA.dso?'kc-up':dso<=90?'kc-nt':'kc-dn';
-    const supplyCls=supply==null?'':supply>=20?'kc-up':supply>=16?'kc-nt':'kc-dn';
+    const supplyCls=cmpCls('supply_hours',supply);
 
     // Operations: Production, NRW Rate, NRW Cost, Supply Hours.
     // Active Customers moved to Zone Risk Matrix; NRW Cost adds financial impact of losses.
@@ -2524,7 +2620,7 @@ async function loadBoard(){
       {l:'Production (m³)', v:F.m3(n.vol_produced||0), s:'Volume produced in scope', icon:ICON.drop, badgeLabel:'INFO', trend:trendDir(tr.production)},
       {l:'NRW Rate', v:nrwPct!=null?`${Number(nrwPct).toFixed(1)}%`:'—', s:(nrwPct||0)<=IWA.nrw?'Within __ORG_SHORT__ target':'Above __ORG_SHORT__ target', cls:nrwCls, icon:ICON.nrw, badgeLabel:(nrwPct||0)<=IWA.nrw?'GOOD':(nrwPct||0)<=IWA.nrw_warn?'WATCH':'HIGH', bm:`__ORG_SHORT__ <${IWA.nrw}% · IWA <${IWA.nrw_iwa}%`, bmPct:bmPct(nrwPct,IWA.nrw,false), bmOk:nrwPct!=null&&nrwPct<=IWA.nrw, trend:trendDir(tr.nrw_pct,true)},
       {l:'NRW Cost', v:n.nrw_cost!=null?F.money(n.nrw_cost):'—', s:n.nrw_vol!=null?`${F.m3(n.nrw_vol)} unaccounted water`:'Revenue lost to water losses', cls:nrwCls, icon:ICON.cash, badgeLabel:nrwPct==null?'INFO':nrwPct<=IWA.nrw?'GOOD':nrwPct<=IWA.nrw_warn?'WATCH':'HIGH'},
-      {l:'Supply Hours / Day', v:supply!=null?Number(supply).toFixed(1):'—', s:(supply||0)>=20?'Strong continuity':'Monitor continuity', cls:supplyCls, icon:ICON.clock, badgeLabel:(supply||0)>=20?'GOOD':(supply||0)>=16?'WATCH':'HIGH'},
+      {l:'Supply Hours / Day', v:supply!=null?Number(supply).toFixed(1):'—', s:cmpFlag('supply_hours',supply)==='GOOD'?'Strong continuity':'Monitor continuity', cls:supplyCls, icon:ICON.clock, badgeLabel:cmpFlag('supply_hours',supply)||'INFO', help:cmpHelp('supply_hours')},
     ]);
 
     // Finance: Net Margin, DSO, Collection Rate, Operating Ratio.
@@ -2534,7 +2630,7 @@ async function loadBoard(){
     kpis('bv-fin-kpis',d,[
       {l:'Net Margin', v:netMargin!=null?`${Number(netMargin).toFixed(1)}%`:'—', s:netMargin!=null?(netMargin>50?'Strong operating surplus':netMargin>20?'Moderate surplus':'Thin or negative margin'):'Revenue minus operating cost', cls:nmCls, icon:ICON.revenue, badgeLabel:netMargin!=null?(netMargin>50?'GOOD':netMargin>20?'WATCH':'HIGH'):'INFO'},
       {l:'Days Sales Outstanding', v:dso!=null?Math.round(dso):'—', s:dso!=null?((dso||0)<=IWA.dso?'Healthy debtor cycle':'Debtor cycle stretched'):'Debtor days', cls:dsoCls, icon:ICON.clock, badgeLabel:dso!=null?((dso||0)<=IWA.dso?'GOOD':(dso||0)<=90?'WATCH':'HIGH'):'INFO', bm:`IBNET <${IWA.dso} days`, bmPct:bmPct(dso,IWA.dso,false), bmOk:dso!=null&&dso<=IWA.dso},
-      {l:'Collection Rate', v:collRate!=null?`${Number(collRate).toFixed(1)}%`:'—', s:(collRate||0)>=IWA.coll_rate?'At benchmark':'Below benchmark', cls:collCls, icon:ICON.revenue, badgeLabel:(collRate||0)>=IWA.coll_rate?'GOOD':(collRate||0)>=80?'WATCH':'HIGH', bm:`IBNET >${IWA.coll_rate}%`, bmPct:bmPct(collRate,IWA.coll_rate,true), bmOk:collRate!=null&&collRate>=IWA.coll_rate},
+      {l:'Collection Rate', v:collRate!=null?`${Number(collRate).toFixed(1)}%`:'—', s:(collRate||0)>=IWA.coll_rate?'At benchmark':'Below benchmark', cls:collCls, icon:ICON.revenue, badgeLabel:(collRate||0)>=IWA.coll_rate?'GOOD':(collRate||0)>=IWA.coll_warn?'WATCH':'HIGH', bm:`IBNET >${IWA.coll_rate}%`, bmPct:bmPct(collRate,IWA.coll_rate,true), bmOk:collRate!=null&&collRate>=IWA.coll_rate},
       {l:'Operating Ratio', v:opRatio!=null?Number(opRatio).toFixed(2):'—', s:(opRatio||0)<IWA.op_ratio?'Costs below revenue':'Cost pressure', cls:opCls, icon:ICON.chart, badgeLabel:(opRatio||0)>0&&(opRatio||0)<IWA.op_ratio?'GOOD':(opRatio||0)<1?'WATCH':'HIGH', bm:`World Bank <${IWA.op_ratio}`, bmPct:bmPct(opRatio,IWA.op_ratio,false), bmOk:opRatio!=null&&opRatio>0&&opRatio<IWA.op_ratio},
     ]);
 
@@ -2544,7 +2640,7 @@ async function loadBoard(){
     const zonesAtRisk=zones.filter(z=>(z.nrw_pct!=null&&z.nrw_pct>IWA.nrw_warn)||(z.collection_rate!=null&&z.collection_rate<IWA.zone_coll_warn)||(z.dso!=null&&z.dso>90)).length;
     const tones=[
       nrwPct==null?null:nrwPct<=IWA.nrw?'good':nrwPct<=IWA.nrw_warn?'watch':'high',
-      collRate==null?null:collRate>=IWA.coll_rate?'good':collRate>=80?'watch':'high',
+      collRate==null?null:collRate>=IWA.coll_rate?'good':collRate>=IWA.coll_warn?'watch':'high',
       opRatio==null||opRatio===0?null:opRatio<IWA.op_ratio?'good':opRatio<1?'watch':'high',
       dso==null?null:dso<=IWA.dso?'good':dso<=90?'watch':'high',
     ].filter(Boolean);
@@ -2571,7 +2667,7 @@ async function loadBoard(){
     const zmEl=document.getElementById('bv-zone-matrix');
     if(zmEl&&zones.length){
       const nrwRag=v=>v==null?'info':v<=IWA.nrw?'good':v<=IWA.nrw_warn?'watch':'high';
-      const collRag=v=>v==null?'info':v>=IWA.coll_rate?'good':v>=80?'watch':'high';
+      const collRag=v=>v==null?'info':v>=IWA.coll_rate?'good':v>=IWA.zone_coll_warn?'watch':'high';
       const dsoRag=v=>v==null?'info':v<=IWA.dso?'good':v<=90?'watch':'high';
       const opRag=v=>(!v||v===0)?'info':v<IWA.op_ratio?'good':v<1?'watch':'high';
       const rd=cls=>`<span class="bv-rag bv-rag-${cls}"></span>`;
@@ -2620,7 +2716,7 @@ async function loadBoard(){
       if(collRate!=null){
         const collOk=collRate>=IWA.coll_rate;
         const collStatus=collOk?`meets the IBNET ${IWA.coll_rate}% benchmark`
-          :collRate>=80?`is below the IBNET ${IWA.coll_rate}% benchmark`
+          :collRate>=IWA.coll_warn?`is below the IBNET ${IWA.coll_rate}% benchmark`
           :`is significantly below the IBNET ${IWA.coll_rate}% benchmark`;
         const dsoNote=dso!=null?(dso>IWA.dso
           ?`; DSO of ${Math.round(dso)} days exceeds the ${IWA.dso}-day IBNET standard`
@@ -2654,7 +2750,7 @@ async function loadFinance(){
     const d=await apiPanel('executive');
     const f=d.financial||{}, n=d.nrw||{}, z=d.zones||[], t=d.trends||{};
     const collRate=f.collection_rate, opRatio=f.op_ratio, dso=f.dso;
-    const collCls=collRate==null?'':collRate>=IWA.coll_rate?'kc-up':collRate>=80?'kc-nt':'kc-dn';
+    const collCls=collRate==null?'':collRate>=IWA.coll_rate?'kc-up':collRate>=IWA.coll_warn?'kc-nt':'kc-dn';
     const opCls=opRatio==null||opRatio===0?'':opRatio<IWA.op_ratio?'kc-up':opRatio<1?'kc-nt':'kc-dn';
     const dsoCls=dso==null?'':dso<=IWA.dso?'kc-up':dso<=90?'kc-nt':'kc-dn';
     // Quick-win ratios derived from the executive panel:
@@ -2678,7 +2774,7 @@ async function loadFinance(){
     ]},options:{...baseOpts(v=>'__CURRENCY__ '+v+'B'),plugins:legendOpts('top')}});
     const zl=z.map(x=>x.zone);
     mkChart('ch-fin-collzone',{type:'bar',data:{labels:zl,datasets:[
-      {label:'Collection %',data:z.map(x=>+(x.collection_rate||0).toFixed(1)),backgroundColor:z.map(x=>(x.collection_rate||0)>=IWA.coll_rate?'#16a34a':(x.collection_rate||0)>=80?'#d97706':'#dc2626'),borderRadius:4},
+      {label:'Collection %',data:z.map(x=>+(x.collection_rate||0).toFixed(1)),backgroundColor:z.map(x=>(x.collection_rate||0)>=IWA.coll_rate?'#16a34a':(x.collection_rate||0)>=IWA.zone_coll_warn?'#d97706':'#dc2626'),borderRadius:4},
     ]},options:{...baseOpts(v=>v+'%'),plugins:legendOpts()}});
     mkChart('ch-fin-dso',{type:'bar',data:{labels:zl,datasets:[
       {label:'DSO (days)',data:z.map(x=>Math.round(x.dso||0)),backgroundColor:z.map(x=>(x.dso||0)<=IWA.dso?'#16a34a':(x.dso||0)<=90?'#d97706':'#dc2626'),borderRadius:4},
@@ -2696,7 +2792,7 @@ async function loadHra(){
     const sp1k=s.staff_per_1000_conn;
     kpis('hra-kpis',d,[
       {l:'Total Staff', v:F.num(s.total_staff||0), s:`${F.num(s.perm_staff||0)} permanent · ${F.num(s.temp_staff||0)} temporary`, icon:ICON.people, badgeLabel:'INFO'},
-      {l:'Staff per 1,000 Conn.', v:sp1k!=null?Number(sp1k).toFixed(1):'—', s:sp1k!=null?(sp1k<=13?'Within IBNET norm':sp1k<=20?'Above IBNET norm':'High staffing ratio'):'Staffing efficiency', cls:sp1k!=null?(sp1k<=13?'kc-up':sp1k<=20?'kc-nt':'kc-dn'):'', icon:ICON.people, badgeLabel:sp1k!=null?(sp1k<=13?'GOOD':sp1k<=20?'WATCH':'HIGH'):'INFO', bm:'IBNET ≤13 / 1k conn', bmPct:sp1k!=null?Math.min(100,13/Math.max(sp1k,0.1)*100):null, bmOk:sp1k!=null&&sp1k<=13},
+      staffRatioCard('Staff per 1,000 Conn.', sp1k),
       {l:'m³ per Staff', v:F.num(s.m3_per_staff), s:'Production per staff · in selected period', icon:ICON.drop, badgeLabel:'INFO'},
       {l:'Staff Cost', v:F.money(s.staff_costs||0), s:s.wages_per_staff!=null?`Payroll · ${F.money(s.wages_per_staff)} per head`:'Payroll · per-head wages not assessed', icon:ICON.cash, badgeLabel:'INFO'},
       {l:'Fuel Used', v:`${F.num(s.fuel_used_litres||0)} L`, s:`${F.money(s.fuel_cost||0)} · ${F.num(s.distances_km||0)} km`, icon:ICON.bolt, badgeLabel:'INFO'},
@@ -2737,9 +2833,9 @@ async function loadInfra(){
     const bd1k=s.breakdowns_per_1k_customers, acr=s.active_conn_ratio;
     kpis('infra-kpis',d,[
       {l:'Total Breakdowns', v:F.num(s.total_breakdowns||0), s:`${F.num(s.pipe_breakdowns||0)} pipe · ${F.num(s.pump_breakdowns||0)} pump`, icon:ICON.wrench, badgeLabel:'INFO'},
-      {l:'Per 1k Customers', v:bd1k!=null?Number(bd1k).toFixed(1):'—', s:bd1k==null?'Reliability norm':bd1k<=IWA.bd_per_1k?'Within reliability norm':'Above reliability norm', cls:bd1k==null?'':bd1k<=IWA.bd_per_1k?'kc-up':bd1k<=IWA.bd_per_1k*2?'kc-nt':'kc-dn', icon:ICON.gauge, badgeLabel:bd1k==null?'INFO':bd1k<=IWA.bd_per_1k?'GOOD':bd1k<=IWA.bd_per_1k*2?'WATCH':'HIGH'},
+      breakdownRateCard('Per 1k Customers', bd1k),
       {l:'Metered Connections', v:F.num(s.total_metered||0), s:'Total meter asset base', icon:ICON.meter, badgeLabel:'INFO'},
-      {l:'Active Conn. Ratio', v:acr!=null?`${Number(acr).toFixed(1)}%`:'—', s:acr==null?'Meter activity':acr>=90?'Most meters active':acr>=75?'Inactive share to watch':'High disconnected share', cls:acr==null?'':acr>=90?'kc-up':acr>=75?'kc-nt':'kc-dn', icon:ICON.meter, badgeLabel:acr==null?'INFO':acr>=90?'GOOD':acr>=75?'WATCH':'HIGH'},
+      activeRatioCard(acr),
       {l:'Stuck Meters', v:F.num(s.stuck_meters||0), s:s.stuck_pct!=null?`${Number(s.stuck_pct).toFixed(1)}% of metered`:'Meter exceptions', icon:ICON.meter, badgeLabel:'INFO'},
       {l:'Pipeline Added', v:`${F.num(s.dev_lines_total||0)} m`, s:'Network extensions installed', icon:ICON.pipe, badgeLabel:'INFO'},
     ]);
@@ -2794,7 +2890,7 @@ async function loadOverview(){
         <div class="iwa-tile-val">${sc_nrw==null?'Not assessed':sc_nrw.toFixed(1)+'%'}</div>
         <div class="iwa-tile-bm">__ORG_SHORT__ &lt;${IWA.nrw}% · IWA &lt;${IWA.nrw_iwa}%</div>
       </div>
-      <div class="iwa-tile ${tileCls(sc_cr,{good:IWA.coll_rate,watch:80})}">
+      <div class="iwa-tile ${tileCls(sc_cr,{good:IWA.coll_rate,watch:IWA.coll_warn})}">
         <div class="iwa-tile-icon">💰</div>
         <div class="iwa-tile-lbl">Collection Rate</div>
         <div class="iwa-tile-val">${sc_cr!=null?sc_cr.toFixed(1)+'%':'—'}</div>
@@ -2812,7 +2908,7 @@ async function loadOverview(){
         <div class="iwa-tile-val">${sc_dso!=null?Math.round(sc_dso):'—'}</div>
         <div class="iwa-tile-bm">IBNET &lt;${IWA.dso} days</div>
       </div>
-      <div class="iwa-tile ${tileCls(sc_ei,{good:IWA.energy,watch:.7,reverse:true})}">
+      <div class="iwa-tile ${tileCls(sc_ei,{good:IWA.energy,watch:CMP.energy_intensity.warn,reverse:true})}">
         <div class="iwa-tile-icon">⚡</div>
         <div class="iwa-tile-lbl">Energy Intensity</div>
         <div class="iwa-tile-val">${sc_ei?sc_ei.toFixed(2):'—'}</div>
@@ -2822,9 +2918,9 @@ async function loadOverview(){
     kpis('ov-essentials',d,[
       {l:'Production (m³)', v:F.m3(n.vol_produced||0), s:'Selected-scope production volume', icon:ICON.drop, badgeLabel:'INFO'},
       {l:'NRW Rate', v:n.nrw_pct!=null?`${Number(n.nrw_pct).toFixed(1)}%`:'—', s:(n.nrw_pct||0)<=IWA.nrw?'Within corporate threshold':'Above corporate threshold', cls:(n.nrw_pct||0)<=IWA.nrw?'kc-up':(n.nrw_pct||0)<=IWA.nrw_warn?'kc-nt':'kc-dn', icon:ICON.nrw, badgeLabel:(n.nrw_pct||0)<=IWA.nrw?'GOOD':(n.nrw_pct||0)<=IWA.nrw_warn?'WATCH':'HIGH', bm:`__ORG_SHORT__ <${IWA.nrw}% · IWA <${IWA.nrw_iwa}%`, bmPct:bmPct(n.nrw_pct,IWA.nrw,false), bmOk:n.nrw_pct!=null&&(n.nrw_pct<=IWA.nrw)},
-      {l:'Collection Rate', v:f.collection_rate!=null?`${Number(f.collection_rate).toFixed(1)}%`:'—', s:(f.collection_rate||0)>=IWA.coll_rate?'Collections are at benchmark':'Collections are below benchmark', cls:(f.collection_rate||0)>=IWA.coll_rate?'kc-up':(f.collection_rate||0)>=80?'kc-nt':'kc-dn', icon:ICON.cash, badgeLabel:(f.collection_rate||0)>=IWA.coll_rate?'GOOD':(f.collection_rate||0)>=80?'WATCH':'HIGH', bm:`IBNET >${IWA.coll_rate}%`, bmPct:bmPct(f.collection_rate,IWA.coll_rate,true), bmOk:f.collection_rate!=null&&(f.collection_rate>=IWA.coll_rate)},
+      {l:'Collection Rate', v:f.collection_rate!=null?`${Number(f.collection_rate).toFixed(1)}%`:'—', s:(f.collection_rate||0)>=IWA.coll_rate?'Collections are at benchmark':'Collections are below benchmark', cls:(f.collection_rate||0)>=IWA.coll_rate?'kc-up':(f.collection_rate||0)>=IWA.coll_warn?'kc-nt':'kc-dn', icon:ICON.cash, badgeLabel:(f.collection_rate||0)>=IWA.coll_rate?'GOOD':(f.collection_rate||0)>=IWA.coll_warn?'WATCH':'HIGH', bm:`IBNET >${IWA.coll_rate}%`, bmPct:bmPct(f.collection_rate,IWA.coll_rate,true), bmOk:f.collection_rate!=null&&(f.collection_rate>=IWA.coll_rate)},
       {l:'Active Customers', v:F.num(p.active_customers||0), s:'Latest active customer base in scope', icon:ICON.people, badgeLabel:'INFO'},
-      {l:'Supply Hours / Day', v:p.supply_hours_avg!=null?Number(p.supply_hours_avg).toFixed(1):'—', s:(p.supply_hours_avg||0)>=20?'Continuity is relatively strong':'Continuity needs closer monitoring', cls:(p.supply_hours_avg||0)>=20?'kc-up':(p.supply_hours_avg||0)>=16?'kc-nt':'kc-dn', icon:ICON.clock, badgeLabel:(p.supply_hours_avg||0)>=20?'GOOD':(p.supply_hours_avg||0)>=16?'WATCH':'HIGH'},
+      {l:'Supply Hours / Day', v:p.supply_hours_avg!=null?Number(p.supply_hours_avg).toFixed(1):'—', s:cmpFlag('supply_hours',p.supply_hours_avg)==='GOOD'?'Continuity is relatively strong':'Continuity needs closer monitoring', cls:cmpCls('supply_hours',p.supply_hours_avg), icon:ICON.clock, badgeLabel:cmpFlag('supply_hours',p.supply_hours_avg)||'INFO', help:cmpHelp('supply_hours')},
       {l:'Breakdowns', v:p.total_breakdowns!=null?F.num(p.total_breakdowns):'—', s:p.total_breakdowns!=null?((p.total_breakdowns||0)<=10?'Lower current failure load':'Inspect network reliability hot spots'):'No breakdown data for period', cls:p.total_breakdowns!=null?((p.total_breakdowns||0)<=10?'kc-up':(p.total_breakdowns||0)<=25?'kc-nt':'kc-dn'):'', icon:ICON.wrench, badgeLabel:p.total_breakdowns!=null?((p.total_breakdowns||0)<=10?'GOOD':(p.total_breakdowns||0)<=25?'WATCH':'HIGH'):'INFO'},
     ]);
 
@@ -2837,7 +2933,7 @@ async function loadOverview(){
     const noneAssessed=z.length?'Not assessed':'No zone data';
     renderOverviewExceptionStrip([
       {kicker:'Top NRW risk', main:highestNrw?`${highestNrw.zone} · ${Number(highestNrw.nrw_pct).toFixed(1)}%`:noneAssessed, sub:'Highest current NRW level in scope.', tone:!highestNrw?'':highestNrw.nrw_pct>IWA.nrw_warn?'high':highestNrw.nrw_pct>IWA.nrw?'watch':'good'},
-      {kicker:'Collections pressure', main:lowestCollections?`${lowestCollections.zone} · ${Number(lowestCollections.collection_rate).toFixed(1)}%`:noneAssessed, sub:'Lowest collection rate among visible zones.', tone:!lowestCollections?'':lowestCollections.collection_rate<80?'high':lowestCollections.collection_rate<IWA.coll_rate?'watch':'good'},
+      {kicker:'Collections pressure', main:lowestCollections?`${lowestCollections.zone} · ${Number(lowestCollections.collection_rate).toFixed(1)}%`:noneAssessed, sub:'Lowest collection rate among visible zones.', tone:!lowestCollections?'':lowestCollections.collection_rate<IWA.zone_coll_warn?'high':lowestCollections.collection_rate<IWA.coll_rate?'watch':'good'},
       {kicker:'Debtor pressure', main:highestDso?`${highestDso.zone} · ${Math.round(Number(highestDso.dso))} days`:noneAssessed, sub:'Largest debtor cycle in the current cut.', tone:!highestDso?'':highestDso.dso>90?'high':highestDso.dso>IWA.dso?'watch':'good'},
       {kicker:'Cost efficiency', main:highestOp?`${highestOp.zone} · ${Number(highestOp.op_ratio).toFixed(2)}`:noneAssessed, sub:'Highest operating ratio in the current cut.', tone:!highestOp?'':highestOp.op_ratio>1?'high':highestOp.op_ratio>IWA.op_ratio?'watch':'good'},
     ]);
@@ -3382,12 +3478,12 @@ function _spMonths(d){const dm=(d.monthly||[]).filter(m=>m.has_data);return {dm,
 async function loadNrw(){
   kpis('nrw-kpis',[{l:'Loading…',v:'—'}]);
   try{
-    const d=await apiPanel('nrw'),k=d.kpi,ok=k.pct_nrw<=k.target_nrw;
+    const d=await apiPanel('nrw'),k=d.kpi,nf=cmpFlag('nrw_pct',k.pct_nrw);
     kpis('nrw-kpis',d,[
       {l:'Water Produced',v:F.m3(k.vol_produced),s:'Total system output',icon:ICON.chart},
       {l:'Water Sold',v:F.m3(k.water_sold),s:'Revenue (billed) water',icon:ICON.revenue,cls:'kc-up'},
       {l:'Non-Revenue Water',v:F.m3(k.nrw_volume),s:'Volume lost / unbilled',icon:ICON.nrw,cls:'kc-dn'},
-      {l:'NRW Rate',v:F.pct(k.pct_nrw),s:ok?'Within 25% target':`${k.gap_to_target>0?'+':''}${k.gap_to_target}pp vs 25% target`,cls:ok?'kc-up':'kc-dn',icon:ICON.gauge,badgeLabel:ok?'GOOD':'WATCH'},
+      {l:'NRW Rate',v:F.pct(k.pct_nrw),s:nf==null?'NRW target':nf==='GOOD'?`Within ${IWA.nrw}% corporate target`:`${k.gap_to_target>0?'+':''}${k.gap_to_target} pp vs ${IWA.nrw}% corporate target`,cls:cmpCls('nrw_pct',k.pct_nrw),icon:ICON.gauge,badgeLabel:nf||'INFO',help:cmpHelp('nrw_pct')},
       {l:'Economic NRW',v:k.economic_nrw!=null?F.money(k.economic_nrw):'—',s:k.avg_tariff_per_m3?`__CURRENCY__ ${F.dec(k.avg_tariff_per_m3)}/m³ avg tariff`:'Revenue value of water losses',icon:ICON.cash,cls:'kc-dn'},
     ]);
     document.getElementById('nrw-kpis').className='kpi-row kpi-g3';
@@ -3464,9 +3560,9 @@ async function loadNrw(){
 async function loadSupplyContinuity(){
   kpis('supply-continuity-kpis',[{l:'Loading…',v:'—'}]);
   try{
-    const d=await apiPanel('supply-continuity'),k=d.kpi,ok=k.supply_hours>=k.target_hours;
+    const d=await apiPanel('supply-continuity'),k=d.kpi,sf=cmpFlag('supply_hours',k.supply_hours);
     kpis('supply-continuity-kpis',d,[
-      {l:'Supply Hours / Day',v:F.dec(k.supply_hours)+' hrs',s:ok?'Meets 21-hour target':`${k.gap_to_target} hrs vs 21-hour target`,cls:ok?'kc-up':'kc-dn',icon:ICON.gauge,badgeLabel:ok?'GOOD':'WATCH'},
+      {l:'Supply Hours / Day',v:k.supply_hours!=null?F.dec(k.supply_hours)+' hrs':'—',s:sf==null?'Continuity':sf==='GOOD'?`Meets ${k.target_hours}-hour band`:`${k.gap_to_target} hrs vs ${k.target_hours}-hour band`,cls:cmpCls('supply_hours',k.supply_hours),icon:ICON.gauge,badgeLabel:sf||'INFO',help:cmpHelp('supply_hours')},
       {l:'Continuity',v:F.pct(k.continuity_pct),s:'Share of a 24-hour day supplied',icon:ICON.chart},
       {l:'Power-Failure Hours',v:F.num(k.power_fail_hours),s:'Outage hours from power loss',icon:ICON.bolt,cls:'kc-dn'},
       {l:'Target',v:F.num(k.target_hours)+' hrs',s:'Strategic Plan continuity target',icon:ICON.gauge,badgeLabel:'KPI'},
@@ -3533,10 +3629,9 @@ async function loadStaffProductivity(){
   kpis('staff-productivity-kpis',[{l:'Loading…',v:'—'}]);
   try{
     const d=await apiPanel('staff-productivity'),k=d.kpi;
-    const connOk=k.staff_per_1000conn!=null&&k.staff_per_1000conn<=k.target_per_1000conn;
     kpis('staff-productivity-kpis',d,[
       {l:'Total Establishment',v:F.num(k.total_staff),s:`${F.num(k.perm_staff)} permanent · ${F.num(k.temp_staff)} temporary`,icon:ICON.staff},
-      {l:'Staff / 1,000 Connections',v:F.dec(k.staff_per_1000conn),s:connOk?'Within target of 13':'Above target of 13',cls:connOk?'kc-up':'kc-dn',icon:ICON.people,badgeLabel:connOk?'GOOD':'WATCH'},
+      staffRatioCard('Staff / 1,000 Connections', k.staff_per_1000conn),
       {l:'Staff / 1,000 m³',v:F.dec(k.staff_per_1000m3),s:'Productivity vs production (target 8)',icon:ICON.gauge},
       {l:'Staff Cost',v:F.money(k.staff_cost),s:'Salaries and wages',icon:ICON.cash},
     ]);
@@ -3593,7 +3688,6 @@ async function loadBreakdowns(){
   kpis('bd-kpis',[{l:'Loading…',v:'—'}]);
   try{
     const d=await apiPanel('breakdowns'),k=d.kpi;
-    const bdOk=k.per_1k_customers!=null&&k.per_1k_customers<=IWA.bd_per_1k;
     const PVC_SIZE_FIELDS=['pvc_20mm','pvc_25mm','pvc_32mm','pvc_40mm','pvc_50mm','pvc_63mm','pvc_75mm','pvc_90mm','pvc_110mm','pvc_160mm','pvc_200mm','pvc_250mm','pvc_315mm'];
     const hasMaterialSplit=d.monthly.some(m=>((m.pipe_pvc||0)+(m.pipe_gi||0)+(m.pipe_di||0)+(m.pipe_hdpe_ac||0))>0)
       || d.by_zone.some(z=>((z.pipe_pvc||0)+(z.pipe_gi||0)+(z.pipe_di||0)+(z.pipe_hdpe_ac||0))>0);
@@ -3606,11 +3700,7 @@ async function loadBreakdowns(){
       {l:'Pipe Breakdowns',v:F.num(k.pipe_breakdowns),s:'Mains & reticulation failures',icon:ICON.pipe,cls:'kc-dn'},
       {l:'Pump Breakdowns',v:F.num(k.pump_breakdowns),s:'Mechanical failures',icon:ICON.wrench,cls:k.pump_breakdowns>0?'kc-nt':''},
       {l:'Total Breakdowns',v:F.num(k.total),s:'Combined infrastructure events',icon:ICON.nrw,cls:'kc-dn'},
-      {l:'Per 1,000 Connections',v:F.dec(k.per_1k_customers),
-       s:bdOk?'Within IBNET threshold':'Above 5/1K benchmark',
-       cls:bdOk?'kc-up':'kc-dn',icon:ICON.gauge,
-       badgeLabel:bdOk?'GOOD':'WATCH',
-       bm:'IBNET benchmark <'+IWA.bd_per_1k+'/1K connections',bmPct:bmPct(k.per_1k_customers,IWA.bd_per_1k,false),bmOk:bdOk},
+      breakdownRateCard('Per 1,000 Connections', k.per_1k_customers),
       {l:'Pump Hours Lost',v:F.num(k.pump_hours_lost)+' h',s:'Productive capacity lost',icon:ICON.clock,cls:'kc-dn'},
     ]);
     document.getElementById('bd-kpis').className='kpi-row kpi-g3';
@@ -3945,14 +4035,10 @@ async function loadWorkforce(){
     ]);
     document.getElementById('wf-kpis').className='kpi-row kpi-g3';
     // Staff productivity section
-    const connOk=kp.staff_per_1000conn!=null&&kp.staff_per_1000conn<=kp.target_per_1000conn;
     const m3Ok=kp.staff_per_1000m3>0&&kp.staff_per_1000m3<=kp.target_per_1000m3;
     kpis('wf-productivity-kpis',d,[
       {l:'Total Establishment',v:F.num(kp.total_staff),s:`${F.num(kp.perm_staff)} permanent · ${F.num(kp.temp_staff)} temporary`,icon:ICON.staff},
-      {l:'Staff / 1,000 Connections',v:F.dec(kp.staff_per_1000conn),
-       s:connOk?'Within target of 13':'Above target of 13',cls:connOk?'kc-up':'kc-dn',icon:ICON.people,
-       badgeLabel:connOk?'GOOD':'WATCH',bm:'Target ≤13/1,000 connections',
-       bmPct:bmPct(kp.staff_per_1000conn,kp.target_per_1000conn,false),bmOk:connOk},
+      staffRatioCard('Staff / 1,000 Connections', kp.staff_per_1000conn),
       {l:'Staff / 1,000 m³',v:F.dec(kp.staff_per_1000m3),
        s:m3Ok?'Within target of 8':'Above target of 8',cls:m3Ok?'kc-up':kp.staff_per_1000m3>0?'kc-dn':'',
        icon:ICON.gauge,badgeLabel:m3Ok?'GOOD':kp.staff_per_1000m3>0?'WATCH':null,
@@ -6227,11 +6313,11 @@ function _bgtZoneTable(zones) {
   const fmt1 = v => Number.isFinite(Number(v)) ? Number(v).toFixed(1) : '—';
   const fB = v => { const a=Math.abs(v); return a>=1e9?(v/1e9).toFixed(2)+'B':a>=1e6?(v/1e6).toFixed(0)+'M':(v/1e3).toFixed(0)+'K'; };
   const fV = v => (v>=0?'+':'')+fB(v);
-  const nrwCls = n => n>30?'zs-bad':n>IWA.nrw?'zs-warn':'zs-good';
+  const nrwCls = n => n>IWA.nrw_warn?'zs-bad':n>IWA.nrw?'zs-warn':'zs-good';
   const varCls = v => v>=0?'zs-good':'zs-bad';
   const bpi = z => z.budget_sales_ytd>0 ? (z.actual_sales/z.budget_sales_ytd).toFixed(2) : '—';
   const bpiCls = z => { const b = z.budget_sales_ytd>0?(z.actual_sales/z.budget_sales_ytd):1; return b>=1?'zs-good':b>=0.9?'zs-warn':'zs-bad'; };
-  const crCls = r => r>=90?'zs-good':r>=80?'zs-warn':'zs-bad';
+  const crCls = r => r>=IWA.coll_rate?'zs-good':r>=IWA.zone_coll_warn?'zs-warn':'zs-bad';
 
   let h = `<table class="zs" style="width:100%" aria-label="Zone comparative analysis"><caption class="sr-only">Zone comparative analysis</caption>
     <thead><tr>
@@ -6499,9 +6585,9 @@ function _bgtEffKpis(ek, br) {
      bm:`Budget estimate: ~__CUR_SYM__ ${Math.round(br.electricity_budget/br.vol_produced_target)}/m³`},
     {l:'Collection rate', v:ek.collection_rate_pct+'%',
      s:'Cash collected ÷ amount billed × 100',
-     cls:ek.collection_rate_pct>=90?'kc-up':ek.collection_rate_pct>=80?'kc-nt':'kc-dn',
+     cls:ek.collection_rate_pct>=IWA.coll_rate?'kc-up':ek.collection_rate_pct>=IWA.coll_warn?'kc-nt':'kc-dn',
      icon:ICON.revenue,
-     badgeLabel:ek.collection_rate_pct>=90?'GOOD':ek.collection_rate_pct>=80?'WATCH':'ADV',
+     badgeLabel:ek.collection_rate_pct>=IWA.coll_rate?'GOOD':ek.collection_rate_pct>=IWA.coll_warn?'WATCH':'ADV',
      bm:'IBNET benchmark >90%'},
     {l:'Estimated cost of water loss', v:fmtCompactMoney(ek.nrw_financial_cost),
      s:'Total NRW volume × FY tariff per m³ tariff',
@@ -7180,7 +7266,7 @@ function _rcInsight(text){
 function _rcFmt(n,d=0){if(n==null||isNaN(n))return'—';return Number(n).toLocaleString('en-GB',{minimumFractionDigits:d,maximumFractionDigits:d});}
 function _rcMoney(n){if(n==null||isNaN(n))return'—';const a=Math.abs(n);if(a>=1e9)return'__CUR_SYM__ '+(n/1e9).toFixed(2)+'B';if(a>=1e6)return'__CUR_SYM__ '+(n/1e6).toFixed(1)+'M';if(a>=1e3)return'__CUR_SYM__ '+(n/1e3).toFixed(0)+'K';return'__CUR_SYM__ '+_rcFmt(n);}
 function _rcPct(n,d=1){return n==null?'—':Number(n).toFixed(d)+'%';}
-function _rcStaffRatioText(v){return v==null?'The staff-to-connections ratio is not assessed for this scope (no active connections or staff recorded).':`The staff-to-connections ratio of ${_rcFmt(v,1)} per 1,000 connections is ${v<=5?'within':'above'} the IBNET <5 benchmark.`;}
+function _rcStaffRatioText(v){if(v==null)return'The staff-to-connections ratio is not assessed for this scope (no active connections or staff recorded).';const f=cmpFlag('staff_per_1000_conn',v);return `The staff-to-connections ratio of ${_rcFmt(v,1)} per 1,000 connections is ${f==='GOOD'?'within':'above'} the ${cmpBm('staff_per_1000_conn')}.`;}
 function _rcAssessed(rows,key){return (rows||[]).filter(r=>r[key]!=null);}
 function _rcTone(v,good,warn,rev=false){if(v==null)return'';if(rev){if(v<=good)return'rc-good';if(v<=warn)return'rc-warn';return'rc-bad';}if(v>=good)return'rc-good';if(v>=warn)return'rc-warn';return'rc-bad';}
 function _rcHeader(title,scope,generated){
@@ -7570,7 +7656,7 @@ function _rcHRA(d,narrative,alerts){
     {val:_rcFmt(s.temp_staff),              lbl:'Temporary Staff'},
     {val:_rcFmt(s.total_staff),             lbl:'Total Staff'},
     {val:_rcFmt(s.m3_per_staff,0),          lbl:'m³ per Staff'},
-    {val:_rcFmt(s.staff_per_1000_conn,1),   lbl:'Staff/1k Connections', sub:'IBNET <5'},
+    {val:_rcFmt(s.staff_per_1000_conn,1),   lbl:'Staff/1k Connections', sub:cmpBm('staff_per_1000_conn')},
     {val:_rcMoney(s.wages),                    lbl:'Total Wages'},
   ]);
   if(s.perm_staff){
@@ -7580,7 +7666,7 @@ function _rcHRA(d,narrative,alerts){
       ['Permanent Staff',          _rcFmt(s.perm_staff),           '—'],
       ['Temporary Staff',          _rcFmt(s.temp_staff),           '—'],
       ['Total Staff',              _rcFmt(s.total_staff),          '—'],
-      ['Staff / 1,000 Connections',_rcFmt(s.staff_per_1000_conn,1),'<5 (IBNET)'],
+      ['Staff / 1,000 Connections',_rcFmt(s.staff_per_1000_conn,1),cmpBm('staff_per_1000_conn')],
       ['m³ Produced per Staff',    _rcFmt(s.m3_per_staff,0),       'Higher = better'],
       ['Total Wages',              _rcMoney(s.wages),                 '—'],
       ['Total Staff Costs',        _rcMoney(s.staff_costs),           '—'],
@@ -7634,20 +7720,20 @@ function _rcInfrastructure(d,narrative,alerts){
   ]);
   if(s.pipe_breakdowns!=null){
     const totalBd=(s.pipe_breakdowns||0)+(s.pump_breakdowns||0);
-    h+=_rcInsight(`The network recorded ${totalBd} total breakdown incidents — ${_rcFmt(s.pipe_breakdowns)} pipe and ${_rcFmt(s.pump_breakdowns)} pump failures — resulting in ${_rcFmt(s.pump_hours_lost)} pump-hours lost. Average daily supply stands at ${_rcFmt(s.supply_hours_avg_daily,1)} hours/day (target ≥20h). ${s.stuck_pct==null?'The stuck-meter rate is not assessed for this scope (no metered connections recorded).':`The stuck-meter rate of ${_rcPct(s.stuck_pct)} ${s.stuck_pct<8?'is within':'exceeds'} the 8% acceptable threshold.`}`);
+    h+=_rcInsight(`The network recorded ${totalBd} total breakdown incidents — ${_rcFmt(s.pipe_breakdowns)} pipe and ${_rcFmt(s.pump_breakdowns)} pump failures — resulting in ${_rcFmt(s.pump_hours_lost)} pump-hours lost. Average daily supply stands at ${_rcFmt(s.supply_hours_avg_daily,1)} hours/day (target ≥20h). ${s.stuck_pct==null?'The stuck-meter rate is not assessed for this scope (no metered connections recorded).':`The stuck-meter rate of ${_rcPct(s.stuck_pct)} ${s.stuck_pct<=CMP.stuck_pct.warn?'is within':'exceeds'} the ${CMP.stuck_pct.warn}% ${CMP.stuck_pct.warn_comparator.source.toLowerCase()}.`}`);
     h+=_rcSectionHdr('Infrastructure KPIs');
     h+=_rcTable(['Indicator','Value','Benchmark'],[
       ['Total Pipe Breakdowns',         _rcFmt(s.pipe_breakdowns),          '—'],
       ['Total Pump Breakdowns',         _rcFmt(s.pump_breakdowns),          '—'],
-      ['Breakdowns per 1k Customers',   _rcFmt(s.breakdowns_per_1k_customers,1),'<10 (IBNET)'],
+      ['Breakdowns per 1k Customers',   _rcFmt(s.breakdowns_per_1k_customers,1),cmpBm('breakdowns_per_1k')],
       ['Pump Hours Lost',               _rcFmt(s.pump_hours_lost),          '—'],
       ['Power Failure Hours',           _rcFmt(s.power_fail_hours),         '—'],
       ['Avg Supply Hours/Day',          _rcFmt(s.supply_hours_avg_daily,1)+'h','≥20h/day'],
       ['Stuck Meters',                  _rcFmt(s.stuck_meters),             '—'],
-      ['Stuck Meter Rate',              _rcPct(s.stuck_pct),                '<8%'],
+      ['Stuck Meter Rate',              _rcPct(s.stuck_pct),                cmpBm('stuck_pct')+'%'],
       ['Pipe Extensions (m)',           _rcFmt(s.dev_lines_total),          '—'],
       ['Total Metered Connections',     _rcFmt(s.total_metered),            '—'],
-      ['Active Connection Ratio',       _rcPct(s.active_conn_ratio),        '>85%'],
+      ['Active Connection Ratio',       _rcPct(s.active_conn_ratio),        cmpBm('active_conn_ratio')+'%'],
     ].filter(r=>r[1]&&r[1]!=='—'),'Infrastructure KPIs');
   }
   const bz=d.breakdowns_by_zone||[];
@@ -7692,7 +7778,7 @@ function _rcTreatmentEnergy(d,narrative,alerts){
   const prod=d.production_summary||{};
   let h=_rcSectionHdr('Treatment & Energy Overview');
   h+=_rcKpiRow([
-    {val:_rcFmt(prod.energy_intensity_kwh_m3,3)+' kWh/m³',lbl:'Energy Intensity',sub:'IWA ≤0.5 kWh/m³',tone:_rcTone(prod.energy_intensity_kwh_m3,0.5,0.8,true)},
+    {val:_rcFmt(prod.energy_intensity_kwh_m3,3)+' kWh/m³',lbl:'Energy Intensity',sub:'IWA ≤0.5 kWh/m³',tone:_rcTone(prod.energy_intensity_kwh_m3,CMP.energy_intensity.good,CMP.energy_intensity.warn,true)},
     {val:_rcFmt(prod.power_kwh,0)+' kWh',lbl:'Total Power Used',sub:'YTD'},
     {val:_rcMoney(prod.power_cost),lbl:'Power Cost',sub:'YTD'},
     {val:_rcMoney(prod.chem_cost),lbl:'Chemical Cost',sub:'YTD'},
@@ -7760,7 +7846,7 @@ function _rcWaterQuality(d,narrative,alerts){
     h+=_rcSectionHdr('Supply Continuity — Contamination Risk Indicator');
     h+=_rcInsight('Intermittent supply (< 20h/day) increases the risk of back-siphonage and network contamination. Zones with low supply hours require heightened water quality surveillance.');
     h+=_rcTable(['Zone','Avg Supply Hours/Day','Contamination Risk'],
-      pbz.map(z=>[z.zone,_rcFmt(z.supply_hours_avg,1),(z.supply_hours_avg||0)>=20?'✓ Low risk':(z.supply_hours_avg||0)>=16?'⚠ Moderate risk':'⛔ High risk']),'Supply Risk by Zone');
+      pbz.map(z=>[z.zone,_rcFmt(z.supply_hours_avg,1),({GOOD:'✓ Low risk',WATCH:'⚠ Moderate risk',HIGH:'⛔ High risk'})[cmpFlag('supply_hours',z.supply_hours_avg)]||'— Not assessed']),'Supply Risk by Zone');
     h+=_rcChart('bar',pbz.map(z=>z.zone),[
       {label:'Supply Hours/Day',data:pbz.map(z=>z.supply_hours_avg||0),backgroundColor:pbz.map(z=>(z.supply_hours_avg||0)>=20?RC_C[1]:(z.supply_hours_avg||0)>=16?RC_C[2]:RC_C[3]),borderRadius:4},
       {label:'20h Target',type:'line',data:pbz.map(()=>20),borderColor:'#94a3b8',borderDash:[5,5],pointRadius:0,fill:false},
@@ -7792,7 +7878,7 @@ function _rcSupplyContinuity(d,narrative,alerts){
     const lowSupply=pbz.reduce((a,b)=>(b.supply_hours_avg||0)<(a.supply_hours_avg||0)?b:a,pbz[0]);
     h+=_rcSectionHdr('Supply Hours by Zone');
     h+=_rcTable(['Zone','Avg Supply Hours/Day','vs 20h Target'],
-      pbz.map(z=>[z.zone,_rcFmt(z.supply_hours_avg,1),(z.supply_hours_avg||0)>=20?'✓ On target':`▼ ${(20-(z.supply_hours_avg||0)).toFixed(1)}h shortfall`]),'Supply by Zone');
+      pbz.map(z=>[z.zone,_rcFmt(z.supply_hours_avg,1),z.supply_hours_avg==null?'— Not assessed':z.supply_hours_avg>=CMP.supply_hours.good?'✓ Within band':`▼ ${(CMP.supply_hours.good-z.supply_hours_avg).toFixed(1)}h shortfall`]),'Supply by Zone');
     h+=_rcInsight(`${lowSupply.zone} records the lowest average daily supply at ${_rcFmt(lowSupply.supply_hours_avg,1)} hours/day. Total power failure hours stand at ${_rcFmt(prod.power_fail_hours,0)} YTD — the primary cause of supply interruptions. Redundant power supply (generators, solar backup) at key pumping stations would materially improve continuity scores.`);
     h+=_rcChart('bar',pbz.map(z=>z.zone),[
       {label:'Supply Hours/Day',data:pbz.map(z=>z.supply_hours_avg||0),backgroundColor:pbz.map(z=>(z.supply_hours_avg||0)>=20?RC_C[1]:(z.supply_hours_avg||0)>=16?RC_C[2]:RC_C[3]),borderRadius:4},
@@ -7835,7 +7921,7 @@ function _rcStaffProductivity(d,narrative,alerts){
   let h=_rcSectionHdr('Staff Productivity Overview');
   h+=_rcKpiRow([
     {val:_rcFmt(s.m3_per_staff,0)+' m³',lbl:'m³ per Staff',sub:'Higher = better'},
-    {val:_rcFmt(s.staff_per_1000_conn,1),lbl:'Staff/1k Connections',sub:'IBNET <5',tone:_rcTone(s.staff_per_1000_conn,5,8,true)},
+    {val:_rcFmt(s.staff_per_1000_conn,1),lbl:'Staff/1k Connections',sub:cmpBm('staff_per_1000_conn'),tone:_rcTone(s.staff_per_1000_conn,CMP.staff_per_1000_conn.good,CMP.staff_per_1000_conn.warn,true)},
     {val:_rcMoney(s.wages_per_staff),lbl:'Wages per Staff',sub:'Average'},
     {val:_rcPct(s.payroll_cost_ratio),lbl:'Payroll Cost Ratio',sub:'% of revenue'},
     {val:_rcFmt(s.total_staff),lbl:'Total Staff',sub:`${_rcFmt(s.perm_staff)} perm + ${_rcFmt(s.temp_staff)} temp`},

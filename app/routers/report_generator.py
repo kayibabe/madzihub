@@ -28,7 +28,8 @@ from sqlalchemy.orm import Session
 
 from app.core.tenant import tenant as _tenant
 from app.database import BudgetLine, get_db
-from app.services.assessment import ratio as assessed_ratio, flag as assessed_flag, above, complete, divide
+from app.services.assessment import ratio as assessed_ratio, above, complete, divide
+from app.services.comparators import assess as cmp_flag, benchmark_text as cmp_text
 from app.routers.panels import (
     ZONE_COLORS,
     _base,
@@ -49,9 +50,7 @@ router = APIRouter(prefix="/api/reports", tags=["Report Centre"])
 
 # NRW target percentage (tenant configuration: targets.nrw_pct)
 NRW_TARGET_PCT = _tenant.target("nrw_pct", 27.0)
-COLL_GOOD = _tenant.thresholds.get("coll_good", 90)
-COLL_WARN = _tenant.thresholds.get("coll_warn", 75)
-NRW_WARN = _tenant.thresholds.get("nrw_warn", 35)
+
 
 
 # ── Internal helpers ───────────────────────────────────────────────────────────
@@ -124,7 +123,7 @@ def report_board_pack(
     vol_prod = _nz_sum(rows, "vol_produced")
     nrw_vol = _nz_sum(rows, "nrw")
     total_dbt = sum(max(0, r.total_debtors) for r in lv_d)
-    active = sum(max(0, r.active_customers) for r in lv) or 1
+    active = sum(max(0, r.active_customers) for r in lv)
     pipe_bd = _nz_sum(rows, "pipe_breakdowns")
     pump_bd = _nz_sum(rows, "pump_breakdowns")
     power_kwh = _nz_sum(rows, "power_kwh")
@@ -141,17 +140,17 @@ def report_board_pack(
         "revenue": round(revenue, 2),
         "cash_collected": round(cash, 2),
         "collection_rate": coll_rate,
-        "collection_rate_flag": assessed_flag(coll_rate, COLL_GOOD, COLL_WARN),
+        "collection_rate_flag": cmp_flag("collection_rate", coll_rate),
         "nrw_pct": nrw_pct,
-        "nrw_flag": assessed_flag(nrw_pct, NRW_TARGET_PCT, NRW_WARN, lower=True),
+        "nrw_flag": cmp_flag("nrw_pct", nrw_pct),
         "active_customers": round(active),
         "total_breakdowns": round(pipe_bd + pump_bd),
         "supply_hours_avg": supply_daily,
         "op_ratio": op_ratio,
-        "op_ratio_flag": assessed_flag(op_ratio, 0.8, 1.0, lower=True),
+        "op_ratio_flag": cmp_flag("op_ratio", op_ratio),
         "dso": dso,
-        "dso_flag": assessed_flag(dso, 60, 90, lower=True),
-        "energy_intensity": round(power_kwh / vol_prod, 2) if vol_prod else 0,
+        "dso_flag": cmp_flag("dso", dso),
+        "energy_intensity": assessed_ratio(rows, "power_kwh", "vol_produced", scale=1, digits=2),
     }
 
     # ── Financial Snapshot ─────────────────────────────────────────
@@ -285,7 +284,7 @@ def report_operations(
         "power_cost": round(_nz_sum(rows, "power_cost"), 2),
         "energy_intensity_kwh_m3": round(_nz_avg(rows, "power_kwh_per_m3"), 3),
         "chem_cost": round(_nz_sum(rows, "chem_cost"), 2),
-        "chem_cost_per_m3": round(_nz_sum(rows, "chem_cost") / vol_prod, 3) if vol_prod else 0,
+        "chem_cost_per_m3": divide(_nz_sum(rows, "chem_cost"), vol_prod, scale=1, digits=3),
         "supply_hours_avg_daily": supply_daily,
         "power_fail_hours": round(_nz_sum(rows, "power_fail_hours")),
         "pipe_breakdowns": round(_nz_sum(rows, "pipe_breakdowns")),
@@ -477,13 +476,13 @@ def report_financial(
             "total_revenue": round(revenue, 2),
             "cash_collected": round(cash, 2),
             "collection_rate": coll_rate,
-            "collection_rate_flag": assessed_flag(coll_rate, COLL_GOOD, COLL_WARN),
+            "collection_rate_flag": cmp_flag("collection_rate", coll_rate),
             "op_costs": round(opex, 2),
             "op_ratio": op_ratio,
-            "op_ratio_flag": assessed_flag(op_ratio, 0.8, 1.0, lower=True),
+            "op_ratio_flag": cmp_flag("op_ratio", op_ratio),
             "total_debtors": round(total_dbt, 2),
             "dso": dso,
-            "dso_flag": assessed_flag(dso, 60, 90, lower=True),
+            "dso_flag": cmp_flag("dso", dso),
             "net_surplus": round(revenue - opex, 2),
             "service_charge": round(_nz_sum(rows, "service_charge"), 2),
             "meter_rental": round(_nz_sum(rows, "meter_rental"), 2),
@@ -764,15 +763,15 @@ def report_zone_comparison(
             "color": z.get("color", "#64748b"),
             "vol_produced": z.get("vol_produced", 0),
             "nrw_pct": z.get("nrw_pct"),
-            "nrw_flag": assessed_flag(z.get("nrw_pct"), NRW_TARGET_PCT, NRW_WARN, lower=True),
+            "nrw_flag": cmp_flag("nrw_pct", z.get("nrw_pct")),
             "collection_rate": z.get("collection_rate"),
-            "collection_flag": assessed_flag(z.get("collection_rate"), COLL_GOOD, COLL_WARN),
+            "collection_flag": cmp_flag("collection_rate", z.get("collection_rate")),
             "active_customers": z.get("active_customers", 0),
             "pipe_breakdowns": z.get("pipe_breakdowns", 0),
             "pump_breakdowns": z.get("pump_breakdowns", 0),
             "total_breakdowns": (z.get("pipe_breakdowns", 0) or 0) + (z.get("pump_breakdowns", 0) or 0),
             "dso": z_dso,
-            "dso_flag": assessed_flag(z_dso, 60, 90, lower=True),
+            "dso_flag": cmp_flag("dso", z_dso),
             "op_cost": z.get("op_cost", 0),
             "op_cost_per_m3": round(z_opex / z_vol, 2) if z_vol else 0,
             "amt_billed": z.get("amt_billed", 0),
@@ -985,7 +984,7 @@ def report_scheme_performance(
             "vol_produced": round(s_vol, 1),
             "nrw_vol": round(s_nrw, 1),
             "nrw_pct": s_nrw_pct,
-            "nrw_flag": assessed_flag(s_nrw_pct, NRW_TARGET_PCT, NRW_WARN, lower=True),
+            "nrw_flag": cmp_flag("nrw_pct", s_nrw_pct),
             "active_customers": round(s_active),
             "amt_billed": round(s_billed, 2),
             "cash_collected": round(s_cash, 2),
@@ -1128,9 +1127,9 @@ def report_scorecard(
             "score": fin_score,
             "grade": _grade(fin_score),
             "metrics": [
-                {"name": "Collection Rate",   "value": f"{coll_rate}%",         "benchmark": ">90% (IBNET)",        "flag": assessed_flag(coll_rate, COLL_GOOD, COLL_WARN)},
-                {"name": "Operating Ratio",   "value": f"{op_ratio:.2f}",        "benchmark": "<0.80 (World Bank)", "flag": assessed_flag(op_ratio, 0.8, 1.0, lower=True)},
-                {"name": "DSO (days)",         "value": f"{dso:.0f}d",            "benchmark": "<90d (IBNET)",       "flag": assessed_flag(dso, 60, 90, lower=True)},
+                {"name": "Collection Rate",   "value": f"{coll_rate}%",         "benchmark": cmp_text("collection_rate"), "flag": cmp_flag("collection_rate", coll_rate)},
+                {"name": "Operating Ratio",   "value": f"{op_ratio:.2f}",        "benchmark": cmp_text("op_ratio"), "flag": cmp_flag("op_ratio", op_ratio)},
+                {"name": "DSO (days)",         "value": f"{dso:.0f}d",            "benchmark": cmp_text("dso"), "flag": cmp_flag("dso", dso)},
             ],
         },
         {
@@ -1139,8 +1138,8 @@ def report_scorecard(
             "score": ops_score,
             "grade": _grade(ops_score),
             "metrics": [
-                {"name": "NRW Rate",           "value": f"{nrw_pct}%",           "benchmark": f"<{NRW_TARGET_PCT:g}% ({_tenant.identity.short_name} target)", "flag": assessed_flag(nrw_pct, NRW_TARGET_PCT, NRW_WARN, lower=True)},
-                {"name": "Supply Hours/Day",   "value": f"{supply_daily:.1f}h",  "benchmark": "≥20h/day",           "flag": "GOOD" if supply_daily >= 20 else ("WATCH" if supply_daily >= 16 else "HIGH")},
+                {"name": "NRW Rate",           "value": f"{nrw_pct}%",           "benchmark": cmp_text("nrw_pct"), "flag": cmp_flag("nrw_pct", nrw_pct)},
+                {"name": "Supply Hours/Day",   "value": f"{supply_daily:.1f}h",  "benchmark": cmp_text("supply_hours"), "flag": cmp_flag("supply_hours", supply_daily)},
                 {"name": "Vol Produced (m³)",  "value": f"{vol_prod:,.0f}",      "benchmark": "YTD total",          "flag": ""},
             ],
         },
@@ -1150,8 +1149,8 @@ def report_scorecard(
             "score": inf_score,
             "grade": _grade(inf_score),
             "metrics": [
-                {"name": "Breakdowns/1k Cust","value": f"{bd_per_1k:.1f}",      "benchmark": "<10 (IBNET)",        "flag": "GOOD" if bd_per_1k < 10 else ("WATCH" if bd_per_1k < 20 else "HIGH")},
-                {"name": "Stuck Meters",       "value": f"{stuck_pct:.1f}% of meters","benchmark": "<8% (target)", "flag": "GOOD" if stuck_pct < 5 else ("WATCH" if stuck_pct < 8 else "HIGH")},
+                {"name": "Breakdowns/1k Cust","value": f"{bd_per_1k:.1f}",      "benchmark": cmp_text("breakdowns_per_1k"), "flag": cmp_flag("breakdowns_per_1k", bd_per_1k)},
+                {"name": "Stuck Meters",       "value": f"{stuck_pct:.1f}% of meters","benchmark": cmp_text("stuck_pct"), "flag": cmp_flag("stuck_pct", stuck_pct)},
             ],
         },
         {
@@ -1171,7 +1170,7 @@ def report_scorecard(
             "grade": _grade(hrf_score),
             "metrics": [
                 {"name": "m³/Staff",           "value": f"{m3_per_staff:,.0f}",  "benchmark": "Higher = better",    "flag": ""},
-                {"name": "Staff/1k Connections","value": f"{staff_per_1k:.1f}",  "benchmark": "<5 (IBNET)",         "flag": "GOOD" if staff_per_1k < 5 else ("WATCH" if staff_per_1k < 10 else "HIGH")},
+                {"name": "Staff/1k Connections","value": f"{staff_per_1k:.1f}",  "benchmark": cmp_text("staff_per_1000_conn"), "flag": cmp_flag("staff_per_1000_conn", staff_per_1k)},
                 {"name": "Total Staff",         "value": str(int(perm + temp)),   "benchmark": f"Perm: {int(perm)}, Temp: {int(temp)}", "flag": ""},
             ],
         },

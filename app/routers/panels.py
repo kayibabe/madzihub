@@ -20,6 +20,7 @@ from sqlalchemy.orm import Session
 from app.core.tenant import tenant as _tenant
 from app.database import Record, get_db
 from app.services.assessment import ratio as assessed_ratio, flag as assessed_flag, complete, divide
+from app.services.comparators import assess as cmp_flag, rule as cmp_rule
 from app.utils import MONTHS_ORDER as FY_MONTHS, apply_fy_filter, csv_list
 
 router = APIRouter(prefix="/api/panels", tags=["Panels"])
@@ -1304,14 +1305,14 @@ def panel_executive(zones: Optional[str] = None, schemes: Optional[str] = None,
 
     financial = {
         "op_ratio": op_ratio,
-        "op_ratio_flag": assessed_flag(op_ratio, 0.8, 1.0, lower=True),
+        "op_ratio_flag": cmp_flag("op_ratio", op_ratio),
         "dso": dso,
-        "dso_flag": assessed_flag(dso, 60, 90, lower=True),
+        "dso_flag": cmp_flag("dso", dso),
         "rev_per_conn": rev_per_conn,
         "net_margin": net_margin,
         "net_margin_flag": assessed_flag(net_margin, 50, 20),
         "collection_rate": assessed_ratio(rows, 'cash_collected', 'amt_billed'),
-        "collection_rate_flag": assessed_flag(assessed_ratio(rows, "cash_collected", "amt_billed"), _tenant.thresholds.get("coll_good", 90), _tenant.thresholds.get("coll_warn", 75)),
+        "collection_rate_flag": cmp_flag("collection_rate", assessed_ratio(rows, "cash_collected", "amt_billed")),
         "cash_collected": round(cash, 2),
         "amt_billed": round(revenue, 2),
     }
@@ -1557,7 +1558,7 @@ def panel_staff_productivity(zones: Optional[str] = None, schemes: Optional[str]
             # rather than a raw annual ratio so it is comparable to the SP target.
             "staff_per_1000m3": round(_nz_avg(rows, "staff_per_1000m3_12h"), 2),
             "staff_cost": round(_nz_sum(rows, "staff_costs") + _nz_sum(rows, "wages"), 2),
-            "target_per_1000conn": 13, "target_per_1000m3": 8,
+            "target_per_1000conn": cmp_rule("staff_per_1000_conn")["good"], "target_per_1000m3": 8,
         },
         "by_zone": [{"zone": z["zone"], "color": z["color"],
                      "staff_per_1000m3_12h": z.get("staff_per_1000m3_12h", 0)} for z in bz],
@@ -1576,12 +1577,14 @@ def panel_supply_continuity(zones: Optional[str] = None, schemes: Optional[str] 
         zd[r.zone].append(r)
     zone_supply = [{"zone": z, "color": ZONE_COLORS.get(z, "#64748b"),
                     "supply_hours": _supply_daily(zr)} for z, zr in sorted(zd.items())]
+    target = cmp_rule("supply_hours")["good"]   # same governed comparator as the Board card
     return {
         "kpi": {
-            "supply_hours": daily, "target_hours": 21,
-            "gap_to_target": round(daily - 21, 1),
+            "supply_hours": daily, "target_hours": target,
+            "gap_to_target": None if daily is None else round(daily - target, 1),
+            "supply_flag": cmp_flag("supply_hours", daily),
             "power_fail_hours": round(_nz_sum(rows, "power_fail_hours")),
-            "continuity_pct": round(daily / 24 * 100, 1),
+            "continuity_pct": divide(daily, 24),
         },
         "by_zone": zone_supply,
         "monthly": mo,

@@ -22,7 +22,7 @@
    "staff_cost": 0,
    "staff_per_1000conn": 2320.6,
    "staff_per_1000m3": 1188.6,
-   "target_per_1000conn": 13,
+   "target_per_1000conn": 13.0,
    "target_per_1000m3": 8,
    "temp_staff": 9988,
    "total_staff": 19353

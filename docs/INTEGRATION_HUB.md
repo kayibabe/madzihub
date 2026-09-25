@@ -54,6 +54,8 @@ Rules the pipeline enforces:
 - **Roll-up only for additive measures.** A unit without its own value gets the sum of its leaf units for `sum` measures. Averages are never added up.
 - **Ratios are formula measures**, computed from their rolled-up components at every level (see §2.1). They are never averaged.
 - **Quarters and fiscal years are built from monthly values** using each measure's aggregation. `avg` measures are time-weighted by days in each month (`time_weighting: days_in_month`); where observation weighting matters, define the measure as a formula over a total and a count. They carry `months_reporting` / `months_expected`, so a year-to-date total is never judged against a full-year target (`gap_to_target.on_track` is `null` with a note).
+- **Targets assess only their own period.** `gap_to_target` uses the strategic-plan target for exactly the current period and grain; an earlier period's target is never carried forward (`target_note` explains instead). Other bases (regulator, budget, internal) are returned separately in `other_comparators`. Each gap and target carries a `comparator` with its type, source, unit, organisational unit, period and version.
+- **Freshness is explicit.** `/api/position/sources/freshness` gives each source a `freshness` state (`current`, `overdue`, `failed`, `disabled`, `no_ingestion`, `not_scheduled`) and `last_value_at`. Only a scheduled source on schedule is `current`; approved progress updates and uploads are `not_scheduled`.
 - **Idempotent loads.** Re-running a source or re-dropping a file updates rows in place.
 - **The watermark only advances after a successful load.** A failed run retries from the same point.
 
