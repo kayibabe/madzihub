@@ -269,7 +269,64 @@ The first half of "Before Slice 2" is in place: an isolated database with twelve
 5. One partial scheme (Lakeshore, 7 % of connections) makes company-wide collection, operating ratio and DSO Not assessed for the year. That is correct under the contract, but the screens do not say which unit is missing. This feeds Slice 2's scope and coverage messaging.
 6. The demo seed's service areas (Hilltop, north Riverside, Market Town, Bay Area) differ from the demo returns' schemes, so Strategic Position expects 12 units where 8 report returns.
 
-Next: run the contributor (`north.ops`), reviewer (`north.mgr`) and approver (`planner`, `south.mgr`) journeys on this database, then choose the Slice 2 design.
+The role journeys are recorded in the next section.
+
+## Role journeys on the populated-year dataset
+
+Commit under test: `eeb472a`, with no application-code changes. The dataset was rebuilt immediately beforehand (`scripts/build_review_dataset.py --replace`) and served through the `madzihub-review-year` launch configuration at 1440 × 1000. Each role was signed in with an 8-hour session token minted from that database's own secret, so no password was typed. The helper script was not committed; the passwords in `accounts.txt` work equally well. Accounts: contributor `north.ops`, reviewer `north.mgr`, approvers `planner` (organisation-wide, strategy and report manager) and `south.mgr` (South).
+
+### Journey run
+
+1. **Planner sets up the work.** The New cycle list offered only FY2026/27 periods. The planner first used Setup → Reporting periods → Add fiscal year (2026) to create the FY2025/26 periods. The planner then created "Q4 FY2025/26 progress" (due 15 October 2026, verification required), generated assignments and opened the cycle.
+2. **Contributor submits.** `north.ops` landed on My Work, which listed Q-NRW North under "Progress updates to submit". An empty save was refused with a readable alert. A save of 150 % with no evidence was **accepted** and sent for review; the range and evidence checks failed only on the saved revision. Revision 2 corrected it to 25.9 %, the North value computed from the returns for April–June 2026 (411,972 m³ produced).
+3. **Reviewer returns.** `north.mgr` found the update on My Work and returned it. The reason was required: an empty confirm was refused and focus stayed on the field. The contributor received a notice that included the reason. Revision 3 added a variance reason, and the reviewer verified it.
+4. **Approver approves.** `planner` found it under "Updates to approve" and approved it. The record keeps all three revisions, each with its checks and the full decision trail. The approved value appears in the Strategic Position trend for North (source `strategy-updates`).
+5. **Scope and segregation.** `south.mgr` could not see or approve North's update: the API returned 404. The server refuses verification or approval of one's own submission (`app/modules/strategy/service.py:786`).
+6. **Governed report.** `planner` created "Submissions and data quality — MadziHub — Q4 FY2025/26" and submitted it for review. The frozen draft shows completeness (2 assignments, 1 approved, 1 returned), data-quality findings, a fingerprint and an "IN REVIEW — NOT APPROVED" banner.
+
+**Test data left in the isolated database:** FY2025/26 platform periods; the Q4 FY2025/26 cycle; North Q4 approved at 25.9 % (three revisions); report #2 in review. An API scope probe during the `south.mgr` session submitted South Q4 (value 37, narrative "probe"). The planner then returned it with a note identifying it as test data. Rebuilding the dataset removes all of it. No other database was touched.
+
+### What worked
+
+- Contributors and reviewers land on My Work, and their queues list the right unit and period.
+- Blank, pending and zero stay distinct in the submit form. Revisions cannot be edited, and each one keeps its own checks.
+- Return requires a reason, and the reason reaches the contributor. Segregation of duties and unit scope are enforced on the server.
+- Approved values flow into Strategic Position with their source. The frozen report states its status, period, completeness and fingerprint.
+
+### Findings
+
+Status: all findings below are Verified in this setup, except where the treatment calls for a product decision.
+
+| ID | Priority | Observation | Recommended treatment |
+| --- | --- | --- | --- |
+| RJ-01 | P1 | **Work is routed to people who cannot open it.** `generate_assignments` sets every unit's submitter to the indicator owner (`app/modules/strategy/service.py:549`). South Q-NRW is assigned to `north.ops` in both cycles, although that account has North access only. Both "Progress update requested" notices for South open "Progress update not found." Nobody with South access has the item in a To submit queue or on My Work. `south.mgr` can submit it from the record, since approvers may submit, but is never asked to. The People dialog lists only people in scope, but it opens showing "(any contributor)" while the table shows `north.ops`. It also offers viewers (`auditor`, `board`) as submitter, verifier or approver. | Resolve the submitter per unit from scope when assignments are generated. Flag unassigned or out-of-scope units in the cycle table before it opens. Make the dialog show the current values and offer only roles that can act. |
+| RJ-02 | P1 | **Hand-offs are not notified.** Nothing notifies the reviewer on submission or resubmission, the approver after verification, or the contributor on approval. A report in review appears in no approver's notices or My Work; My Work has no report category. Return notices go to the assigned contributor rather than the person who submitted. The planner's return of South reached `north.ops`, not `south.mgr`. "Requested" notices stay unread after the work is approved. | Notify the next actor at each transition and the actual submitter on return. Close or mark request notices when the work completes. Add reports awaiting approval to My Work. |
+| RJ-03 | P1 | **An impossible value can be submitted without evidence.** 150 % (valid range 0–100) with the "Evidence (required)" field empty was accepted and sent to the reviewer. The failures appear only on the saved revision. | Check range and required evidence in the form before submission. **Product decision needed:** block the submission, or allow it only with an explicit acknowledgement. The server's rule of never adjusting values is unaffected either way. |
+| RJ-04 | P2 | The governed Submissions report shows a returned value (South, 37) in its Value column with no qualifier. | Show returned or unapproved values as such, or omit them from the value column. |
+| RJ-05 | P2 | There are two fiscal calendars. The builder added 9 catalogue fiscal years, but platform reporting periods existed only for FY2026/27. A planner cannot open a cycle or report for a past year until someone adds its periods, and the New cycle list gives no hint of this. | Explain missing periods in the cycle and report dialogs, with a link to Reporting periods. The review builder should also create platform periods for the populated year. |
+| RJ-06 | P2 | **Navigation shows pages the role cannot use.** The contributor sees Access ("Could not load this page: Administrator access required."), Audit trail ("…available to administrators and auditors.") and Regulatory ("Not found.": the module answers 404 to unauthorised users by design). | Filter navigation by permission, as Slice 2 plans. Keep the server checks. |
+| RJ-07 | P2 | For unit-scoped users, the System alerts bell opens with raw API text: "Error: /api/insights/summary?year=2027: organisation_scope_required: …". The bell button has no accessible name and sits over the live clock at 1440 px. | Hide the bell or scope the alerts for scoped users, show a readable message, give the button a name and fix the overlap. |
+| RJ-08 | P2 | **Counts go stale, and an empty badge shows.** Progress Updates tab counts ("To submit 1", "To verify 1") and the My Work badge do not refresh after submit, return or verify, although the API queue is already empty. With nothing unread, the My Work badge renders as an empty red pill: `.mz-badge{display:inline-flex}` (`app/static/assets/css/mod-platform.css:47`) overrides `hidden`. | Refresh counts after every transition, and respect `[hidden]` for badges. |
+| RJ-09 | P2 | **My Work summary tiles count only actions.** While an update waited, the reviewer's tiles read 0 / 0 / 0 / 0. The planner, who had one update to verify and one to approve, still landed on the Board. | Make the tiles cover updates and reports, and land any role with pending work on My Work (UX-05, UX-08). |
+| RJ-10 | P2 | **Reviewer and approver actions are unclear.** The reviewer's most prominent button is "Submit a new revision", with Verify secondary. Verify, Approve and Open cycle take effect on one click, with no confirmation or optional note, although Return requires a reason. The decision log records verification as "Verify · Approved by north.mgr" (the mapping at `service.py:789`). Toasts read "Done." | Make the role's primary action the primary button. Confirm Approve and Open cycle, offering an optional note. Log "Verified" and use specific toasts. |
+| RJ-11 | P2 | The resubmission dialog does not show the return reason. On the record, the reason sits under Decisions, below every revision. The submit dialog's final button is "Save" (UX-07). | Show the latest return reason at the top of the record and in the dialog. Label the button "Submit update" or "Submit revision". |
+| RJ-12 | P2 | **Focus is lost after dialogs.** After Escape on People, a confirmed Return or a failed Save, focus goes to `body` instead of returning to the trigger. A failed submit neither focuses nor marks (`aria-invalid`) the invalid field; the message itself is correctly `role="alert"`. My Work shows eight notice buttons all named just "Open". | Return focus to the trigger, focus and mark the invalid field, and name notice buttons by their subject (Slice 3/4 components). |
+| RJ-13 | P2 | **One unit and period shows three NRW figures.** Strategic Position for North, by quarter: the returns-computed "Non-revenue water 25.7 %" (no target); the plan KPI "Non-Revenue Water — No data", with the hint "select a single unit" although North is selected; and Q-NRW 31.4 %, off track against 28 %. The two numbers come from independent fictional sources (the demo seed and the synthetic returns). The product gap is that a manually reported indicator and the computed measure for the same concept are neither linked nor reconciled, and the consistency check passed. The same quarter is "Q4 FY2025/26" in Progress Updates but "Quarter from Apr 2026" in Strategic Position. Earlier quarters can be reached only through the drill-down. | Allow an indicator to reference a catalogue measure (show the computed value and warn on divergence). Fix the hint, use one period label, and add a period selector (UX-09/UX-10, Slice 2). |
+| RJ-14 | P3 | Two units share the name "Riverside": a Central scheme and a North service area from the demo seed. Both appear in pickers and in the contributor's access line. This extends finding 6 above. | Qualify duplicate names with their parent, and align the seed's service areas with the returns schemes. |
+| RJ-15 | P3 | Board text and card footers still cite IBNET for collection (>90 %) and DSO (<60 days), and the sidebar badge reads "IWA · IBNET ALIGNED". These values were not in Slice 1b's disputed set, but their attribution is unverified. | Check these attributions through the comparator registry (UX-11), or drop the badge. |
+
+### Consequences for Slice 2
+
+RJ-01, RJ-02, RJ-03 and RJ-08 are routing and correctness defects, not layout. A redesigned My Work would still show wrong or missing work until they are fixed. The recommended order is a small **Slice 1c (work routing)** first: RJ-01, RJ-02, RJ-04, RJ-05, the RJ-08 counts and badge, and RJ-03 once its product decision is made. Slice 2 then builds on correct queues. It should:
+
+- make My Work the landing page for any role with pending work;
+- have its tiles count updates and reports as well as actions;
+- filter navigation by permission (RJ-06);
+- handle alerts for scoped users (RJ-07);
+- make each role's primary action clear (RJ-10);
+- fix Strategic Position period selection and labels (RJ-13).
+
+RJ-11 and RJ-12 belong to Slice 3's record and dialog components.
 
 ## Working checklist
 
@@ -281,7 +338,9 @@ Next: run the contributor (`north.ops`), reviewer (`north.mgr`) and approver (`p
 - [x] Slice 1b: verify scope, freshness, comparator provenance and percentage-point presentation (`51e5692`).
 - [x] Confirm the registry's product-default comparator values (accepted as shipped, 25 September 2026).
 - [x] Build the isolated populated-year dataset with complete, measured-zero, partial, stale and empty cases.
-- [ ] Complete the additional-role journeys on that dataset before selecting the Slice 2 design.
+- [x] Complete the additional-role journeys on that dataset before selecting the Slice 2 design (contributor, reviewer, approvers; findings RJ-01 to RJ-15).
+- [ ] Decide RJ-03 (block or acknowledge an out-of-range / missing-evidence submission) and confirm the Slice 1c ordering.
+- [ ] Slice 1c: work routing (RJ-01, RJ-02, RJ-04, RJ-05, RJ-08, and RJ-03 once decided).
 - [ ] Deliver Slices 2 and 3 with accessibility checks within each slice.
 - [ ] Complete Slice 4's responsive and accessibility checks across the affected journeys.
 
