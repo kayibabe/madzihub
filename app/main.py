@@ -298,11 +298,13 @@ app.include_router(strategic.router,    dependencies=_org_wide)
 from app.modules.strategy.router import router as strategy_router  # noqa: E402
 from app.modules.scorecard.router import router as scorecard_router  # noqa: E402
 from app.modules.reporting.router import router as reporting_router  # noqa: E402
+from app.modules.documents.router import router as documents_router  # noqa: E402
 
 app.include_router(platform_router)
 app.include_router(strategy_router)
 app.include_router(scorecard_router)
 app.include_router(reporting_router)
+app.include_router(documents_router)
 
 # ── Upload (admin only) ───────────────────────────────────────
 app.include_router(upload.router, dependencies=[Depends(require_admin)])

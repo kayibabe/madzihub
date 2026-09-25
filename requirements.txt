@@ -34,6 +34,7 @@ pycparser==3.0
 pydantic_core==2.46.3
 pydantic==2.13.3
 PyJWT==2.15.0
+pypdf==6.19.0
 python-dateutil==2.9.0.post0
 python-multipart==0.0.31
 PyYAML==6.0.3

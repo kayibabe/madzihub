@@ -94,16 +94,39 @@ review and edit the generated file under `app/migrations/versions/`, then run th
 `tests/test_migrations.py` fails if the models and the migrations disagree.
 
 ## Backup and restore
-### SQLite mode
-Back up (with the service stopped, or use the file `python -m app.migrate` creates):
-- `data/madzihub.db`
-- deployment package version
-- current environment configuration
+
+The database and the **file store** (`MADZI_FILE_STORE`, default `data/files`: approved report
+outputs and uploaded documents) belong together: a database restored without its files has
+documents whose files are missing, and every download of them fails its integrity check.
+
+### Create and check a backup (SQLite)
+
+    python -m app.platform.backup create                 # -> data/backups/madzihub-backup-<utc>.zip
+    python -m app.platform.backup verify data\backups\madzihub-backup-<utc>.zip
+
+`create` copies the database with SQLite's backup API (safe while the service runs in WAL mode)
+and every stored file, and writes `manifest.json` with SHA-256 fingerprints and the schema
+revision. `verify` re-checks every fingerprint. Schedule `create` daily (Task Scheduler, like the
+reminder job) and copy the archives off the server. Keep the deployment package version and the
+`.env` (without printing its secrets) with them.
+
+PostgreSQL: take a `pg_dump`, and run `python -m app.platform.backup create --files-only` at the
+same time for the file store.
 
 ### Restore
 1. Stop the service.
-2. Restore the database file and delete any `-wal` / `-shm` files beside it.
-3. Restore matching application version.
-4. Check it: `python -m app.migrate status` must report "up to date".
-5. Start the service.
-6. Run smoke tests.
+2. Restore into **new** locations (the command never overwrites):
+
+       python -m app.platform.backup restore <archive.zip> --db D:\MadziHub\data\restored.db --files D:\MadziHub\data\files-restored
+
+3. Point `DATABASE_URL` and `MADZI_FILE_STORE` in `.env` at the restored locations (or swap the
+   folders in after moving the old ones aside). Delete any stale `-wal` / `-shm` files beside the old
+   database.
+4. Restore the matching application version.
+5. Check it: `python -m app.migrate status` must report "up to date" (or run `upgrade` if the
+   backup is from an older revision).
+6. Start the service and run the smoke tests; open a document and a report to confirm downloads
+   pass their integrity check.
+
+A restore was exercised end to end by `tests/test_documents.py` (BackupTests): create, verify,
+restore into new locations, refusal to overwrite, and detection of a tampered archive.

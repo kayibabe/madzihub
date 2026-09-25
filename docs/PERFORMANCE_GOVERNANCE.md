@@ -266,3 +266,60 @@ the same information follows the map for screen-reader and print use.
 Generated reports (and uploaded documents) are kept in `MADZI_FILE_STORE` (default `data/files`).
 Files are written once with app-generated names, never overwritten, and checked against their
 recorded hash when read. **Back this folder up together with the database** (see the deployment runbook).
+
+---
+
+## 5. Document control
+
+**Page:** Documents (Master list · All documents · Search). **API:** `/api/documents/*`.
+
+### Types
+
+| Type | Controlled | Number | Review | Formats |
+|---|---|---|---|---|
+| Policy | yes | POL-0001 | 36 months | PDF, Word |
+| Procedure | yes | PRO-… | 24 months | PDF, Word |
+| Plan | yes | PLN-… | 12 months | PDF, Word, Excel |
+| Form / template | yes | FRM-… | 24 months | PDF, Word, Excel |
+| Evidence, Report, Minutes | no | — | — | as configured (minutes default to *confidential*) |
+
+### Controlled documents
+
+    draft ──approve──► approved ──make effective──► effective ──(next revision becomes effective)──► superseded
+      withdraw (reason) is possible before a document is superseded
+
+- Created by document controllers (duty) or reviewers on the unit; each gets the next number.
+- Files are uploaded while the document is a draft. Approval is by the named approver or a
+  document controller, never by the owner or the last uploader; the approved version is recorded.
+- After approval the document cannot change: **Start revision** creates revision *n + 1* (same
+  number) as a draft; when it becomes effective, the previous revision is superseded.
+- Making a document effective sets its review date from the type's interval; owners get
+  due-soon and overdue review notices from the daily reminder job.
+
+### Evidence
+
+Any record's *Linked records* panel has **Attach evidence file**. The file becomes a document
+under the record's unit and the record is linked to that **exact version**. Replacing the file adds
+a version and a new pinned link; the earlier one stays. Evidence on a progress update satisfies
+the "evidence required" data-quality check.
+
+### Uploads, storage and access
+
+- The extension must be allowed for the type **and** the content must really be that kind of file
+  (PDF header, Office package structure, image signature, text without binary or HTML); renamed
+  executables and scripts are refused. Size is limited by `UPLOAD_LIMIT_MB`.
+- Files go to the append-only file store with an app-generated name and their SHA-256; every
+  download re-checks the fingerprint and is written to the audit trail.
+- Unit scope applies to documents, versions, downloads and search. Classification narrows it:
+  *confidential* needs the reviewer role on the unit; *restricted* is limited to the named owner and
+  approver and document controllers. The people named on a document always see it.
+
+### Search
+
+Text is extracted from PDF (pypdf), Word, Excel, CSV and text files for full-text search (SQLite
+FTS5; PostgreSQL full-text search at query time). If extraction fails the upload still succeeds,
+the failure is shown on the version, and the file is untouched. Scanned PDFs have no text (OCR is
+not included). Results and snippets only ever come from documents the reader may open.
+
+Retention schedules, legal holds and disposal are **not** automated in this release: they need
+each utility's approved records schedule first.

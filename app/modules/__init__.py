@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import importlib
 
-MODULES = ("strategy", "scorecard", "reporting")
+MODULES = ("strategy", "scorecard", "reporting", "documents")
 
 
 def load_all() -> None:

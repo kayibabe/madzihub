@@ -401,8 +401,10 @@ MZ.extras = async function(host, type, id, {canComment = true} = {}){
           {label: 'Record', render: l => `${MZ.esc(l.other.type_label)}: ${l.other.page ? `<button class="mz-link" data-mz="open-link" data-page="${MZ.esc(l.other.page)}" data-type="${MZ.esc(l.other.type)}" data-id="${MZ.esc(l.other.id)}">${MZ.esc(l.other.title)}</button>` : MZ.esc(l.other.title)}${l.to_version ? ` <span class="mz-badge info">v${MZ.esc(l.to_version)}</span>` : ''}`},
           {label: 'By', render: l => `${MZ.esc(l.created_by)}<div class="mz-meta">${MZ.esc(MZ.date(l.created_at))}</div>`}],
         rows: links.links}) : '<div class="mz-empty">No linked records.</div>'}
-        ${links.hidden ? `<p class="mz-meta">${links.hidden} linked record(s) are outside your access and not shown.</p>` : ''}`);
-      MZ.onAct(body, {'open-link': d => MZ.open(d.page, d.type, d.id)});
+        ${links.hidden ? `<p class="mz-meta">${links.hidden} linked record(s) are outside your access and not shown.</p>` : ''}
+        ${MZ.attachEvidence && canComment && MZ.me && !MZ.me.read_only && type !== 'document' ? '<div class="mz-btn-row" style="margin-top:8px"><button class="mz-btn" data-mz="attach">Attach evidence file</button></div>' : ''}`);
+      MZ.onAct(body, {'open-link': d => MZ.open(d.page, d.type, d.id),
+                      attach: async () => { state.tab = 'links'; if(await MZ.attachEvidence(type, id)) MZ.extras(host, type, id, {canComment}); }});
     }else{
       MZ.html(body, MZ.historyHtml(history));
     }

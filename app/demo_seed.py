@@ -178,7 +178,43 @@ def _reports(db: Session) -> None:
     rp.transition(db, _admin_scope(db), inst.id, "approve")
 
 
-STEPS += [_tree, _users, _actions, _strategy, _scorecard, _reports]
+def _documents(db: Session) -> None:
+    from app.modules.documents import service as ds
+    from app.modules.documents.models import Document, DocumentType
+    from app.modules.strategy.models import CycleAssignment
+
+    if db.query(Document).count():
+        return
+    ds.ensure_types(db)
+    admin = _admin_scope(db)
+    pol = ds.create(db, admin, type_id=db.query(DocumentType).filter_by(code="policy").one().id,
+                    title="Non-revenue water management policy", org_unit_code="org", owner="planner",
+                    approver="south.mgr", tags=["nrw", "operations"])
+    ds.add_version(db, _as(db, "planner"), pol.id, "nrw-policy.docx", _demo_docx(
+        "Every region measures non-revenue water monthly and reports it quarterly with its water balance."),
+        "First issue")
+    ds.transition(db, _as(db, "south.mgr"), pol.id, "approve")
+    ds.transition(db, _as(db, "planner"), pol.id, "make_effective")
+    a = db.query(CycleAssignment).filter_by(org_unit_code="north").first()
+    if a is not None:
+        ds.attach_evidence(db, _as(db, "north.ops"), "cycle_assignment", a.id, "water-balance-q1.csv",
+                           b"month,produced_m3,billed_m3\nJul,410000,281000\nAug,398000,273500\nSep,405500,279000\n",
+                           "Q1 water balance (North)")
+
+
+def _demo_docx(text: str) -> bytes:
+    import io
+    import zipfile
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        z.writestr("[Content_Types].xml", '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/'
+                                          'package/2006/content-types"/>')
+        z.writestr("word/document.xml", f"<w:document><w:body><w:p><w:r><w:t>{text}</w:t></w:r></w:p></w:body>"
+                                        "</w:document>")
+    return buf.getvalue()
+
+
+STEPS += [_tree, _users, _actions, _strategy, _scorecard, _reports, _documents]
 
 
 def run(db: Session) -> dict[str, str]:

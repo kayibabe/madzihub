@@ -31,8 +31,10 @@ def _boot(tmpdir: str):
 
 def _model_drift(database) -> list:
     """What `alembic check` reports: differences between the models and the migrated schema."""
+    import app.migrate as migrate
     with database.engine.connect() as conn:
-        return compare_metadata(MigrationContext.configure(conn), database.Base.metadata)
+        ctx = MigrationContext.configure(conn, opts={"include_object": migrate.include_object})
+        return compare_metadata(ctx, database.Base.metadata)
 
 
 def _make_legacy(database, *statements: str) -> None:
