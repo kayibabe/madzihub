@@ -28,6 +28,7 @@ from sqlalchemy.orm import Session
 
 from app.core.tenant import tenant as _tenant
 from app.database import BudgetLine, get_db
+from app.services.assessment import ratio as assessed_ratio, flag as assessed_flag, above, complete
 from app.routers.panels import (
     ZONE_COLORS,
     _base,
@@ -47,7 +48,10 @@ from app.utils import MONTHS_ORDER as FY_MONTHS, csv_list
 router = APIRouter(prefix="/api/reports", tags=["Report Centre"])
 
 # NRW target percentage (tenant configuration: targets.nrw_pct)
-NRW_TARGET_PCT = _tenant.target("nrw_pct", 25.0)
+NRW_TARGET_PCT = _tenant.target("nrw_pct", 27.0)
+COLL_GOOD = _tenant.thresholds.get("coll_good", 90)
+COLL_WARN = _tenant.thresholds.get("coll_warn", 75)
+NRW_WARN = _tenant.thresholds.get("nrw_warn", 35)
 
 
 # ── Internal helpers ───────────────────────────────────────────────────────────
@@ -71,8 +75,8 @@ def _zone_rows_map(rows):
 
 def _dso(total_debtors, amt_billed, n_months):
     """Calculate Days Sales Outstanding."""
-    if not amt_billed or not n_months:
-        return 0
+    if total_debtors is None or not amt_billed or not n_months:
+        return None
     monthly_rev = amt_billed / n_months
     return round(total_debtors / monthly_rev * 30, 1)
 
@@ -126,10 +130,10 @@ def report_board_pack(
     power_kwh = _nz_sum(rows, "power_kwh")
     supply_daily = _supply_daily(rows)
 
-    nrw_pct = round(nrw_vol / vol_prod * 100, 1) if vol_prod else 0
-    coll_rate = round(cash / revenue * 100, 1) if revenue else 0
-    op_ratio = round(opex / revenue, 2) if revenue else 0
-    dso = _dso(total_dbt, revenue, n_months)
+    nrw_pct = assessed_ratio(rows, 'nrw', 'vol_produced')
+    coll_rate = assessed_ratio(rows, 'cash_collected', 'amt_billed')
+    op_ratio = assessed_ratio(rows, 'op_cost', 'amt_billed', scale=1, digits=2)
+    dso = _dso(total_dbt, revenue, n_months) if complete(rows, "total_debtors", "amt_billed") else None
 
     # ── Executive KPIs ─────────────────────────────────────────────
     executive_kpis = {
@@ -137,16 +141,16 @@ def report_board_pack(
         "revenue": round(revenue, 2),
         "cash_collected": round(cash, 2),
         "collection_rate": coll_rate,
-        "collection_rate_flag": "GOOD" if coll_rate >= 90 else ("WATCH" if coll_rate >= 75 else "HIGH"),
+        "collection_rate_flag": assessed_flag(coll_rate, COLL_GOOD, COLL_WARN),
         "nrw_pct": nrw_pct,
-        "nrw_flag": "GOOD" if nrw_pct <= NRW_TARGET_PCT else "HIGH",
+        "nrw_flag": assessed_flag(nrw_pct, NRW_TARGET_PCT, NRW_WARN, lower=True),
         "active_customers": round(active),
         "total_breakdowns": round(pipe_bd + pump_bd),
         "supply_hours_avg": supply_daily,
         "op_ratio": op_ratio,
-        "op_ratio_flag": "GOOD" if op_ratio < 0.8 else ("WATCH" if op_ratio < 1.0 else "HIGH"),
+        "op_ratio_flag": assessed_flag(op_ratio, 0.8, 1.0, lower=True),
         "dso": dso,
-        "dso_flag": "GOOD" if dso < 60 else ("WATCH" if dso < 90 else "HIGH"),
+        "dso_flag": assessed_flag(dso, 60, 90, lower=True),
         "energy_intensity": round(power_kwh / vol_prod, 2) if vol_prod else 0,
     }
 
@@ -160,7 +164,7 @@ def report_board_pack(
         "total_debtors": round(total_dbt, 2),
         "dso": dso,
         "net_surplus": round(revenue - opex, 2),
-        "net_margin_pct": round((revenue - opex) / revenue * 100, 1) if revenue else 0,
+        "net_margin_pct": round((revenue - opex) / revenue * 100, 1) if revenue and complete(rows, "amt_billed", "op_cost") else None,
     }
 
     # ── Top 3 Zone Risks (NRW %, then DSO) ───────────────────────
@@ -172,16 +176,16 @@ def report_board_pack(
         z_rev = z.get("amt_billed", 0) or 0
         z_nm = max(len(set(_lk(r) for r in zr)), 1)
         z_dbt = z.get("total_debtors", 0) or 0
-        z_dso = _dso(z_dbt, z_rev, z_nm)
+        z_dso = _dso(z_dbt, z_rev, z_nm) if complete(zr, "total_debtors", "amt_billed") else None
         zone_risk_list.append({
             "zone": zn,
             "color": z.get("color", "#64748b"),
-            "nrw_pct": z.get("nrw_pct", 0),
+            "nrw_pct": z.get("nrw_pct"),
             "dso": z_dso,
-            "collection_rate": z.get("collection_rate", 0),
-            "risk_score": (z.get("nrw_pct", 0) / NRW_TARGET_PCT) + (z_dso / 90.0),
+            "collection_rate": z.get("collection_rate"),
+            "risk_score": (z["nrw_pct"] / NRW_TARGET_PCT) + (z_dso / 90.0) if z.get("nrw_pct") is not None and z_dso is not None else None,
         })
-    top_zone_risks = sorted(zone_risk_list, key=lambda x: x["risk_score"], reverse=True)[:3]
+    top_zone_risks = sorted((z for z in zone_risk_list if z["risk_score"] is not None), key=lambda x: x["risk_score"], reverse=True)[:3]
 
     # ── NRW Trend (12 months) ─────────────────────────────────────
     nrw_trend = _trend_series(mo, "pct_nrw")
@@ -216,7 +220,7 @@ def report_board_pack(
                 },
                 "nrw_pct": {
                     "current": nrw_pct,
-                    "prior": round(p_nrw / p_vol * 100, 1) if p_vol else 0,
+                    "prior": assessed_ratio(prior_rows, 'nrw', 'vol_produced'),
                 },
                 "op_costs": {
                     "current": round(opex, 2),
@@ -239,8 +243,8 @@ def report_board_pack(
                 "zone": z["zone"],
                 "color": z.get("color", "#64748b"),
                 "vol_produced": z.get("vol_produced", 0),
-                "nrw_pct": z.get("nrw_pct", 0),
-                "collection_rate": z.get("collection_rate", 0),
+                "nrw_pct": z.get("nrw_pct"),
+                "collection_rate": z.get("collection_rate"),
                 "active_customers": z.get("active_customers", 0),
                 "op_ratio": round(z.get("op_cost", 0) / z.get("amt_billed", 1), 2) if z.get("amt_billed") else 0,
             }
@@ -267,7 +271,7 @@ def report_operations(
 
     vol_prod = _nz_sum(rows, "vol_produced")
     nrw_vol = _nz_sum(rows, "nrw")
-    nrw_pct = round(nrw_vol / vol_prod * 100, 2) if vol_prod else 0
+    nrw_pct = assessed_ratio(rows, 'nrw', 'vol_produced', digits=2)
     power_kwh = _nz_sum(rows, "power_kwh")
     supply_daily = _supply_daily(rows)
 
@@ -296,8 +300,8 @@ def report_operations(
             "color": z.get("color", "#64748b"),
             "vol_produced": z.get("vol_produced", 0),
             "nrw_vol": z.get("nrw", 0),
-            "nrw_pct": z.get("nrw_pct", 0),
-            "above_target": z.get("nrw_pct", 0) > NRW_TARGET_PCT,
+            "nrw_pct": z.get("nrw_pct"),
+            "above_target": above(z.get("nrw_pct"), NRW_TARGET_PCT),
         }
         for z in bz
     ]
@@ -345,7 +349,7 @@ def report_operations(
         {
             "month": m["month"],
             "vol_produced": m.get("vol_produced", 0),
-            "nrw_pct": m.get("pct_nrw", 0),
+            "nrw_pct": m.get("pct_nrw"),
             "supply_hours": m.get("supply_hours", 0),
         }
         for m in mo
@@ -360,7 +364,7 @@ def report_operations(
                 "zone": z["zone"],
                 "color": z.get("color", "#64748b"),
                 "vol_produced": z.get("vol_produced", 0),
-                "nrw_pct": z.get("nrw_pct", 0),
+                "nrw_pct": z.get("nrw_pct"),
                 "supply_hours_avg": z.get("supply_hours", 0),
             }
             for z in bz
@@ -395,9 +399,9 @@ def report_financial(
     cash = _nz_sum(rows, "cash_collected")
     opex = _nz_sum(rows, "op_cost")
     total_dbt = sum(max(0, r.total_debtors) for r in lv_d)
-    coll_rate = round(cash / revenue * 100, 1) if revenue else 0
-    op_ratio = round(opex / revenue, 2) if revenue else 0
-    dso = _dso(total_dbt, revenue, n_months)
+    coll_rate = assessed_ratio(rows, 'cash_collected', 'amt_billed')
+    op_ratio = assessed_ratio(rows, 'op_cost', 'amt_billed', scale=1, digits=2)
+    dso = _dso(total_dbt, revenue, n_months) if complete(rows, "total_debtors", "amt_billed") else None
 
     # Budget variance (if available)
     budget_variance = {}
@@ -449,7 +453,7 @@ def report_financial(
             "month": m["month"],
             "amt_billed": m.get("amt_billed", 0),
             "cash_collected": m.get("cash_collected", 0),
-            "collection_rate": m.get("collection_rate", 0),
+            "collection_rate": m.get("collection_rate"),
         }
         for m in mo
         if m.get("has_data")
@@ -473,13 +477,13 @@ def report_financial(
             "total_revenue": round(revenue, 2),
             "cash_collected": round(cash, 2),
             "collection_rate": coll_rate,
-            "collection_rate_flag": "GOOD" if coll_rate >= 90 else ("WATCH" if coll_rate >= 75 else "HIGH"),
+            "collection_rate_flag": assessed_flag(coll_rate, COLL_GOOD, COLL_WARN),
             "op_costs": round(opex, 2),
             "op_ratio": op_ratio,
-            "op_ratio_flag": "GOOD" if op_ratio < 0.8 else ("WATCH" if op_ratio < 1.0 else "HIGH"),
+            "op_ratio_flag": assessed_flag(op_ratio, 0.8, 1.0, lower=True),
             "total_debtors": round(total_dbt, 2),
             "dso": dso,
-            "dso_flag": "GOOD" if dso < 60 else ("WATCH" if dso < 90 else "HIGH"),
+            "dso_flag": assessed_flag(dso, 60, 90, lower=True),
             "net_surplus": round(revenue - opex, 2),
             "service_charge": round(_nz_sum(rows, "service_charge"), 2),
             "meter_rental": round(_nz_sum(rows, "meter_rental"), 2),
@@ -491,7 +495,7 @@ def report_financial(
                 "color": z.get("color", "#64748b"),
                 "amt_billed": z.get("amt_billed", 0),
                 "cash_collected": z.get("cash_collected", 0),
-                "collection_rate": z.get("collection_rate", 0),
+                "collection_rate": z.get("collection_rate"),
                 "op_cost": z.get("op_cost", 0),
                 "total_debtors": z.get("total_debtors", 0),
             }
@@ -748,7 +752,7 @@ def report_zone_comparison(
         z_rev = z.get("amt_billed", 0) or 0
         z_nm = max(len(set(_lk(r) for r in zr)), 1)
         z_dbt = z.get("total_debtors", 0) or 0
-        z_dso = _dso(z_dbt, z_rev, z_nm)
+        z_dso = _dso(z_dbt, z_rev, z_nm) if complete(zr, "total_debtors", "amt_billed") else None
         z_vol = z.get("vol_produced", 0) or 0
         z_opex = z.get("op_cost", 0) or 0
 
@@ -756,16 +760,16 @@ def report_zone_comparison(
             "zone": zn,
             "color": z.get("color", "#64748b"),
             "vol_produced": z.get("vol_produced", 0),
-            "nrw_pct": z.get("nrw_pct", 0),
-            "nrw_flag": "GOOD" if z.get("nrw_pct", 0) <= NRW_TARGET_PCT else "HIGH",
-            "collection_rate": z.get("collection_rate", 0),
-            "collection_flag": "GOOD" if z.get("collection_rate", 0) >= 90 else ("WATCH" if z.get("collection_rate", 0) >= 75 else "HIGH"),
+            "nrw_pct": z.get("nrw_pct"),
+            "nrw_flag": assessed_flag(z.get("nrw_pct"), NRW_TARGET_PCT, NRW_WARN, lower=True),
+            "collection_rate": z.get("collection_rate"),
+            "collection_flag": assessed_flag(z.get("collection_rate"), COLL_GOOD, COLL_WARN),
             "active_customers": z.get("active_customers", 0),
             "pipe_breakdowns": z.get("pipe_breakdowns", 0),
             "pump_breakdowns": z.get("pump_breakdowns", 0),
             "total_breakdowns": (z.get("pipe_breakdowns", 0) or 0) + (z.get("pump_breakdowns", 0) or 0),
             "dso": z_dso,
-            "dso_flag": "GOOD" if z_dso < 60 else ("WATCH" if z_dso < 90 else "HIGH"),
+            "dso_flag": assessed_flag(z_dso, 60, 90, lower=True),
             "op_cost": z.get("op_cost", 0),
             "op_cost_per_m3": round(z_opex / z_vol, 2) if z_vol else 0,
             "amt_billed": z.get("amt_billed", 0),
@@ -790,8 +794,8 @@ def report_zone_comparison(
         "zone": "TOTAL",
         "color": "#374151",
         "vol_produced": round(total_vol, 1),
-        "nrw_pct": round(total_nrw / total_vol * 100, 1) if total_vol else 0,
-        "collection_rate": round(total_cash / total_rev * 100, 1) if total_rev else 0,
+        "nrw_pct": assessed_ratio(rows, 'nrw', 'vol_produced'),
+        "collection_rate": assessed_ratio(rows, 'cash_collected', 'amt_billed'),
         "active_customers": round(total_active),
         "pipe_breakdowns": round(_nz_sum(rows, "pipe_breakdowns")),
         "pump_breakdowns": round(_nz_sum(rows, "pump_breakdowns")),
@@ -830,7 +834,7 @@ def report_nrw_analysis(
     vol_prod = _nz_sum(rows, "vol_produced")
     nrw_vol = _nz_sum(rows, "nrw")
     rev_water = _nz_sum(rows, "revenue_water")
-    nrw_pct = round(nrw_vol / vol_prod * 100, 1) if vol_prod else 0
+    nrw_pct = assessed_ratio(rows, 'nrw', 'vol_produced')
 
     # Estimate NRW cost using average tariff
     vol_billed = (
@@ -847,7 +851,7 @@ def report_nrw_analysis(
         "nrw_vol": round(nrw_vol, 1),
         "nrw_pct": nrw_pct,
         "nrw_target_pct": NRW_TARGET_PCT,
-        "above_target": nrw_pct > NRW_TARGET_PCT,
+        "above_target": above(nrw_pct, NRW_TARGET_PCT),
         "nrw_cost_estimate": nrw_cost_estimate,
         "avg_tariff": avg_tariff,
         "vol_billed": round(vol_billed, 1),
@@ -859,21 +863,21 @@ def report_nrw_analysis(
     zones_below = []
     for z in bz:
         zn = z["zone"]
-        z_nrw = z.get("nrw_pct", 0)
-        above = z_nrw > NRW_TARGET_PCT
+        z_nrw = z.get("nrw_pct")
+        is_above = above(z_nrw, NRW_TARGET_PCT)
         entry = {
             "zone": zn,
             "color": z.get("color", "#64748b"),
             "vol_produced": z.get("vol_produced", 0),
             "nrw_vol": z.get("nrw", 0),
             "nrw_pct": z_nrw,
-            "above_target": above,
-            "distance_from_target": round(z_nrw - NRW_TARGET_PCT, 1),
+            "above_target": is_above,
+            "distance_from_target": round(z_nrw - NRW_TARGET_PCT, 1) if z_nrw is not None else None,
         }
         nrw_by_zone.append(entry)
-        if above:
+        if is_above:
             zones_above.append(zn)
-        else:
+        elif is_above is False:
             zones_below.append(zn)
 
     # NRW component breakdown (physical vs commercial loss proxy).
@@ -899,9 +903,9 @@ def report_nrw_analysis(
         {
             "month": m["month"],
             "nrw_vol": m.get("nrw", 0),
-            "nrw_pct": m.get("pct_nrw", 0),
+            "nrw_pct": m.get("pct_nrw"),
             "vol_produced": m.get("vol_produced", 0),
-            "above_target": (m.get("pct_nrw", 0) or 0) > NRW_TARGET_PCT,
+            "above_target": above(m.get("pct_nrw"), NRW_TARGET_PCT),
         }
         for m in mo
         if m.get("has_data")
@@ -958,7 +962,7 @@ def report_scheme_performance(
 
         s_vol = _nz_sum(sr, "vol_produced")
         s_nrw = _nz_sum(sr, "nrw")
-        s_nrw_pct = round(s_nrw / s_vol * 100, 1) if s_vol else 0
+        s_nrw_pct = assessed_ratio(sr, 'nrw', 'vol_produced')
         s_billed = _nz_sum(sr, "amt_billed")
         s_cash = _nz_sum(sr, "cash_collected")
         s_active = sum(max(0, r.active_customers) for r in slv)
@@ -977,11 +981,11 @@ def report_scheme_performance(
             "vol_produced": round(s_vol, 1),
             "nrw_vol": round(s_nrw, 1),
             "nrw_pct": s_nrw_pct,
-            "nrw_flag": "GOOD" if s_nrw_pct <= NRW_TARGET_PCT else "HIGH",
+            "nrw_flag": assessed_flag(s_nrw_pct, NRW_TARGET_PCT, NRW_WARN, lower=True),
             "active_customers": round(s_active),
             "amt_billed": round(s_billed, 2),
             "cash_collected": round(s_cash, 2),
-            "collection_rate": round(s_cash / s_billed * 100, 1) if s_billed else 0,
+            "collection_rate": assessed_ratio(sr, 'cash_collected', 'amt_billed'),
             "total_debtors": round(s_dbt, 2),
             "dso": _dso(s_dbt, s_billed, s_n_months),
             "pipe_breakdowns": round(s_pipe_bd),
@@ -1009,11 +1013,11 @@ def report_scheme_performance(
     totals = {
         "scheme_count": len(scheme_summaries),
         "vol_produced": round(total_vol, 1),
-        "nrw_pct": round(total_nrw / total_vol * 100, 1) if total_vol else 0,
+        "nrw_pct": assessed_ratio(rows, 'nrw', 'vol_produced'),
         "active_customers": round(total_active),
         "amt_billed": round(total_rev, 2),
         "cash_collected": round(total_cash, 2),
-        "collection_rate": round(total_cash / total_rev * 100, 1) if total_rev else 0,
+        "collection_rate": assessed_ratio(rows, 'cash_collected', 'amt_billed'),
         "total_debtors": round(total_dbt, 2),
         "dso": _dso(total_dbt, total_rev, n_months),
         "total_breakdowns": round(_nz_sum(rows, "pipe_breakdowns") + _nz_sum(rows, "pump_breakdowns")),
@@ -1046,7 +1050,7 @@ def report_scorecard(
     rows, bz, mo = _base(zones, None, months, year, db)
 
     if not rows:
-        return {"domains": [], "overall_grade": "N/A", "overall_score": 0}
+        return {"domains": [], "overall_grade": "Not assessed", "overall_score": None}
 
     lv = _latest(rows)
     lv_d = _latest_nonzero(rows, "total_debtors")
@@ -1070,14 +1074,24 @@ def report_scorecard(
     supply_daily = _supply_daily(rows)
     dtc_avg = _nz_avg(rows, "days_to_connect", cap=365)
 
-    nrw_pct = round(nrw_vol / vol_prod * 100, 1) if vol_prod else 0
-    coll_rate = round(cash / revenue * 100, 1) if revenue else 0
-    op_ratio = round(opex / revenue, 2) if revenue else 0
-    dso = _dso(total_dbt, revenue, n_months)
+    nrw_pct = assessed_ratio(rows, 'nrw', 'vol_produced')
+    coll_rate = assessed_ratio(rows, 'cash_collected', 'amt_billed')
+    op_ratio = assessed_ratio(rows, 'op_cost', 'amt_billed', scale=1, digits=2)
+    dso = _dso(total_dbt, revenue, n_months) if complete(rows, "total_debtors", "amt_billed") else None
     stuck_pct = round(stuck / metered * 100, 1) if metered else 0
     bd_per_1k = round((pipe_bd + pump_bd) / active * 1000, 1)
     m3_per_staff = round(vol_prod / total_staff, 1)
     staff_per_1k = round(total_staff / active * 1000, 1)
+
+    required = ("nrw", "vol_produced", "amt_billed", "cash_collected", "op_cost",
+                "total_debtors", "supply_hours", "active_customers", "total_metered",
+                "pipe_breakdowns", "pump_breakdowns", "stuck_meters", "days_to_connect",
+                "perm_staff", "temp_staff")
+    if (not complete(rows, *required) or any(v is None for v in (nrw_pct, coll_rate, op_ratio, dso, supply_daily))
+            or sum(r.active_customers for r in lv) <= 0
+            or sum(r.total_metered for r in lv) <= 0 or perm + temp <= 0):
+        return {"domains": [], "overall_grade": "Not assessed", "overall_score": None,
+                "assessment_note": "Required score inputs are missing or a denominator is zero."}
 
     def _grade(score):
         if score >= 85: return "A"
@@ -1110,9 +1124,9 @@ def report_scorecard(
             "score": fin_score,
             "grade": _grade(fin_score),
             "metrics": [
-                {"name": "Collection Rate",   "value": f"{coll_rate}%",         "benchmark": ">90% (IBNET)",        "flag": "GOOD" if coll_rate >= 90 else ("WATCH" if coll_rate >= 75 else "HIGH")},
-                {"name": "Operating Ratio",   "value": f"{op_ratio:.2f}",        "benchmark": "<0.80 (World Bank)", "flag": "GOOD" if op_ratio < 0.80 else ("WATCH" if op_ratio < 1.0 else "HIGH")},
-                {"name": "DSO (days)",         "value": f"{dso:.0f}d",            "benchmark": "<90d (IBNET)",       "flag": "GOOD" if dso < 60 else ("WATCH" if dso < 90 else "HIGH")},
+                {"name": "Collection Rate",   "value": f"{coll_rate}%",         "benchmark": ">90% (IBNET)",        "flag": assessed_flag(coll_rate, COLL_GOOD, COLL_WARN)},
+                {"name": "Operating Ratio",   "value": f"{op_ratio:.2f}",        "benchmark": "<0.80 (World Bank)", "flag": assessed_flag(op_ratio, 0.8, 1.0, lower=True)},
+                {"name": "DSO (days)",         "value": f"{dso:.0f}d",            "benchmark": "<90d (IBNET)",       "flag": assessed_flag(dso, 60, 90, lower=True)},
             ],
         },
         {
@@ -1121,7 +1135,7 @@ def report_scorecard(
             "score": ops_score,
             "grade": _grade(ops_score),
             "metrics": [
-                {"name": "NRW Rate",           "value": f"{nrw_pct}%",           "benchmark": f"<{NRW_TARGET_PCT:g}% ({_tenant.identity.short_name} target)", "flag": "GOOD" if nrw_pct <= NRW_TARGET_PCT else ("WATCH" if nrw_pct <= 35 else "HIGH")},
+                {"name": "NRW Rate",           "value": f"{nrw_pct}%",           "benchmark": f"<{NRW_TARGET_PCT:g}% ({_tenant.identity.short_name} target)", "flag": assessed_flag(nrw_pct, NRW_TARGET_PCT, NRW_WARN, lower=True)},
                 {"name": "Supply Hours/Day",   "value": f"{supply_daily:.1f}h",  "benchmark": "≥20h/day",           "flag": "GOOD" if supply_daily >= 20 else ("WATCH" if supply_daily >= 16 else "HIGH")},
                 {"name": "Vol Produced (m³)",  "value": f"{vol_prod:,.0f}",      "benchmark": "YTD total",          "flag": ""},
             ],

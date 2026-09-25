@@ -29,7 +29,7 @@ hierarchy:
   - {name: Central, color: '#0369a1'}
   - {name: South, color: '#b45309'}
 targets:
-  nrw_pct: 25.0
+  nrw_pct: 27.0
 thresholds:
   nrw_warn: 35.0
   coll_good: 90.0

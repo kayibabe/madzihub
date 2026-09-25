@@ -4,21 +4,21 @@
    {
     "amt_billed": 0,
     "cash_collected": 0,
-    "collection_rate": 0,
+    "collection_rate": null,
     "color": "#0369a1",
     "zone": "Central"
    },
    {
     "amt_billed": 0,
     "cash_collected": 0,
-    "collection_rate": 0,
+    "collection_rate": null,
     "color": "#0f766e",
     "zone": "North"
    },
    {
     "amt_billed": 0,
     "cash_collected": 0,
-    "collection_rate": 0,
+    "collection_rate": null,
     "color": "#b45309",
     "zone": "South"
    }

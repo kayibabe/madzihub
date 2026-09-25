@@ -128,7 +128,7 @@ class RenderedAssetTests(unittest.TestCase):
             self.assertNotIn(p, js)
         for legacy in LEGACY_NAMES:
             self.assertNotIn(legacy, js)
-        self.assertIn("nrw:25,", js)
+        self.assertIn("nrw:27,", js)
         self.assertIn('const ALL_FY_MONTHS=["July",', js)
         self.assertIn('"North": "#0f766e"', js)
         # The USD "$" symbol survives, escaped so it can never open a ${...} substitution.
@@ -220,7 +220,7 @@ class DemoTenantTests(unittest.TestCase):
                 self.assertNotIn("__ORG_SHORT__", html)
 
                 nrw = c.get("/api/panels/nrw?year=2025", headers=h).json()
-                self.assertEqual(nrw["kpi"]["target_nrw"], 25.0)
+                self.assertEqual(nrw["kpi"]["target_nrw"], 27.0)
                 self.assertEqual({z["zone"] for z in nrw["by_zone"]}, set(DEMO_ZONES))
                 self.assertEqual(nrw["by_zone"][0]["color"].lower()[:1], "#")
 

@@ -26,10 +26,10 @@
   "kpi": {
    "avg_tariff_per_m3": 0.0,
    "economic_nrw": null,
-   "gap_to_target": 9.4,
+   "gap_to_target": 7.4,
    "nrw_volume": 24637,
    "pct_nrw": 34.4,
-   "target_nrw": 25.0,
+   "target_nrw": 27.0,
    "vol_produced": 71610,
    "water_sold": 46973
   },

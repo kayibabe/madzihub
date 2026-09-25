@@ -12,7 +12,7 @@ from app.database import Record
 
 _ORG = _tenant.identity.short_name
 _CUR = _tenant.currency.code
-_NRW = _tenant.target("nrw_pct", 25.0)
+_NRW = _tenant.target("nrw_pct", 27.0)
 
 
 @dataclass
@@ -321,7 +321,7 @@ CHART_GOVERNANCE_REGISTRY: list[ChartGovernanceItem] = [
         title="NRW Rate by Zone — Current Period (%)",
         benchmark_mode="line",
         benchmark_label="Target line",
-        note="Benchmark context: compare every zone against the 27% corporate NRW target and the 20% good-practice benchmark.",
+        note=f"Benchmark context: compare every zone against the {_NRW:g}% corporate NRW target and the 20% good-practice benchmark.",
         rationale="Zone comparison is valid because each bar is the same KPI measured against the same benchmark rule.",
         legend_style="compact-top",
         print_priority="high",
@@ -341,7 +341,7 @@ CHART_GOVERNANCE_REGISTRY: list[ChartGovernanceItem] = [
         title="NRW Rate by Zone (%)",
         benchmark_mode="line",
         benchmark_label="Target line",
-        note="Benchmark context: compare each zone against the 27% target and 20% international good-practice benchmark.",
+        note=f"Benchmark context: compare each zone against the {_NRW:g}% target and 20% international good-practice benchmark.",
         rationale="Like-for-like zone benchmarking is analytically legitimate for NRW percentage comparisons.",
         legend_style="compact-top",
         print_priority="high",
@@ -458,10 +458,10 @@ CHART_GOVERNANCE_REGISTRY: list[ChartGovernanceItem] = [
     ),
     ChartGovernanceItem(
         page_key="budget",
-        title="NRW % by Zone vs 27% Target",
+        title=f"NRW % by Zone vs {_NRW:g}% Target",
         benchmark_mode="line",
         benchmark_label="Target line",
-        note="Benchmark context: 27% is the internal management target; the most material operational priority is the largest-producing zone with persistent excess NRW.",
+        note=f"Benchmark context: {_NRW:g}% is the internal management target; the most material operational priority is the largest-producing zone with persistent excess NRW.",
         rationale="This is a direct target-comparison chart using a single corporate threshold.",
         legend_style="compact-top",
         print_priority="high",
@@ -471,7 +471,7 @@ CHART_GOVERNANCE_REGISTRY: list[ChartGovernanceItem] = [
         title="NRW % Monthly Trend by Zone",
         benchmark_mode="context",
         benchmark_label="Read note",
-        note="Benchmark context: sustained movement toward or below 27% matters more than isolated monthly swings.",
+        note=f"Benchmark context: sustained movement toward or below {_NRW:g}% matters more than isolated monthly swings.",
         rationale="Multi-zone trend spaghetti plots are more credible with interpretation notes than with stacked reference lines.",
         legend_style="compact-top",
         print_priority="medium",

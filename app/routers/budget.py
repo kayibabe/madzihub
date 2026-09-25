@@ -638,7 +638,7 @@ def get_variance(
 
     cust_sch_map = scheme_active_map
 
-    nrw_target = B("nrw_pct") or _tenant.target("nrw_pct", 25.0)   # tenant target if no budget loaded
+    nrw_target = B("nrw_pct") or _tenant.target("nrw_pct", 27.0)   # tenant target if no budget loaded
     scheme_rows = []
     for r in scheme_q:
         nrw_pct  = r.nrw_vol / r.vp * 100 if r.vp else 0

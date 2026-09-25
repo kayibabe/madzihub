@@ -3,14 +3,14 @@
   "financial": {
    "amt_billed": 0,
    "cash_collected": 0,
-   "collection_rate": 0,
-   "collection_rate_flag": "HIGH",
-   "dso": 0,
-   "dso_flag": "GOOD",
-   "net_margin": 0,
-   "net_margin_flag": "LOW",
-   "op_ratio": 0,
-   "op_ratio_flag": "GOOD",
+   "collection_rate": null,
+   "collection_rate_flag": "NOT ASSESSED",
+   "dso": null,
+   "dso_flag": "NOT ASSESSED",
+   "net_margin": null,
+   "net_margin_flag": "NOT ASSESSED",
+   "op_ratio": null,
+   "op_ratio_flag": "NOT ASSESSED",
    "rev_per_conn": 0.0
   },
   "nrw": {
@@ -134,9 +134,9 @@
    {
     "active_customers": 1952,
     "breakdowns_total": 54045,
-    "collection_rate": 0,
+    "collection_rate": null,
     "color": "#0369a1",
-    "dso": 0,
+    "dso": null,
     "nrw_pct": 35.0,
     "nrw_trend": [
      35.0,
@@ -152,7 +152,7 @@
      35.0,
      35.0
     ],
-    "op_ratio": 0,
+    "op_ratio": null,
     "rev_per_conn": 0.0,
     "schemes": 2,
     "zone": "Central"
@@ -160,9 +160,9 @@
    {
     "active_customers": 2366,
     "breakdowns_total": 65510,
-    "collection_rate": 0,
+    "collection_rate": null,
     "color": "#0f766e",
-    "dso": 0,
+    "dso": null,
     "nrw_pct": 38.0,
     "nrw_trend": [
      38.0,
@@ -178,7 +178,7 @@
      38.0,
      38.0
     ],
-    "op_ratio": 0,
+    "op_ratio": null,
     "rev_per_conn": 0.0,
     "schemes": 3,
     "zone": "North"
@@ -186,9 +186,9 @@
    {
     "active_customers": 4022,
     "breakdowns_total": 111367,
-    "collection_rate": 0,
+    "collection_rate": null,
     "color": "#b45309",
-    "dso": 0,
+    "dso": null,
     "nrw_pct": 32.0,
     "nrw_trend": [
      32.0,
@@ -204,7 +204,7 @@
      32.0,
      32.0
     ],
-    "op_ratio": 0,
+    "op_ratio": null,
     "rev_per_conn": 0.0,
     "schemes": 3,
     "zone": "South"

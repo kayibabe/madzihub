@@ -4,7 +4,7 @@
    {
     "above_target": true,
     "color": "#0369a1",
-    "distance_from_target": 10.0,
+    "distance_from_target": 8.0,
     "nrw_pct": 35.0,
     "nrw_vol": 5865.9,
     "vol_produced": 16759.7,
@@ -13,7 +13,7 @@
    {
     "above_target": true,
     "color": "#0f766e",
-    "distance_from_target": 13.0,
+    "distance_from_target": 11.0,
     "nrw_pct": 38.0,
     "nrw_vol": 7719.6,
     "vol_produced": 20314.8,
@@ -22,7 +22,7 @@
    {
     "above_target": true,
     "color": "#b45309",
-    "distance_from_target": 7.0,
+    "distance_from_target": 5.0,
     "nrw_pct": 32.0,
     "nrw_vol": 11051.2,
     "vol_produced": 34535.2,
@@ -35,7 +35,7 @@
    "physical_loss_proxy": 18477.6,
    "total_nrw": 24636.7
   },
-  "nrw_target": 25.0,
+  "nrw_target": 27.0,
   "nrw_trend": [
    {
     "above_target": true,
@@ -127,7 +127,7 @@
    "avg_tariff": 0.0,
    "nrw_cost_estimate": 0.0,
    "nrw_pct": 34.4,
-   "nrw_target_pct": 25.0,
+   "nrw_target_pct": 27.0,
    "nrw_vol": 24636.7,
    "revenue_water": 46973.0,
    "vol_billed": 243581.4,
