@@ -232,9 +232,44 @@ Also fixed while touching these paths, all missing-data defects of the UX-01 kin
 
 ### Open findings (Slice 1b)
 
-- Product confirmation needed for the values marked "product default" in the registry. External benchmark attributions that screens previously disagreed on are no longer asserted: staff <5 IBNET, breakdowns 5 or 10 IBNET. Tenants can override each value through `thresholds`/`targets` keys named in the registry.
+- ~~Product confirmation needed for the values marked "product default" in the registry.~~ Accepted by the product owner on 25 September 2026 as the shipped defaults, unchanged: stuck meters ≤5 / ≤8 %, staffing alert ≤20 per 1,000, breakdowns ≤5 / ≤10 per 1,000, active connections ≥90 / ≥75 %, payroll ≤35 / ≤50 % of revenue, supply ≥20 / ≥16 h/day, energy alert ≤0.8 kWh/m³. Screens keep "(default)" and origin "product default" because the value is the product's, not the tenant's. External benchmark attributions that screens previously disagreed on are no longer asserted: staff <5 IBNET, breakdowns 5 or 10 IBNET. Tenants can override each value through `thresholds`/`targets` keys named in the registry.
 - Comparator details appear in visible card text (source and boundary) and in tooltips (types, origin, version). Card tooltips are not keyboard-reachable. That is an existing pattern, left for Slice 3/4.
 - Strategic Position "View by" wording and leading with reporting measures (the rest of UX-09 and UX-10) remain in Slice 2.
+
+## Coverage gaps: populated-year dataset
+
+The first half of "Before Slice 2" is in place: an isolated database with twelve populated fiscal months. The role journeys themselves are still to be done.
+
+### What it contains
+
+`tests/fixtures/populated_year.py` generates FY2025/26 (July 2025 – June 2026) for the demo tenant's 8 schemes, plus July–August 2026 of the current year. That is 104 returns. Values are fictional but consistent with each other: billed volume + NRW = production, and connection and stuck-meter balances roll forward. Stuck and active meters stay within metered connections, costs add up to operating cost, and debtors move with billing and collection. Scale follows `tenants/demo/budget.yaml` (4.2 M m³, USD 4.0 M water sales).
+
+| Case | Where | Expected on screen |
+| --- | --- | --- |
+| Complete | Northgate, Hillside, Central Works, Riverside, Southport | Assessed. North reads GOOD, South HIGH, and Hillside has a trunk-main burst in February 2026 |
+| Measured zero | Ridgeway: breakdowns, disconnections, new connections, new stuck meters, power failures entered as 0 | Assessed as 0 (breakdowns 0.0 per 1,000, GOOD), never "—" |
+| Partial (not entered) | Lakeshore: staffing and payroll never; billing April–June 2026; breakdowns October–November 2025 | Not assessed wherever those inputs are needed (South and company collection, operating ratio, DSO, payroll, breakdowns) |
+| Stale | Valley: no returns after December 2025 | Latest period December 2025 |
+| Empty | September 2026 onwards; Valley from January 2026; FY2027/28 | Nothing assessed |
+
+`scripts/build_review_dataset.py --out <new folder>` builds the database. It adds the demo people and grants (`app.demo_seed`: contributor `north.ops`, reviewer `north.mgr`, approvers `planner` and `south.mgr`, viewers `auditor` and `board`), fiscal years and budget, and the returns. It publishes the returns to the measure catalogue through the existing legacy-returns bridge, and adds three sources whose freshness is current, overdue and failed. It refuses the project's `data/` folder and any non-empty folder it did not build (a marker file). `--replace` rebuilds only its own folders. It writes `manifest.json` and `accounts.txt` (one-time random passwords for the fictional accounts) next to the database. Freshness is relative to build time, so rebuild before a journey.
+
+### Evidence
+
+- `tests/test_populated_year.py` (15 tests, pass) covers: shape, determinism and scale; the relationships above in every entered return; measured zeros are 0 and not NULL; NULLs only where declared; the cases through the real report and panel API; builder refusals and the rebuild of read-only evidence files; and an end-to-end build in a subprocess. The end-to-end build checks record, user and NULL counts, that the legacy bridge published exactly the entered values, and that freshness is computed as current, overdue and failed.
+- Built and served locally (`madzihub-review-year` launch configuration, 1440 × 1000). Board, FY2025/26: "3 Zones · 8 Schemes · 12 Months", "2/3 fully assessed", Production 4.21 M m³, NRW 30.3 % WATCH, Finance Net margin and Collection rate Not assessed ("Required data unavailable"). No console errors. Strategic Position: "2 sources need attention", with billing-export current, lims-results failed and scada-daily overdue.
+- API check on a copy, FY2025/26. North: NRW 25.9 GOOD, collection 92.4 GOOD, operating ratio 0.78 GOOD, DSO 69.2 WATCH, breakdowns 9.3 per 1,000. South: NRW 36.9 HIGH; collection, operating ratio, DSO, payroll and breakdowns Not assessed. South January–March: collection 76.8 WATCH.
+
+### Findings the dataset exposed (not fixed here)
+
+1. `/api/catalogue/data-quality` returns a server error once any return has a NULL amount (`catalogue.py:200`, `None > 0`). The same check reads `pct_nrw` as a fraction and reports NRW "2293 %". The importer rollup, the compliance overview and the parity fixture all store it as a percentage.
+2. Staff per 1,000 connections stays assessed when a scheme's staffing is not entered. South reads 15.8 with Lakeshore's staff counted as 0 but its connections still counted. Stock NULLs are coerced to 0 before `divide`.
+3. The breakdowns panel for Lakeshore reads 15.4 per 1,000 with two months not entered, while the Infrastructure report says Not assessed for the same scope. The panel does not apply the completeness rule.
+4. Staleness is not surfaced. The Board status reads "Latest: June · Returns through June" although Valley stopped in December. Strategic Position shows Valley's December value with `data_age_days` 0, because age counts from load time, not from the period.
+5. One partial scheme (Lakeshore, 7 % of connections) makes company-wide collection, operating ratio and DSO Not assessed for the year. That is correct under the contract, but the screens do not say which unit is missing. This feeds Slice 2's scope and coverage messaging.
+6. The demo seed's service areas (Hilltop, north Riverside, Market Town, Bay Area) differ from the demo returns' schemes, so Strategic Position expects 12 units where 8 report returns.
+
+Next: run the contributor (`north.ops`), reviewer (`north.mgr`) and approver (`planner`, `south.mgr`) journeys on this database, then choose the Slice 2 design.
 
 ## Working checklist
 
@@ -244,7 +279,9 @@ Also fixed while touching these paths, all missing-data defects of the UX-01 kin
 - [x] Slice 1a: implement, pass the correctness exit gate and review snapshot changes individually; commit independently (`53c554b`).
 - [x] Confirm the page-by-page fiscal-filter policy before the relevant Slice 1b changes (accepted as written, 25 September 2026).
 - [x] Slice 1b: verify scope, freshness, comparator provenance and percentage-point presentation (`51e5692`).
-- [ ] Complete populated-year and additional-role journeys before selecting the Slice 2 design.
+- [x] Confirm the registry's product-default comparator values (accepted as shipped, 25 September 2026).
+- [x] Build the isolated populated-year dataset with complete, measured-zero, partial, stale and empty cases.
+- [ ] Complete the additional-role journeys on that dataset before selecting the Slice 2 design.
 - [ ] Deliver Slices 2 and 3 with accessibility checks within each slice.
 - [ ] Complete Slice 4's responsive and accessibility checks across the affected journeys.
 
