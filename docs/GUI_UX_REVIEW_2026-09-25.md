@@ -328,6 +328,39 @@ RJ-01, RJ-02, RJ-03 and RJ-08 are routing and correctness defects, not layout. A
 
 RJ-11 and RJ-12 belong to Slice 3's record and dialog components.
 
+## Slice 1c implementation record
+
+Commit: `0ba0f7f` on branch `codex-review-fixes`. Tests: 41 pass (`test_strategy_me`, `test_reporting`, `test_populated_year`). Browser QA: all six findings verified against the `madzihub-slice1c` isolated dataset (port 8096, `accounts.txt` in the scratchpad for that session). Codex review pending — handoff at `docs/reviews/2026-09-25-slice-1c-work-routing.md`.
+
+### What was done
+
+**RJ-01 — Out-of-scope submitter.** `scope.py` adds `user_scopes()` (every active user's Scope, keyed by username) and `closest_holders()` (the people to ask: unit-level before org-wide, lowest sufficient role, configurable exclude list). `strategy/service.py` adds a `People` class that wraps these and caches the scope map per request. `generate_assignments()` only names `ind.owner` as contributor if they can contribute to the unit; other units go unassigned. `update_assignment()` validates that a named person holds the required role on the unit, refusing with `Invalid` if not. `assignment_query()` uses a routing-aware `mine_to_do()` closure so each user's queue reflects who routing actually reaches. The cycle detail table shows routing columns (submits / verifies / approves, with the named person and the fallback note) for managers via an optional `people` parameter on `assignment_dict()`. The People dialog description was updated to state that only eligible people are shown, and the JS dropdowns are built from the filtered `assignable-users` response.
+
+**RJ-02 — Missing hand-off notifications.** `notifications.py` adds `resolve(db, entity_type, entity_id, kinds)` which marks unread notices about a record as read once the step they requested is done. `strategy/service.py` calls `_ask()` to notify the next actor at each step and `resolve()` to close prior requests: submit asks the reviewer (or approver when there is no verification step), verify asks the approver, approve/return closes the request and notifies the actual submitter. `reporting/service.py` adds `approvers(db, inst)` (closest approver(s) for the unit, excluding the report's authors) and `_hand_off(db, scope, inst, name, reason)` (sends `report_submitted`, `report_approved` or `report_returned` and closes prior `report_submitted` requests). The reporting module's `my_work(db, scope)` is registered in `MY_WORK_PROVIDERS`; the front-end `mod-reports.js` renders the "Reports to approve" section on My Work. `platform/router.py` adds `read_only` to the assignable-users response so the JS can exclude read-only accounts.
+
+**RJ-03 — Impossible value acknowledged, not blocked.** `strategy/service.py` adds `blocking_failures(db, a, ind, value_state, value, evidence_note)` which returns `(code, message)` pairs for out-of-range values and missing required evidence. `submit_update()` calls it and, if failures exist, requires `acknowledge_checks=True` on the request body; the acknowledgement is stored in `extra_after` and prepended to each DQA failure reason so it is visible in the revision log. `strategy/router.py` adds `acknowledge_checks: bool = False` to `SubmitIn`. The submit dialog (`mod-strategy.js`) runs a client-side `failures()` check and, if there are any, shows them in a `showChecks()` panel with an acknowledgement checkbox; the Submit button is disabled until the box is ticked. The submit label is "Submit revision" for resubmissions, "Submit update" for first submissions.
+
+**RJ-04 — Returned/unapproved value labelled in governed reports.** `reporting/layout.py` adds `_UNAPPROVED = {"returned": "returned", "submitted": "not yet approved", "verified": "not yet approved"}` and a `_value(s, contract)` function that appends the qualifier to the cell when the assignment status is in the dict and the report's `submissions_contract` is ≥ 2. `reporting/builders.py` sets `data["submissions_contract"] = 2` after the submissions section, so the flag is frozen into the report data. Reports frozen before this change have no `submissions_contract` key and render exactly as they were approved.
+
+**RJ-05 — Missing periods explained in dialogs; populated-year periods built.** `mod-platform.js` adds `MZ.periodsIntro(periods)` (returns a sentence listing available fiscal years and a link to Setup → Reporting periods) and `MZ.bindPeriodsLink()` (wires a click on that link to navigate there). Both the New cycle and New report dialogs call these helpers. `scripts/build_review_dataset.py` calls `periods.ensure_fiscal_year(db, populated_year.POPULATED_FY)` so the populated fiscal year has its 17 platform periods (1 year, 4 quarters, 12 months) from the first build, without a manual Setup step.
+
+**RJ-08 — Stale counts and hidden badge.** The Progress Updates page in `mod-strategy.js` now calls the queue-count API on every `load()` invocation rather than once at page mount; `MZ.refreshUnread()` is called after every successful transition so the bell badge updates immediately. `mod-platform.js` adds `aria-label` to the badge count and calls `MZ.refreshUnread()` in the `open-note` notification handler. `mod-platform.css` adds `.mz-badge[hidden]{display:none}` with a comment explaining the specificity issue (the existing `display:inline-flex` rule would otherwise override the `hidden` attribute).
+
+### Evidence
+
+| Finding | Verified by |
+| --- | --- |
+| RJ-01 routing | Unit test: `RoutingTests` (4 cases). Browser: cycle table shows routing columns; People dialog lists only eligible users, filtered hierarchically by role. |
+| RJ-02 hand-off | Unit test: `test_report_in_review_reaches_approvers_and_their_my_work`, `test_report_managers_are_asked_when_the_unit_has_no_other_approver` in `HandOffAndLabelTests`; `test_each_hand_off_asks_the_next_actor_and_closes_the_request` and `test_reminders_follow_routing` in `RoutingTests`. Browser: submitted south report → south.mgr received `report_submitted` notice; "Reports to approve" section visible on My Work with the correct entry. |
+| RJ-03 acknowledgement | Unit test: `test_dqa_records_problems_without_changing_values` (updated). Browser: submit form with value 150 and no evidence showed two failures; Submit was blocked until acknowledgement checkbox was ticked; submission went through with "Range: fail", "Evidence: fail" chips and "The submitter acknowledged this and submitted anyway." in DQA. |
+| RJ-04 value labels | Unit test: `test_returned_and_unapproved_values_are_labelled`. Browser: HTML output of south submission_dq report showed `150 (not yet approved)` in the Value column; reports without `submissions_contract` key showed bare values. |
+| RJ-05 period guidance | Browser: New cycle dialog showed "Periods available here: FY2025/26, FY2026/27. To use another fiscal year, first add its periods under Setup › Reporting periods." Unit test `test_builds_an_isolated_populated_database`: `select count(*) from periods where fiscal_year=?` returned 17. |
+| RJ-08 counts and badge | Browser: "To submit" count went 1 → 0 immediately after the Q-NRW submission. Badge `aria-label="4 unread notices"` visible with `display:flex`; after `read-all` + `refreshUnread()`: `hidden=true`, `display:none`. |
+
+### Remaining scope
+
+RJ-06, RJ-07, RJ-09 through RJ-15 are deferred to Slices 2 and 3 as noted under "Consequences for Slice 2". No regressions in the pre-existing `BoardPackTests`, `IncompleteScoreTests` and `DraftAndScopeTests` test classes (all pass).
+
 ## Working checklist
 
 - [x] Consolidate browser findings, source causes and agreed review corrections.
@@ -339,8 +372,8 @@ RJ-11 and RJ-12 belong to Slice 3's record and dialog components.
 - [x] Confirm the registry's product-default comparator values (accepted as shipped, 25 September 2026).
 - [x] Build the isolated populated-year dataset with complete, measured-zero, partial, stale and empty cases.
 - [x] Complete the additional-role journeys on that dataset before selecting the Slice 2 design (contributor, reviewer, approvers; findings RJ-01 to RJ-15).
-- [ ] Decide RJ-03 (block or acknowledge an out-of-range / missing-evidence submission) and confirm the Slice 1c ordering.
-- [ ] Slice 1c: work routing (RJ-01, RJ-02, RJ-04, RJ-05, RJ-08, and RJ-03 once decided).
+- [x] Decide RJ-03 (block or acknowledge an out-of-range / missing-evidence submission) and confirm the Slice 1c ordering. Decision: acknowledge — form shows failed checks before submit; submission allowed only after ticking an explicit acknowledgement checkbox; acknowledgement recorded on the revision in the audit trail and DQA reason. Server enforces the flag. Value is never adjusted.
+- [x] Slice 1c: work routing (RJ-01, RJ-02, RJ-04, RJ-05, RJ-08, and RJ-03 once decided). Commit `0ba0f7f`.
 - [ ] Deliver Slices 2 and 3 with accessibility checks within each slice.
 - [ ] Complete Slice 4's responsive and accessibility checks across the affected journeys.
 
