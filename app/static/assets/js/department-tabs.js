@@ -1,7 +1,8 @@
 /* ═══════════════════════════════════════════════════════════════════════
    Department tabs controller
-   Top-level switcher: Board View · Operations · Finance · Human Resource &
-   Administration · Infrastructure. Each tab swaps in its own sidebar menu.
+   Top-level switcher: Board View · Performance & Governance · Operations ·
+   Finance · Human Resource & Administration · Infrastructure · Reports.
+   Each tab swaps in its own sidebar menu.
    - Board / Operations / HR / Infrastructure -> live pages (stub:false)
    - Finance -> filter-aware "coming soon" welcome screen (stub:true)
    Loads after app-core.js so globals (buildCompactFilterSummary, currentPage,
@@ -59,7 +60,7 @@
     performance:    { label:'Performance & Governance', icon:ICONS.performance, stub:false, landing:'my-work' }
   };
 
-  var ORDER = ['board','operations','finance','hr','infrastructure','reports','performance'];
+  var ORDER = ['board','performance','operations','finance','hr','infrastructure','reports'];
 
   function tabBarHTML(){
     return ORDER.map(function(key){
