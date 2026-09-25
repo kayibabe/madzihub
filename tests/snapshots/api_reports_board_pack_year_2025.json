@@ -3,7 +3,7 @@
   "by_zone": [
    {
     "active_customers": 1952,
-    "collection_rate": 0,
+    "collection_rate": null,
     "color": "#0369a1",
     "nrw_pct": 35.0,
     "op_ratio": 0,
@@ -12,7 +12,7 @@
    },
    {
     "active_customers": 2366,
-    "collection_rate": 0,
+    "collection_rate": null,
     "color": "#0f766e",
     "nrw_pct": 38.0,
     "op_ratio": 0,
@@ -21,7 +21,7 @@
    },
    {
     "active_customers": 4022,
-    "collection_rate": 0,
+    "collection_rate": null,
     "color": "#b45309",
     "nrw_pct": 32.0,
     "op_ratio": 0,
@@ -32,15 +32,15 @@
   "executive_kpis": {
    "active_customers": 8340,
    "cash_collected": 0,
-   "collection_rate": 0,
-   "collection_rate_flag": "HIGH",
-   "dso": 0,
-   "dso_flag": "GOOD",
+   "collection_rate": null,
+   "collection_rate_flag": "NOT ASSESSED",
+   "dso": null,
+   "dso_flag": "NOT ASSESSED",
    "energy_intensity": 2.37,
-   "nrw_flag": "HIGH",
+   "nrw_flag": "WATCH",
    "nrw_pct": 34.4,
-   "op_ratio": 0,
-   "op_ratio_flag": "GOOD",
+   "op_ratio": null,
+   "op_ratio_flag": "NOT ASSESSED",
    "revenue": 0,
    "supply_hours_avg": 23.3,
    "total_breakdowns": 230923,
@@ -48,12 +48,12 @@
   },
   "financial_snapshot": {
    "cash_collected": 0,
-   "collection_rate": 0,
-   "dso": 0,
-   "net_margin_pct": 0,
+   "collection_rate": null,
+   "dso": null,
+   "net_margin_pct": null,
    "net_surplus": 0,
    "op_costs": 0,
-   "op_ratio": 0,
+   "op_ratio": null,
    "total_debtors": 0,
    "total_revenue": 0
   },
@@ -137,32 +137,7 @@
     "prior": 74876.1
    }
   },
-  "zone_risks": [
-   {
-    "collection_rate": 0,
-    "color": "#0f766e",
-    "dso": 0,
-    "nrw_pct": 38.0,
-    "risk_score": 1.52,
-    "zone": "North"
-   },
-   {
-    "collection_rate": 0,
-    "color": "#0369a1",
-    "dso": 0,
-    "nrw_pct": 35.0,
-    "risk_score": 1.4,
-    "zone": "Central"
-   },
-   {
-    "collection_rate": 0,
-    "color": "#b45309",
-    "dso": 0,
-    "nrw_pct": 32.0,
-    "risk_score": 1.28,
-    "zone": "South"
-   }
-  ],
+  "zone_risks": [],
   "zones_filter": null
  },
  "status": 200

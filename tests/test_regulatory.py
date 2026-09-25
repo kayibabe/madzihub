@@ -110,6 +110,12 @@ class PackTests(AppFixture):
         self.assertEqual(self.status("post", f"{rurl}/submit", self.o1), 422)             # values missing
         self.put(f"{rurl}/values", self.o1, [{"code": "NRW", "value": 31}, {"code": "MR", "value": 80}])
         self.put(f"{rurl}/values", self.o1, [{"code": "NRW", "value": 22, "note": "Corrected water balance"}])
+        # A draft return's values can still change: no saved league table may rest on them.
+        league = {"pack_id": p["id"], "return_id": r["id"], "peers": [{"name": "Peer utility", "values": {"NRW": 40, "MR": 60}}]}
+        draft_run = self.c.post("/api/regulatory/league-runs", headers=self.o1, json=league)
+        self.assertEqual(draft_run.status_code, 409)
+        self.assertIn("Submit the return", draft_run.json()["detail"])
+        self.assertEqual(self.get("/api/regulatory/league-runs", self.o1), [])
         out = self.post(f"{rurl}/submit", self.o1)
         self.assertEqual((out["status"], out["revisions"]), ("submitted", 3))
         self.assertEqual(next(v for v in out["values"] if v["code"] == "NRW")["value"], 22)
@@ -117,8 +123,7 @@ class PackTests(AppFixture):
         x = self.c.get(f"{rurl}/export", headers=self.vic)
         self.assertEqual(x.status_code, 200)
         self.assertIn("xl/workbook.xml", zipfile.ZipFile(io.BytesIO(x.content)).namelist())
-        run = self.post("/api/regulatory/league-runs", self.o1, {"pack_id": p["id"], "return_id": r["id"], "peers": [
-            {"name": "Peer utility", "values": {"NRW": 40, "MR": 60}}]}, 201)
+        run = self.post("/api/regulatory/league-runs", self.o1, league, 201)
         self.assertEqual(run["results"]["entities"][0]["own"], True)
         self.assertIn("not an official", run["note"])
         with self.database.engine.connect() as conn:

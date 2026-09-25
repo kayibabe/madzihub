@@ -43,3 +43,25 @@ def test_debug_status_requires_admin():
         token = auth.create_access_token("viewer", "viewer")
         r = client.get("/api/debug/db-status", headers={"Authorization": f"Bearer {token}"})
         assert r.status_code == 401 or r.status_code == 403
+
+
+def test_first_run_banner_survives_a_cp1252_console(monkeypatch):
+    # A standard Windows console cannot encode the box drawing; the one-time password must still print.
+    import io
+    import re
+    import sys
+    from unittest import mock
+
+    from app import auth
+
+    db = mock.MagicMock()
+    db.query.return_value.count.return_value = 0          # no users yet: first run
+    raw = io.BytesIO()
+    console = io.TextIOWrapper(raw, encoding="cp1252", errors="strict")
+    monkeypatch.setattr(sys, "stdout", console)
+    auth.ensure_default_admin(db)
+    console.flush()
+    db.commit.assert_called_once()
+    out = raw.getvalue().decode("cp1252")
+    assert "+====" in out and "MadziHub - First-Run Setup" in out
+    assert re.search(r"Password : [A-Za-z0-9_-]{16}", out)

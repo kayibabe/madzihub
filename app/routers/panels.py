@@ -19,13 +19,14 @@ from sqlalchemy import Float, Integer, Numeric
 from sqlalchemy.orm import Session
 from app.core.tenant import tenant as _tenant
 from app.database import Record, get_db
+from app.services.assessment import ratio as assessed_ratio, flag as assessed_flag, complete
 from app.utils import MONTHS_ORDER as FY_MONTHS, apply_fy_filter, csv_list
 
 router = APIRouter(prefix="/api/panels", tags=["Panels"])
 
 # Zone colours and targets come from the tenant configuration.
 ZONE_COLORS = _tenant.zone_colors
-NRW_TARGET_PCT = _tenant.target("nrw_pct", 25.0)
+NRW_TARGET_PCT = _tenant.target("nrw_pct", 27.0)
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────
@@ -117,14 +118,16 @@ def _supply_daily(rows):
     kept as-is, and the result is capped at 24 h/day before averaging the
     non-zero rows.
     """
+    if not complete(rows, "supply_hours"):
+        return None
     daily = []
     for r in rows:
         v = getattr(r, "supply_hours", 0) or 0
-        if v <= 0:
-            continue
+        if v < 0:
+            return None
         d = (v / 30.44) if v > 31 else v
         daily.append(min(24.0, d))
-    return round(sum(daily) / len(daily), 1) if daily else 0
+    return round(sum(daily) / len(daily), 1) if daily else None
 
 
 CHEM_INTENSITY_FIELDS = [
@@ -218,7 +221,7 @@ def _by_zone(rows):
             "vol_produced":      round(vol,1),
             "revenue_water":     round(_nz_sum(zrows,'revenue_water'),1),
             "nrw":               round(nrw,1),
-            "nrw_pct":           round(nrw/vol*100,2) if vol else 0,
+            "nrw_pct":           assessed_ratio(zrows, 'nrw', 'vol_produced', digits=2),
             "total_metered":     round(sum(r.total_metered for r in lv)),
             "total_disconnected":      _d_raw or (_d_ind + _d_inst + _d_comm + _d_cwp),
             "disconnected_individual": _d_ind,
@@ -238,7 +241,7 @@ def _by_zone(rows):
             "all_conn_applied":  round(_nz_sum(zrows,'all_conn_applied')),
             "cash_collected":    round(ca,2),
             "amt_billed":        round(bi,2),
-            "collection_rate":   round(ca/bi*100,1) if bi else 0,
+            "collection_rate":   assessed_ratio(zrows, 'cash_collected', 'amt_billed'),
             "collection_per_sales": round(_nz_avg(zrows,'collection_per_sales'),3),
             "op_cost":           round(_nz_sum(zrows,'op_cost'),2),
             "chem_cost":         round(ch,2),
@@ -312,9 +315,6 @@ def _monthly(rows):
 
         lv  = _latest(mr)
         vol = _nz_sum(mr, 'vol_produced')
-        # Mark months with zero production AND zero customers as no-data (stub rows)
-        if vol == 0 and sum(r.active_customers for r in lv) == 0:
-            result.append({"month": month, "has_data": False}); continue
 
         nrw    = _nz_sum(mr, 'nrw')
         chem   = _nz_sum(mr, 'chem_cost')
@@ -337,7 +337,7 @@ def _monthly(rows):
             "vol_produced":           round(vol, 1),
             "revenue_water":          round(_nz_sum(mr,'revenue_water'), 1),
             "nrw":                    round(nrw, 1),
-            "pct_nrw":                round(nrw/vol*100, 2) if vol else 0,
+            "pct_nrw":                assessed_ratio(mr, 'nrw', 'vol_produced', digits=2),
             "total_vol_billed_pp":    round(_nz_sum(mr,'total_vol_billed_pp'), 1),
             "total_vol_billed_prepaid":round(_nz_sum(mr,'total_vol_billed_prepaid'), 1),
 
@@ -553,6 +553,7 @@ def _coerce_numeric_nulls(rows):
     _nz_sum handles None values safely via `or 0`."""
     cols = _numeric_columns()
     for r in rows:
+        r._missing_metrics = set(getattr(r, '_missing_metrics', ())) | {name for name in cols if getattr(r, name, None) is None}
         for name in cols:
             if name in _NULLABLE_SENTINEL_COLS:
                 continue
@@ -716,7 +717,7 @@ def panel_production(zones:Optional[str]=None,schemes:Optional[str]=None,
         "kpi":{"vol_produced":round(vol,1),
                "revenue_water":round(rev_water,1),
                "nrw":round(nrw,1),
-               "nrw_pct":round(nrw/vol*100,2) if vol else 0,
+               "nrw_pct":assessed_ratio(rows, 'nrw', 'vol_produced', digits=2),
                "specific_consumption":specific_consumption,
                "rev_water_per_conn":rev_per_conn},
         "by_zone":[{"zone":z["zone"],"color":z["color"],
@@ -1295,28 +1296,28 @@ def panel_executive(zones: Optional[str] = None, schemes: Optional[str] = None,
     avg_tariff = round(revenue / vol_billed, 2) if vol_billed else 0
 
     # ── 1. Financial Health Ratios ────────────────────────────────
-    op_ratio    = round(opex / revenue, 2) if revenue else 0
+    op_ratio    = assessed_ratio(rows, 'op_cost', 'amt_billed', scale=1, digits=2)
     monthly_rev = revenue / n_months if n_months else 0
-    dso         = round(total_dbt / monthly_rev * 30, 0) if monthly_rev else 0
+    dso         = round(total_dbt / monthly_rev * 30, 0) if monthly_rev and complete(rows, "total_debtors", "amt_billed") else None
     rev_per_conn = round(revenue / active, 0) if active else 0
-    net_margin  = round((revenue - opex) / revenue * 100, 1) if revenue else 0
+    net_margin  = round((revenue - opex) / revenue * 100, 1) if revenue and complete(rows, "amt_billed", "op_cost") else None
 
     financial = {
         "op_ratio": op_ratio,
-        "op_ratio_flag": "GOOD" if op_ratio < 0.8 else ("WATCH" if op_ratio < 1.0 else "HIGH"),
+        "op_ratio_flag": assessed_flag(op_ratio, 0.8, 1.0, lower=True),
         "dso": dso,
-        "dso_flag": "GOOD" if dso < 60 else ("WATCH" if dso < 90 else "HIGH"),
+        "dso_flag": assessed_flag(dso, 60, 90, lower=True),
         "rev_per_conn": rev_per_conn,
         "net_margin": net_margin,
-        "net_margin_flag": "GOOD" if net_margin > 50 else ("WATCH" if net_margin > 20 else "LOW"),
-        "collection_rate": round(cash / revenue * 100, 1) if revenue else 0,
-        "collection_rate_flag": "GOOD" if (cash / revenue * 100 if revenue else 0) >= 90 else ("WATCH" if (cash / revenue * 100 if revenue else 0) >= 75 else "HIGH"),
+        "net_margin_flag": assessed_flag(net_margin, 50, 20),
+        "collection_rate": assessed_ratio(rows, 'cash_collected', 'amt_billed'),
+        "collection_rate_flag": assessed_flag(assessed_ratio(rows, "cash_collected", "amt_billed"), _tenant.thresholds.get("coll_good", 90), _tenant.thresholds.get("coll_warn", 75)),
         "cash_collected": round(cash, 2),
         "amt_billed": round(revenue, 2),
     }
 
     # ── 2. NRW Intelligence ───────────────────────────────────────
-    nrw_pct      = round(nrw_vol / vol_prod * 100, 1) if vol_prod else 0
+    nrw_pct      = assessed_ratio(rows, 'nrw', 'vol_produced')
     nrw_cost     = round(nrw_vol * avg_tariff, 0)
     nrw_per_conn = round(nrw_cost / active * 12 / max(n_months, 1), 0) if active else 0
 
@@ -1360,7 +1361,7 @@ def panel_executive(zones: Optional[str] = None, schemes: Optional[str] = None,
         z_dbt = z.get("total_debtors", 0) or 0
         z_nm = len(set(_lk(r) for r in zr))
         z_mr = z_rev / z_nm if z_nm else 0
-        z_dso = round(z_dbt / z_mr * 30, 0) if z_mr else 0
+        z_dso = round(z_dbt / z_mr * 30, 0) if z_mr and complete(zr, "total_debtors", "amt_billed") else None
 
         # sparkline NRW trend
         md = defaultdict(list)
@@ -1371,7 +1372,7 @@ def panel_executive(zones: Optional[str] = None, schemes: Optional[str] = None,
             mr = md[key]
             v = _nz_sum(mr, 'vol_produced')
             n = _nz_sum(mr, 'nrw')
-            nrw_trend.append(round(n / v * 100, 1) if v else 0)
+            nrw_trend.append(assessed_ratio(mr, 'nrw', 'vol_produced'))
 
         zone_snap.append({
             "zone": zn, "color": z.get("color", "#64748b"),
@@ -1379,7 +1380,7 @@ def panel_executive(zones: Optional[str] = None, schemes: Optional[str] = None,
             "nrw_pct": z.get("nrw_pct", 0),
             "collection_rate": z.get("collection_rate", 0),
             "dso": z_dso,
-            "op_ratio": round(z_opex / z_rev, 2) if z_rev else 0,
+            "op_ratio": assessed_ratio(zr, "op_cost", "amt_billed", scale=1, digits=2),
             "rev_per_conn": round(z_rev / z_active, 0) if z_active else 0,
             "active_customers": round(z_active),
             "breakdowns_total": None if z.get("pipe_breakdowns") is None else round((z.get("pipe_breakdowns") or 0) + (z.get("pump_breakdowns") or 0)),
@@ -1427,7 +1428,7 @@ def panel_nrw(zones: Optional[str] = None, schemes: Optional[str] = None,
     prod = _nz_sum(rows, "vol_produced")
     sold = _nz_sum(rows, "revenue_water")
     nrw = _nz_sum(rows, "nrw")
-    pct = round(nrw / prod * 100, 2) if prod else 0
+    pct = assessed_ratio(rows, "nrw", "vol_produced", digits=2)
     # Economic NRW: volume lost × avg revenue per m³ (total_sales / revenue_water)
     total_sales = _nz_sum(rows, "total_sales")
     avg_tariff = total_sales / sold if sold else 0
@@ -1436,7 +1437,7 @@ def panel_nrw(zones: Optional[str] = None, schemes: Optional[str] = None,
         "kpi": {
             "vol_produced": round(prod), "water_sold": round(sold),
             "nrw_volume": round(nrw), "pct_nrw": pct,
-            "target_nrw": NRW_TARGET_PCT, "gap_to_target": round(pct - NRW_TARGET_PCT, 1),
+            "target_nrw": NRW_TARGET_PCT, "gap_to_target": round(pct - NRW_TARGET_PCT, 1) if pct is not None else None,
             "economic_nrw": economic_nrw, "avg_tariff_per_m3": round(avg_tariff, 2),
         },
         "by_zone": [{"zone": z["zone"], "color": z["color"],

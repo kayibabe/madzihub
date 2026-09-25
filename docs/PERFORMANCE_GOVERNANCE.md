@@ -210,6 +210,12 @@ the override is re-evaluated from the frozen inputs (never from live data). Snap
 a reviewer or strategy manager and approved by an approver on the unit who did not take it. A
 locked period accepts no new snapshots or approvals.
 
+A snapshot whose overall score is **incomplete** (below the coverage gate), has invalid weights or
+has nothing to combine **cannot be approved**. The only exception is an explicit override of the
+overall (plan) rating, with a reason: it is audited, and board packs and scorecard reports show it
+as an exception with the reason, who made it and the calculated value. A board pack or scorecard
+report also refuses approval if its frozen score is incomplete without such an override.
+
 ### Strategy map
 
 Pillars with their objectives coloured by rating (from the latest approved snapshot, else a live
@@ -385,7 +391,8 @@ an owned, dated action linked back to it.
   the pack's validation rules. A submitted return is final. Returns export to Excel in the pack's
   template.
 - **League tables** score the utility and the peer values you enter on the same approved pack and
-  are saved with their inputs and fingerprints. They are MadziHub comparisons for management use,
+  are saved with their inputs and fingerprints. Only a **submitted** return can supply the
+  utility's own values (a draft's values can still change). They are MadziHub comparisons for management use,
   **never presented as an official regulator ranking**, and an internal plan score is never
   presented as a regulator score.
 - **Shipped drafts (not approved):** WASREB IMPACT 17 (FY 2023/24) and EWURA FY 2023/24. Their
@@ -409,6 +416,8 @@ an owned, dated action linked back to it.
   plan indicators with weights summing to 100, scored on the signed-off scoring scheme from
   published values and targets; the evaluation is frozen on the contract. The holder accepts or
   appeals; an HR officer who is not party to the contract decides, optionally adjusting the rating.
+  An adjusted rating must lie within the rating range of the scheme the contract was evaluated on,
+  and its label is re-derived from that scheme's bands.
 - **Appraisals** (HR officer or appraiser sets objectives with weights summing to 100): the employee
   agrees and self-assesses, the appraiser appraises (overall = weighted mean, on a stated 1–5 scale
   where 5 is best), the employee acknowledges or appeals, an uninvolved HR officer decides. After

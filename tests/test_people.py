@@ -103,8 +103,26 @@ class ContractTests(PeopleFixture):
         self.assertEqual((ev["final_rating"], ev["final_label"]), (3, "Nearly achieved"))
         self.post(url, self.nate, {"name": "appeal", "reason": "Target set before the tariff freeze."})
         self.assertEqual(self.status("post", url, self.planner, {"name": "decide", "reason": "x"}), 403)
+        # An adjusted rating must sit on the evaluation scheme's scale (1–5 on the default scheme).
+        for bad in (99, 5.01, 0.99, -1):
+            r = self.c.post(url, headers=self.hr, json={"name": "decide", "reason": "Upheld.", "adjusted_rating": bad})
+            self.assertEqual(r.status_code, 422, bad)
+            self.assertIn("between 1 and 5", r.json()["detail"])
+        still = self.get(f"/api/people/contracts/{c['id']}", self.hr)
+        self.assertEqual((still["status"], still["final_rating"], still["final_label"], still["appeal_decision"]),
+                         ("under_appeal", 3, "Nearly achieved", None))
+        # Evaluations recorded before the scheme id was stored still resolve their scheme.
+        from app.modules.people.models import PerformanceContract
+        db = self.db()
+        try:
+            row = db.get(PerformanceContract, c["id"])
+            row.evaluation = {k: v for k, v in row.evaluation.items() if k != "scheme_id"}
+            db.commit()
+        finally:
+            db.close()
         out = self.post(url, self.hr, {"name": "decide", "reason": "Appeal upheld in part.", "adjusted_rating": 3.5})
         self.assertEqual((out["status"], out["final_rating"]), ("closed", 3.5))
+        self.assertEqual(out["final_label"], "Achieved")        # the label follows the adjusted rating
         self.assertEqual(self.status("get", f"/api/people/contracts/{c['id']}", self.nora), 404)
 
 

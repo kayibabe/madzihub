@@ -421,6 +421,22 @@ def set_override(db: Session, scope: Scope, snap_id: int, key: str, rating: int 
     return s
 
 
+SIGNABLE_STATUSES = ("complete", "partial")
+
+
+def score_gap(root: dict) -> str | None:
+    """Why an overall score cannot be signed off, or None.
+
+    A score below the coverage gate (or with invalid weights, or nothing to combine) is not signed
+    off as it stands. The one exception is an overall-rating override on the plan: it carries a
+    reason, the approver's name and an audit entry, and reports show it as an exception.
+    """
+    if root.get("status") in SIGNABLE_STATUSES or root.get("override"):
+        return None
+    return (f"The overall score is {root.get('status')} ({root.get('method')}). Take a new snapshot once enough "
+            "data is approved, or record an overall-rating override with a reason to sign it off as an exception.")
+
+
 def approve_snapshot(db: Session, scope: Scope, snap_id: int, note: str | None = None) -> ScoreSnapshot:
     s = _snapshot(db, scope, snap_id)
     if not scope.can(s.org_unit_code, "approver"):
@@ -433,6 +449,9 @@ def approve_snapshot(db: Session, scope: Scope, snap_id: int, note: str | None =
                        "new snapshot.")
     periods.assert_open(db, s.period_id)
     SNAPSHOT_FLOW.check(s, "approve")
+    gap = score_gap(s.result["tree"]["root"])
+    if gap:
+        raise Conflict(gap)
     previous = (db.query(ScoreSnapshot).filter_by(plan_id=s.plan_id, period_id=s.period_id,
                                                   org_unit_code=s.org_unit_code, status="approved").all())
     for p in previous:
@@ -448,6 +467,7 @@ def approve_snapshot(db: Session, scope: Scope, snap_id: int, note: str | None =
 def snapshot_dict(db: Session, s: ScoreSnapshot, scope: Scope, full: bool = False) -> dict:
     period = db.get(Period, s.period_id)
     plan = db.get(Plan, s.plan_id)
+    gap = score_gap(s.result["tree"]["root"])
     d = {"id": s.id, "plan_id": s.plan_id, "plan": plan.code if plan else None, "period_id": s.period_id,
          "period": period.label if period else None, "org_unit_code": s.org_unit_code, "scheme_id": s.scheme_id,
          "scheme_version": s.scheme_version, "engine_version": s.engine_version, "inputs_hash": s.inputs_hash,
@@ -457,7 +477,8 @@ def snapshot_dict(db: Session, s: ScoreSnapshot, scope: Scope, full: bool = Fals
          "created_at": s.created_at.isoformat() if s.created_at else None, "approved_by": s.approved_by,
          "approved_at": s.approved_at.isoformat() if s.approved_at else None, "supersedes_id": s.supersedes_id,
          "can_approve": s.status == "draft" and not s.provisional and scope.can(s.org_unit_code, "approver")
-                        and s.created_by != scope.username,
+                        and s.created_by != scope.username and gap is None,
+         "approval_blocker": gap if s.status == "draft" else None,
          "can_override": s.status == "draft" and not scope.read_only and (
              scope.has_function("strategy_manager") or scope.can(s.org_unit_code, "approver"))}
     if full:

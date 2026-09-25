@@ -27,6 +27,7 @@ from app.modules.reporting.models import (
     AUDIENCES, FORMATS, REPORT_KINDS, ReportAccessLog, ReportInstance, ReportOutput, ReportTemplate,
 )
 from app.modules.scorecard import engine
+from app.modules.scorecard.service import score_gap
 from app.platform import audit, entities, filestore, periods
 from app.platform.errors import Conflict, Forbidden, Invalid, NotFound
 from app.platform.scope import Scope, check_unit
@@ -194,6 +195,9 @@ def transition(db: Session, scope: Scope, inst_id: int, name: str, reason: str |
             if tpl.kind in NEEDS_APPROVED_SCORE and not (score and score["source"]["approved"]):
                 raise Conflict("Approve the score snapshot for this plan, period and unit, then refresh the data, "
                                "before approving this report.")
+            gap = score_gap(score["root"]) if tpl.kind in NEEDS_APPROVED_SCORE else None
+            if gap:
+                raise Conflict(gap)
             inst.content_hash = _content_hash(inst)
             inst.approved_by, inst.approved_at = scope.username, datetime.utcnow()
     elif name in ("publish", "withdraw"):

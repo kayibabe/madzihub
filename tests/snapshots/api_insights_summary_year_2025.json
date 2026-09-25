@@ -2,42 +2,6 @@
  "json": {
   "alerts": [
    {
-    "category": "financial",
-    "detail": "YTD collection rate of 0% is severely below the IBNET benchmark of 90.0%. Cash flow risk is high.",
-    "metric": "collection_rate",
-    "severity": "critical",
-    "title": "Collection Rate Critical — 0% (benchmark: >90.0%)",
-    "value": 0,
-    "zone": null
-   },
-   {
-    "category": "financial",
-    "detail": "North zone collection rate of 0% is below the 80.0% minimum. Debtors in this zone require targeted follow-up.",
-    "metric": "collection_rate",
-    "severity": "critical",
-    "title": "North Zone — Collection Rate 0%",
-    "value": 0,
-    "zone": "North"
-   },
-   {
-    "category": "financial",
-    "detail": "Central zone collection rate of 0% is below the 80.0% minimum. Debtors in this zone require targeted follow-up.",
-    "metric": "collection_rate",
-    "severity": "critical",
-    "title": "Central Zone — Collection Rate 0%",
-    "value": 0,
-    "zone": "Central"
-   },
-   {
-    "category": "financial",
-    "detail": "South zone collection rate of 0% is below the 80.0% minimum. Debtors in this zone require targeted follow-up.",
-    "metric": "collection_rate",
-    "severity": "critical",
-    "title": "South Zone — Collection Rate 0%",
-    "value": 0,
-    "zone": "South"
-   },
-   {
     "category": "nrw",
     "detail": "North zone NRW of 38.0% exceeds the 35% action threshold. Priority zone for loss reduction intervention.",
     "metric": "pct_nrw",
@@ -48,16 +12,16 @@
    },
    {
     "category": "nrw",
-    "detail": "YTD NRW of 34.4% is 9.4pp above the MadziHub 25% target. Review pipe breakdown hotspots and meter reading coverage.",
+    "detail": "YTD NRW of 34.4% is 7.4pp above the MadziHub 27% target. Review pipe breakdown hotspots and meter reading coverage.",
     "metric": "pct_nrw",
     "severity": "warning",
-    "title": "NRW Above Target — 34.4% (target: 25.0%)",
+    "title": "NRW Above Target — 34.4% (target: 27.0%)",
     "value": 34.4,
     "zone": null
    },
    {
     "category": "nrw",
-    "detail": "Central zone NRW of 35.0% exceeds the MadziHub 25% target.",
+    "detail": "Central zone NRW of 35.0% exceeds the MadziHub 27% target.",
     "metric": "pct_nrw",
     "severity": "warning",
     "title": "Central Zone — NRW Above Target at 35.0%",
@@ -66,7 +30,7 @@
    },
    {
     "category": "nrw",
-    "detail": "South zone NRW of 32.0% exceeds the MadziHub 25% target.",
+    "detail": "South zone NRW of 32.0% exceeds the MadziHub 27% target.",
     "metric": "pct_nrw",
     "severity": "warning",
     "title": "South Zone — NRW Above Target at 32.0%",
@@ -112,7 +76,7 @@
   ],
   "kpi_snapshot": {
    "active_customers": 8339.87,
-   "collection_rate": 0,
+   "collection_rate": null,
    "days_to_connect": 0,
    "latest_month": "June",
    "months_analysed": 12,
@@ -122,9 +86,9 @@
    "total_debtors_M": 0.0
   },
   "summary": {
-   "critical": 5,
+   "critical": 1,
    "info": 0,
-   "total": 12,
+   "total": 8,
    "warning": 7
   }
  },

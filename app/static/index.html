@@ -1149,7 +1149,7 @@
               </div>
             </div>
             <div class="bv-panel-actions">
-              <span class="bv-status bv-status-live">Live</span>
+              <span class="bv-status bv-status-live">Monthly returns</span>
               <button type="button" class="bv-open" onclick="switchDepartment('operations')">Open<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M5 3l5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
             </div>
           </div>
@@ -1167,7 +1167,7 @@
               </div>
             </div>
             <div class="bv-panel-actions">
-              <span class="bv-status bv-status-live">Live</span>
+              <span class="bv-status bv-status-live">Monthly returns</span>
               <button type="button" class="bv-open" onclick="switchDepartment('finance')">Open<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M5 3l5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
             </div>
           </div>
@@ -1185,7 +1185,7 @@
               </div>
             </div>
             <div class="bv-panel-actions">
-              <span class="bv-status bv-status-live">Live</span>
+              <span class="bv-status bv-status-live">Monthly returns</span>
               <button type="button" class="bv-open" onclick="switchDepartment('hr')">Open<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M5 3l5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
             </div>
           </div>
@@ -1203,7 +1203,7 @@
               </div>
             </div>
             <div class="bv-panel-actions">
-              <span class="bv-status bv-status-live">Live</span>
+              <span class="bv-status bv-status-live">Monthly returns</span>
               <button type="button" class="bv-open" onclick="switchDepartment('infrastructure')">Open<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M5 3l5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
             </div>
           </div>
@@ -1463,7 +1463,7 @@
             <p class="ia-card-copy">Dedicated NRW trend and zone exposure view with scheme-level detail table and export.</p>
             <ul class="ia-list">
               <li>Use for loss-reduction monitoring and reporting</li>
-              <li>Strategic Plan #1 driver — target ≤25%</li>
+              <li>Strategic Plan #1 driver — corporate target ≤__NRW_TARGET__%</li>
             </ul>
             <div class="ia-card-actions">
               <button class="ia-btn primary" onclick="navigate('nrw')">Open report</button>
@@ -1834,7 +1834,7 @@
 
     <!-- Non-Revenue Water & Water Balance -->
     <div id="page-nrw" class="db-page report-page-standard">
-      <div class="pg-hdr"><div class="pg-hdr-left"><div class="pg-title">Non-Revenue Water &amp; Water Balance</div><div class="pg-meta" id="pg-meta-nrw">FY — · All Zones · All Months</div><div class="pg-sub">Produced vs sold volume · water losses · zone exposure — the plan's #1 strategic driver (target ≤25%)</div></div></div>
+      <div class="pg-hdr"><div class="pg-hdr-left"><div class="pg-title">Non-Revenue Water &amp; Water Balance</div><div class="pg-meta" id="pg-meta-nrw">FY — · All Zones · All Months</div><div class="pg-sub">Produced vs sold volume · water losses · zone exposure — the plan's #1 strategic driver (corporate target ≤__NRW_TARGET__%)</div></div></div>
       <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#0EA5E9"></span><span class="ex-title">Water Balance Summary</span><span class="ex-sub">— Production, water sold and non-revenue losses</span></div><div id="nrw-kpis" class="kpi-row kpi-g4"></div></div>
       <div class="ex-section">
         <div class="ex-hdr"><span class="ex-dot" style="background:#0077B6"></span><span class="ex-title">IWA Water Balance</span><span class="ex-sub">— Standard four-box decomposition of system input volume</span></div>
@@ -1842,7 +1842,7 @@
       </div>
       <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#DC2626"></span><span class="ex-title">NRW Trend &amp; Zone Exposure</span><span class="ex-sub">— Monthly NRW rate and zone concentration of losses</span></div>
         <div class="chart-row">
-          <div class="chart-card"><div class="chart-title">NRW Rate — Monthly (%)</div><div class="chart-subtitle">Monthly non-revenue water against the 25% strategic target.</div><div class="ch-wrap" style="height:185px"><canvas id="ch-nrw-main"></canvas></div></div>
+          <div class="chart-card"><div class="chart-title">NRW Rate — Monthly (%)</div><div class="chart-subtitle">Monthly non-revenue water against the __NRW_TARGET__% corporate target.</div><div class="ch-wrap" style="height:185px"><canvas id="ch-nrw-main"></canvas></div></div>
           <div class="chart-card"><div class="chart-title">NRW Rate — By Zone (%)</div><div class="chart-subtitle">Which zones carry the highest water losses.</div><div class="ch-wrap" style="height:185px"><canvas id="ch-nrw-zone"></canvas></div></div>
         </div></div>
       <div class="ex-section">
@@ -2332,14 +2332,14 @@
           </div>
           <div class="chart-card budget-card-analytic">
             <div class="chart-title">NRW % Monthly Trend by Zone</div>
-            <div class="chart-subtitle">Trend view: sustained movement toward or below 27% matters more than isolated monthly swings.</div>
+            <div class="chart-subtitle">Trend view: sustained movement toward or below __NRW_TARGET__% matters more than isolated monthly swings.</div>
             <div class="ch-wrap" style="height:220px"><canvas id="ch-bgt-nrw-zone-trend"></canvas></div>
           </div>
         </div>
         <div class="chart-row chart-row-budget-split chart-row-nrw-cohesive">
           <div class="chart-card budget-card-analytic">
-            <div class="chart-title">NRW % by Zone vs 27% Target</div>
-            <div class="chart-subtitle">Current-state view: compare each zone against the 27% management target to see where the biggest operational exposure sits now.</div>
+            <div class="chart-title">NRW % by Zone vs __NRW_TARGET__% Target</div>
+            <div class="chart-subtitle">Current-state view: compare each zone against the __NRW_TARGET__% management target to see where the biggest operational exposure sits now.</div>
             <div class="ch-wrap" style="height:220px"><canvas id="ch-bgt-nrw-zone"></canvas></div>
           </div>
           <div class="chart-card budget-card-analytic">

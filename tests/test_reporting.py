@@ -114,6 +114,47 @@ class BoardPackTests(ReportingFixture):
         self.assertIn("Integrity check failed", res.json()["detail"])
 
 
+class IncompleteScoreTests(ReportingFixture):
+    def setUp(self):
+        ScorecardFixture.setUp(self)
+        self.report(self.i_cov, 99)
+        self.report(self.i_nrw, 30, approve=False)        # score falls below the coverage gate
+        self.tpl = {t["kind"]: t["id"] for t in self.get("/api/reports-hub/templates", self.planner)}
+        scheme = self.get("/api/scorecard/schemes", self.planner)[0]
+        self.post(f"/api/scorecard/schemes/{scheme['id']}/transition", self.planner, {"name": "approve"})
+        self.snap = self.post("/api/scorecard/snapshots", self.planner,
+                              {"plan_id": self.pid, "period_id": self.q["id"], "org_unit_code": "north"}, 201)["id"]
+
+    def test_board_pack_rejects_an_incomplete_score_approved_before_the_gate(self):
+        from app.modules.scorecard.models import ScoreSnapshot
+        db = self.db()
+        try:                                                # as it could be approved before the gate existed
+            db.get(ScoreSnapshot, self.snap).status = "approved"
+            db.commit()
+        finally:
+            db.close()
+        r = self.new("board_pack")
+        self.assertTrue(r["score_approved"])
+        url = f"/api/reports-hub/instances/{r['id']}"
+        self.post(f"{url}/transition", self.planner, {"name": "submit"})
+        res = self.c.post(f"{url}/transition", headers=self.nate, json={"name": "approve"})
+        self.assertEqual(res.status_code, 409)
+        self.assertIn("incomplete", res.json()["detail"])
+        self.assertEqual(self.get(url, self.nate)["status"], "in_review")
+
+    def test_board_pack_shows_an_overridden_incomplete_score_as_an_exception(self):
+        self.post(f"/api/scorecard/snapshots/{self.snap}/override", self.planner,
+                  {"key": "plan", "rating": 3, "reason": "NRW return delayed; board accepts COVER alone"})
+        self.post(f"/api/scorecard/snapshots/{self.snap}/approve", self.nate)
+        r = self.new("board_pack")
+        url = f"/api/reports-hub/instances/{r['id']}"
+        self.post(f"{url}/transition", self.planner, {"name": "submit"})
+        self.assertEqual(self.post(f"{url}/transition", self.nate, {"name": "approve"})["status"], "approved")
+        body = self.out(r["id"], "html", self.nate).text
+        self.assertIn("Exception: the calculated score is", body)
+        self.assertIn("NRW return delayed; board accepts COVER alone (by planner", body)
+
+
 class DraftAndScopeTests(ReportingFixture):
     def test_drafts_are_marked_and_limited_to_authors_and_reviewers(self):
         r = self.new("submission_dq", self.nora)      # a North reviewer may create unit reports

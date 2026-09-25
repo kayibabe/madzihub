@@ -63,7 +63,7 @@ def score_section(db: Session, scope: Scope, plan_id: int, period: Period, unit:
                                          "rating_order": scheme["rating_order"], "cap_pct": scheme["cap_pct"],
                                          "coverage_gate_pct": scheme["coverage_gate_pct"], "bands": scheme["bands"]},
             "root": {k: root.get(k) for k in ("achievement", "rating", "rating_label", "status", "method",
-                                               "coverage_pct")},
+                                               "coverage_pct", "override", "calculated_rating")},
             "rows": _flatten(tree)}
 
 

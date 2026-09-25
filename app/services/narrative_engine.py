@@ -99,7 +99,7 @@ def _build_context(db: Session, year: int) -> dict[str, Any]:
         "fiscal_year":       f"FY {year-1}/{str(year)[-2:]}",
         "months_analysed":   len(has_data),
         "nrw_pct":           nrw_pct,
-        "nrw_target":        _tenant.target("nrw_pct", 25.0),
+        "nrw_target":        _tenant.target("nrw_pct", 27.0),
         "nrw_trend":         nrw_trend,
         "collection_rate":   coll_pct,
         "coll_benchmark":    90.0,

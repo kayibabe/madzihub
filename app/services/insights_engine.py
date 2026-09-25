@@ -14,12 +14,13 @@ from typing import Any
 from sqlalchemy.orm import Session
 from app.core.tenant import tenant as _tenant
 from app.database import Record
+from app.services.assessment import ratio as assessed_ratio
 
 
 # ── Thresholds ─────────────────────────────────────────────────────────────
 # Alert thresholds and the NRW target come from the tenant configuration
 # (tenants/<name>/tenant.yaml → thresholds / targets.nrw_pct).
-THRESHOLDS = {**_tenant.thresholds, "nrw_target": _tenant.target("nrw_pct", 25.0)}
+THRESHOLDS = {**_tenant.thresholds, "nrw_target": _tenant.target("nrw_pct", 27.0)}
 _ORG = _tenant.identity.short_name
 _CUR = _tenant.currency.code
 
@@ -112,8 +113,8 @@ def generate_alerts(db: Session, year: int = None) -> dict[str, Any]:
         dtc    = _nz_avg(mr, 'days_to_connect', cap=365)
 
         monthly_agg[month] = {
-            "pct_nrw":        round(nrw / vol * 100, 1) if vol else 0,
-            "collection_rate":round(cash / billed * 100, 1) if billed else 0,
+            "pct_nrw":        assessed_ratio(mr, 'nrw', 'vol_produced'),
+            "collection_rate":assessed_ratio(mr, 'cash_collected', 'amt_billed'),
             "pipe_breakdowns":pipe,
             "active_customers":active,
             "stuck_meters":   stuck,
@@ -135,10 +136,10 @@ def generate_alerts(db: Session, year: int = None) -> dict[str, Any]:
     # YTD aggregates
     vol_ytd    = _nz_sum(rows, 'vol_produced')
     nrw_ytd    = _nz_sum(rows, 'nrw')
-    nrw_pct    = round(nrw_ytd / vol_ytd * 100, 1) if vol_ytd else 0
+    nrw_pct    = assessed_ratio(rows, 'nrw', 'vol_produced')
     cash_ytd   = _nz_sum(rows, 'cash_collected')
     billed_ytd = _nz_sum(rows, 'amt_billed')
-    coll_rate  = round(cash_ytd / billed_ytd * 100, 1) if billed_ytd else 0
+    coll_rate  = assessed_ratio(rows, 'cash_collected', 'amt_billed')
     active_now = sum(max(0, r.active_customers or 0) for r in lv)
     stuck_now  = sum(max(0, r.stuck_meters   or 0) for r in lv)
     dbt_now    = sum(max(0, r.total_debtors  or 0) for r in lv)
@@ -162,14 +163,14 @@ def generate_alerts(db: Session, year: int = None) -> dict[str, Any]:
     # ══════════════════════════════════════════════════════════════════════
 
     # ── 1. NRW ────────────────────────────────────────────────────────────
-    if nrw_pct > T["nrw_warn"]:
+    if nrw_pct is not None and nrw_pct > T["nrw_warn"]:
         alert("critical","nrw",
-              f"NRW Critical — {nrw_pct}% exceeds 35% action threshold",
+              f"NRW Critical — {nrw_pct}% exceeds {T['nrw_warn']:g}% action threshold",
               f"YTD NRW rate of {nrw_pct}% is {nrw_pct - T['nrw_target']:.1f}pp above the {_ORG} "
-              f"target of {T['nrw_target']}% and above the 35% action threshold. "
+              f"target of {T['nrw_target']}% and above the {T['nrw_warn']:g}% action threshold. "
               f"Immediate investigation required.",
               metric="pct_nrw", value=nrw_pct)
-    elif nrw_pct > T["nrw_target"]:
+    elif nrw_pct is not None and nrw_pct > T["nrw_target"]:
         alert("warning","nrw",
               f"NRW Above Target — {nrw_pct}% (target: {T['nrw_target']}%)",
               f"YTD NRW of {nrw_pct}% is {nrw_pct - T['nrw_target']:.1f}pp above the {_ORG} "
@@ -177,7 +178,7 @@ def generate_alerts(db: Session, year: int = None) -> dict[str, Any]:
               metric="pct_nrw", value=nrw_pct)
 
     # MoM NRW rise
-    if prev and cur["pct_nrw"] - prev["pct_nrw"] > T["mom_nrw_rise"]:
+    if prev and cur["pct_nrw"] is not None and prev["pct_nrw"] is not None and cur["pct_nrw"] - prev["pct_nrw"] > T["mom_nrw_rise"]:
         rise = cur["pct_nrw"] - prev["pct_nrw"]
         alert("warning","nrw",
               f"NRW Rising — up {rise:.1f}pp in {latest_month}",
@@ -186,13 +187,13 @@ def generate_alerts(db: Session, year: int = None) -> dict[str, Any]:
               metric="pct_nrw", value=cur["pct_nrw"])
 
     # ── 2. Collection Rate ────────────────────────────────────────────────
-    if coll_rate < T["coll_warn"]:
+    if coll_rate is not None and coll_rate < T["coll_warn"]:
         alert("critical","financial",
               f"Collection Rate Critical — {coll_rate}% (benchmark: >{T['coll_good']}%)",
               f"YTD collection rate of {coll_rate}% is severely below the IBNET "
               f"benchmark of {T['coll_good']}%. Cash flow risk is high.",
               metric="collection_rate", value=coll_rate)
-    elif coll_rate < T["coll_good"]:
+    elif coll_rate is not None and coll_rate < T["coll_good"]:
         alert("warning","financial",
               f"Collection Rate Below Benchmark — {coll_rate}%",
               f"Collection rate of {coll_rate}% is below the IBNET {T['coll_good']}% benchmark. "
@@ -200,7 +201,7 @@ def generate_alerts(db: Session, year: int = None) -> dict[str, Any]:
               metric="collection_rate", value=coll_rate)
 
     # MoM collection drop
-    if prev and prev["collection_rate"] > 0:
+    if prev and cur["collection_rate"] is not None and prev["collection_rate"] is not None and prev["collection_rate"] > 0:
         coll_drop = prev["collection_rate"] - cur["collection_rate"]
         if coll_drop > T["mom_coll_drop"]:
             alert("warning","financial",
@@ -265,29 +266,29 @@ def generate_alerts(db: Session, year: int = None) -> dict[str, Any]:
         znrw   = _nz_sum(zrows, 'nrw')
         zbilled= _nz_sum(zrows, 'amt_billed')
         zcash  = _nz_sum(zrows, 'cash_collected')
-        znrw_pct  = round(znrw / zvol * 100, 1) if zvol else 0
-        zcoll_pct = round(zcash / zbilled * 100, 1) if zbilled else 0
+        znrw_pct  = assessed_ratio(zrows, 'nrw', 'vol_produced')
+        zcoll_pct = assessed_ratio(zrows, 'cash_collected', 'amt_billed')
         zlv = _latest(zrows)
         zstuck = sum(max(0, r.stuck_meters or 0) for r in zlv)
         zactive= sum(max(0, r.active_customers or 0) for r in zlv) or 1
         zstuck_pct = round(zstuck / zactive * 100, 1)
 
         # Zone NRW critical
-        if znrw_pct > T["zone_nrw_critical"]:
+        if znrw_pct is not None and znrw_pct > T["zone_nrw_critical"]:
             alert("critical","nrw",
                   f"{zone} Zone — NRW Critical at {znrw_pct}%",
-                  f"{zone} zone NRW of {znrw_pct}% exceeds the 35% action threshold. "
+                  f"{zone} zone NRW of {znrw_pct}% exceeds the {T['zone_nrw_critical']:g}% action threshold. "
                   f"Priority zone for loss reduction intervention.",
                   zone=zone, metric="pct_nrw", value=znrw_pct)
-        elif znrw_pct > T["nrw_target"]:
+        elif znrw_pct is not None and znrw_pct > T["nrw_target"]:
             alert("warning","nrw",
                   f"{zone} Zone — NRW Above Target at {znrw_pct}%",
                   f"{zone} zone NRW of {znrw_pct}% exceeds the {_ORG} {T['nrw_target']:g}% target.",
                   zone=zone, metric="pct_nrw", value=znrw_pct)
 
         # Zone collection rate
-        if zcoll_pct < T["zone_coll_warn"]:
-            sev = "critical" if zcoll_pct < T["coll_warn"] else "warning"
+        if zcoll_pct is not None and zcoll_pct < T["zone_coll_warn"]:
+            sev = "critical" if zcoll_pct is not None and zcoll_pct < T["coll_warn"] else "warning"
             alert(sev,"financial",
                   f"{zone} Zone — Collection Rate {zcoll_pct}%",
                   f"{zone} zone collection rate of {zcoll_pct}% is below the {T['zone_coll_warn']}% "
@@ -303,7 +304,7 @@ def generate_alerts(db: Session, year: int = None) -> dict[str, Any]:
                   zone=zone, metric="stuck_meters", value=zstuck)
 
     # ── 8. Trend analysis — is NRW improving or worsening? ───────────────
-    if len(months_with_data) >= 4:
+    if len(months_with_data) >= 4 and all(monthly_agg[m]["pct_nrw"] is not None for m in months_with_data):
         nrw_series = [monthly_agg[m]["pct_nrw"] for m in months_with_data]
         # Compare first half vs second half average
         mid = len(nrw_series) // 2

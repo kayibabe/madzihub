@@ -129,7 +129,7 @@ async function league(body){
   MZ.onAct(body, {run: async () => {
     const r = await MZ.form({title: 'New league-table run', wide: true, fields: [
       {name: 'pack_id', label: 'Pack', type: 'select', options: usable.map(p => ({value: p.id, label: `${p.regulator} ${p.cycle} v${p.version}`}))},
-      {name: 'return_id', label: 'Our return', type: 'select', options: [{value: '', label: '(none)'}, ...rets.map(x => ({value: x.id, label: `${x.pack} · ${x.period_label} (${x.status})`}))]},
+      {name: 'return_id', label: 'Our return (submitted returns only)', type: 'select', options: [{value: '', label: '(none)'}, ...rets.filter(x => x.status === 'submitted').map(x => ({value: x.id, label: `${x.pack} · ${x.period_label}`}))]},
       {name: 'label', label: 'Label'},
       {name: 'peers', label: 'Peer values (JSON)', type: 'textarea', rows: 8, value: '[\n  {"name": "Peer utility A", "values": {"NRW": 40}}\n]', help: 'Values from the regulator’s published report for each peer, by indicator code.'}],
       onSubmit: v => { let peers; try{ peers = JSON.parse(v.peers); }catch(e){ throw new Error('Peer values are not valid JSON.'); }

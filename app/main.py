@@ -390,7 +390,11 @@ def serve_app_core_js(request: Request):
         "__PLAN_TITLE__": _js_text(brand["plan_title"]),
         "__CURRENCY__": _js_text(brand["currency"]),
         "__CUR_SYM__": _js_text(brand["currency_symbol"]),
-        "__NRW_TARGET__": f"{tenant.target('nrw_pct', 25.0):g}",
+        "__NRW_TARGET__": f"{tenant.target('nrw_pct', 27.0):g}",
+        "__NRW_WARN__": f"{tenant.thresholds.get('nrw_warn', 35):g}",
+        "__COLL_GOOD__": f"{tenant.thresholds.get('coll_good', 90):g}",
+        "__COLL_WARN__": f"{tenant.thresholds.get('coll_warn', 75):g}",
+        "__ZONE_COLL_WARN__": f"{tenant.thresholds.get('zone_coll_warn', 80):g}",
         "__FY_MONTHS__": json.dumps(MONTHS_ORDER),
         "__ZONE_COLORS__": json.dumps(tenant.zone_colors),
     }
@@ -451,6 +455,7 @@ async def add_request_context(request: Request, call_next):
 def _brand_html(content: str) -> str:
     """Fill the tenant placeholders in index.html (HTML-escaped)."""
     from html import escape
+    from app.core.tenant import tenant
     brand = _brand_values()
     values = {
         "__PRODUCT_TITLE__": brand["product_title"],
@@ -464,6 +469,7 @@ def _brand_html(content: str) -> str:
         "__ORG_COUNTRY__": brand["country"],
         "__ZONE_COUNT__": brand["zone_count"],
         "__ZONE_PLURAL__": brand["zone_plural"],
+        "__NRW_TARGET__": f"{tenant.target('nrw_pct', 27.0):g}",
     }
     for key, value in values.items():
         content = content.replace(key, escape(value or ""))

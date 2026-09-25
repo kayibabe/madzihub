@@ -91,6 +91,7 @@ async function renderScorecard(body){
       <div class="mz-btn-row">${snap ? '<button class="mz-btn ghost" data-mz="live">Show live calculation</button>' : ''}
         ${canSnap ? '<button class="mz-btn primary" data-mz="snap">Take snapshot</button>' : ''}
         ${snap && snap.can_approve ? '<button class="mz-btn primary" data-mz="approve">Approve snapshot</button>' : ''}</div>
+      ${snap && snap.approval_blocker ? `<p class="mz-meta" role="status"><strong>Cannot be signed off yet:</strong> ${E(snap.approval_blocker)}</p>` : ''}
     </section>
     <section class="mz-card"><h3>Snapshots for this plan, period and unit</h3>${MZ.table({rows: snaps, rowId: s => s.id, selected: SC.snapId, empty: 'No snapshots yet.', columns: [
       {label: '#', render: s => `<span class="mz-mono">${E(s.id)}</span>`}, {label: 'Rating', render: s => E(ratingText(s.rating, s.rating_label))},

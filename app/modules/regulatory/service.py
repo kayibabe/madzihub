@@ -324,7 +324,10 @@ def run_league(db: Session, scope: Scope, pack_id: int, return_id: int | None, p
         r, rp = _return(db, scope, return_id)
         if rp.id != p.id:
             raise Invalid("The return belongs to another pack.")
-        own = {c: v.raw_value for c, v in current_values(db, r).items()}
+        if r.status != "submitted":
+            raise Conflict("Submit the return before comparing it: a draft's values can still change, and a saved "
+                           "league table must not rest on them.")
+        own ={c: v.raw_value for c, v in current_values(db, r).items()}
     for peer in peers:
         if not (peer.get("name") or "").strip():
             raise Invalid("Every peer needs a name.")
