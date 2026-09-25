@@ -36,7 +36,7 @@ class RequestContextFilter(logging.Filter):
 
 
 def configure_logging() -> logging.Logger:
-    level_name = os.getenv("MADZI_LOG_LEVEL", os.getenv("SRWB_LOG_LEVEL", "INFO")).upper()
+    level_name = os.getenv("MADZI_LOG_LEVEL", "INFO").upper()
     level = getattr(logging, level_name, logging.INFO)
 
     root = logging.getLogger()
@@ -55,7 +55,7 @@ def configure_logging() -> logging.Logger:
             handler.setFormatter(formatter)
             handler.addFilter(context_filter)
 
-    app_logger = logging.getLogger("opsapp")
+    app_logger = logging.getLogger("madzihub")
     app_logger.setLevel(level)
     return app_logger
 

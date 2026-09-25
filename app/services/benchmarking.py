@@ -1,7 +1,7 @@
 """
 services/benchmarking.py
 ────────────────────────
-Builds the SRWB Benchmarking Tool (WUP001–WUP107) as a reported table that
+Builds the utility Benchmarking Tool (WUP001–WUP107) as a reported table that
 mirrors the institutional benchmarking workbook, but sourced live from the
 `records` table instead of manual data entry.
 
@@ -52,7 +52,7 @@ from app.utils import MONTHS_ORDER, csv_list, fy_label
 # agg ∈ {"sum","last","avg", None}
 #   None  → manual indicator (no source column); renders blank.
 # fields  → record column(s) summed together to form the indicator.
-# fmt     → frontend number format: "num" | "mwk" | "dec1"
+# fmt     → frontend number format: "num" | "money" | "dec1"
 #
 # Keys emitted into the monthly payload are the lower-cased code (e.g. wup035).
 # ─────────────────────────────────────────────────────────────────────────────
@@ -108,16 +108,16 @@ INDICATORS: List[Dict[str, Any]] = [
     {"code": "WUP041", "label": "Total length of water distribution network","agg": None},
 
     {"section": "5 · Operating Costs"},
-    {"code": "WUP042", "label": "Total operating costs",                    "agg": "sum", "fields": ["op_cost"],      "fmt": "mwk"},
-    {"code": "WUP043", "label": "Total staff cost",                         "agg": "sum", "fields": ["staff_costs"],  "fmt": "mwk"},
-    {"code": "WUP044", "label": "Total energy costs",                       "agg": "sum", "fields": ["power_cost"],   "fmt": "mwk"},
-    {"code": "WUP045", "label": "Total chemical costs",                     "agg": "sum", "fields": ["chem_cost"],    "fmt": "mwk"},
-    {"code": "WUP058", "label": "Total maintenance of water works",         "agg": "sum", "fields": ["maintenance"],  "fmt": "mwk"},
+    {"code": "WUP042", "label": "Total operating costs",                    "agg": "sum", "fields": ["op_cost"],      "fmt": "money"},
+    {"code": "WUP043", "label": "Total staff cost",                         "agg": "sum", "fields": ["staff_costs"],  "fmt": "money"},
+    {"code": "WUP044", "label": "Total energy costs",                       "agg": "sum", "fields": ["power_cost"],   "fmt": "money"},
+    {"code": "WUP045", "label": "Total chemical costs",                     "agg": "sum", "fields": ["chem_cost"],    "fmt": "money"},
+    {"code": "WUP058", "label": "Total maintenance of water works",         "agg": "sum", "fields": ["maintenance"],  "fmt": "money"},
     {"code": "WUP064", "label": "Cash operating expenses",                  "agg": None},
-    {"code": "WUP073", "label": "Total costs",                              "agg": "sum", "fields": ["op_cost"],      "fmt": "mwk", "note": "Proxied by total operating cost"},
-    {"code": "WUP085", "label": "Total W&WW operational expenses",          "agg": "sum", "fields": ["op_cost"],      "fmt": "mwk", "note": "Water-only; wastewater not yet tracked"},
+    {"code": "WUP073", "label": "Total costs",                              "agg": "sum", "fields": ["op_cost"],      "fmt": "money", "note": "Proxied by total operating cost"},
+    {"code": "WUP085", "label": "Total W&WW operational expenses",          "agg": "sum", "fields": ["op_cost"],      "fmt": "money", "note": "Water-only; wastewater not yet tracked"},
     {"code": "WUP095", "label": "Total training cost",                      "agg": None},
-    {"code": "WUP096", "label": "Total annual payroll",                     "agg": "sum", "fields": ["staff_costs", "wages"], "fmt": "mwk"},
+    {"code": "WUP096", "label": "Total annual payroll",                     "agg": "sum", "fields": ["staff_costs", "wages"], "fmt": "money"},
 
     {"section": "6 · Connections"},
     {"code": "WUP046", "label": "New connections installed",                "agg": "sum",  "fields": ["new_connections"],   "fmt": "num"},
@@ -136,18 +136,18 @@ INDICATORS: List[Dict[str, Any]] = [
     {"code": "WUP051", "label": "Cash collected from Private",              "agg": None},
     {"code": "WUP052", "label": "Total amount billed to Private",           "agg": None},
     {"code": "WUP053", "label": "Opening Private debtors",                  "agg": None},
-    {"code": "WUP054", "label": "Total Government debtors",                 "agg": "last", "fields": ["public_debtors"],  "fmt": "mwk"},
+    {"code": "WUP054", "label": "Total Government debtors",                 "agg": "last", "fields": ["public_debtors"],  "fmt": "money"},
     {"code": "WUP055", "label": "Total Government sales",                   "agg": None},
-    {"code": "WUP056", "label": "Total Private debtors",                    "agg": "last", "fields": ["private_debtors"], "fmt": "mwk"},
+    {"code": "WUP056", "label": "Total Private debtors",                    "agg": "last", "fields": ["private_debtors"], "fmt": "money"},
     {"code": "WUP057", "label": "Total Private sales",                      "agg": None},
-    {"code": "WUP059", "label": "Total sales (year 1)",                     "agg": "sum",  "fields": ["total_sales"],    "fmt": "mwk"},
+    {"code": "WUP059", "label": "Total sales (year 1)",                     "agg": "sum",  "fields": ["total_sales"],    "fmt": "money"},
     {"code": "WUP060", "label": "Total sales (year 0)",                     "agg": None},
     {"code": "WUP061", "label": "Total disconnected accounts",             "agg": "sum",  "fields": ["total_disconnected"], "fmt": "num"},
     {"code": "WUP062", "label": "Total number of customers",               "agg": "last", "fields": ["active_customers"], "fmt": "num"},
-    {"code": "WUP063", "label": "Cash collected",                          "agg": "sum",  "fields": ["cash_collected"], "fmt": "mwk"},
-    {"code": "WUP083", "label": "Total W&WW cash income / collections",    "agg": "sum",  "fields": ["cash_collected"], "fmt": "mwk", "note": "Water-only"},
-    {"code": "WUP084", "label": "Total W&WW operating (billed) revenues",  "agg": "sum",  "fields": ["amt_billed"],     "fmt": "mwk", "note": "Water-only"},
-    {"code": "WUP086", "label": "Cash collected (financial ratios)",       "agg": "sum",  "fields": ["cash_collected"], "fmt": "mwk"},
+    {"code": "WUP063", "label": "Cash collected",                          "agg": "sum",  "fields": ["cash_collected"], "fmt": "money"},
+    {"code": "WUP083", "label": "Total W&WW cash income / collections",    "agg": "sum",  "fields": ["cash_collected"], "fmt": "money", "note": "Water-only"},
+    {"code": "WUP084", "label": "Total W&WW operating (billed) revenues",  "agg": "sum",  "fields": ["amt_billed"],     "fmt": "money", "note": "Water-only"},
+    {"code": "WUP086", "label": "Cash collected (financial ratios)",       "agg": "sum",  "fields": ["cash_collected"], "fmt": "money"},
     {"code": "WUP087", "label": "Domestic billing",                        "agg": None},
     {"code": "WUP088", "label": "Average domestic bill ($/month)",         "agg": None},
     {"code": "WUP089", "label": "Average exchange rate ($)",               "agg": None},

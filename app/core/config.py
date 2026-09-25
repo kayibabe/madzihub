@@ -10,23 +10,12 @@ DATA_DIR = BASE_DIR / "data"
 
 
 def _env(name: str, default: str = "") -> str:
-    """Read MADZI_<name>, falling back to the legacy SRWB_<name> variable."""
-    return os.getenv(f"MADZI_{name}", os.getenv(f"SRWB_{name}", default))
+    """Read the MADZI_<name> environment variable."""
+    return os.getenv(f"MADZI_{name}", default)
 
 
-def _default_sqlite_url() -> str:
-    # Existing SRWB installs keep their srwb.db; new installs get madzihub.db.
-    legacy = DATA_DIR / "srwb.db"
-    db_file = legacy if legacy.exists() else DATA_DIR / "madzihub.db"
-    return f"sqlite:///{db_file.as_posix()}"
-
-
-def _default_secret_file() -> str:
-    legacy = DATA_DIR / "srwb.secret"
-    return str(legacy if legacy.exists() else DATA_DIR / "madzihub.secret")
-
-
-DEFAULT_SQLITE_URL = _default_sqlite_url()
+DEFAULT_SQLITE_URL = f"sqlite:///{(DATA_DIR / 'madzihub.db').as_posix()}"
+DEFAULT_SECRET_FILE = str(DATA_DIR / "madzihub.secret")
 
 
 @dataclass
@@ -37,10 +26,10 @@ class Settings:
     upload_limit_mb: int = int(os.getenv("UPLOAD_LIMIT_MB", "50"))
     allowed_origins_raw: str = _env("ALLOWED_ORIGINS", "http://localhost,http://127.0.0.1,http://localhost:8000,http://127.0.0.1:8000").strip()
     allow_local_secret_file: bool = _env("ALLOW_LOCAL_SECRET_FILE", "true").strip().lower() in {"1", "true", "yes"}
-    secret_file_path: Path = Path(_env("SECRET_FILE", _default_secret_file()))
+    secret_file_path: Path = Path(_env("SECRET_FILE", DEFAULT_SECRET_FILE))
     # Passwordless local preview login. Off unless explicitly enabled AND env=development.
     dev_preview_enabled: bool = _env("DEV_PREVIEW", "false").strip().lower() in {"1", "true", "yes"}
-    tenant: str = _env("TENANT", "srwb").strip() or "srwb"
+    tenant: str = _env("TENANT", "demo").strip() or "demo"
 
     @property
     def is_production(self) -> bool:

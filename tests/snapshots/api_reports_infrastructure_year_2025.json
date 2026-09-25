@@ -2,247 +2,223 @@
  "json": {
   "breakdowns_by_zone": [
    {
-    "color": "#0077b6",
-    "pipe_breakdowns": 42350,
-    "pipe_di": 38680,
-    "pipe_gi": 36845,
-    "pipe_hdpe_ac": 40515,
-    "pipe_pvc": 35011,
-    "pump_breakdowns": 20977,
-    "pump_hours_lost": 22811,
-    "total_breakdowns": 63327,
-    "zone": "Liwonde"
+    "color": "#0369a1",
+    "pipe_breakdowns": 36143,
+    "pipe_di": 33012,
+    "pipe_gi": 31446,
+    "pipe_hdpe_ac": 34577,
+    "pipe_pvc": 29880,
+    "pump_breakdowns": 17902,
+    "pump_hours_lost": 19468,
+    "total_breakdowns": 54045,
+    "zone": "Central"
    },
    {
-    "color": "#0d9488",
-    "pipe_breakdowns": 34939,
-    "pipe_di": 31911,
-    "pipe_gi": 30397,
-    "pipe_hdpe_ac": 33425,
-    "pipe_pvc": 28884,
-    "pump_breakdowns": 17306,
-    "pump_hours_lost": 18819,
-    "total_breakdowns": 52245,
-    "zone": "Mangochi"
+    "color": "#0f766e",
+    "pipe_breakdowns": 43810,
+    "pipe_di": 40014,
+    "pipe_gi": 38116,
+    "pipe_hdpe_ac": 41912,
+    "pipe_pvc": 36218,
+    "pump_breakdowns": 21700,
+    "pump_hours_lost": 23598,
+    "total_breakdowns": 65510,
+    "zone": "North"
    },
    {
-    "color": "#16a34a",
-    "pipe_breakdowns": 71995,
-    "pipe_di": 65756,
-    "pipe_gi": 62637,
-    "pipe_hdpe_ac": 68876,
-    "pipe_pvc": 59518,
-    "pump_breakdowns": 35660,
-    "pump_hours_lost": 38779,
-    "total_breakdowns": 107655,
-    "zone": "Mulanje"
-   },
-   {
-    "color": "#d97706",
-    "pipe_breakdowns": 53055,
-    "pipe_di": 48458,
-    "pipe_gi": 46159,
-    "pipe_hdpe_ac": 50756,
-    "pipe_pvc": 43860,
-    "pump_breakdowns": 26279,
-    "pump_hours_lost": 28578,
-    "total_breakdowns": 79334,
-    "zone": "Ngabu"
-   },
-   {
-    "color": "#7c3aed",
-    "pipe_breakdowns": 101640,
-    "pipe_di": 92832,
-    "pipe_gi": 88429,
-    "pipe_hdpe_ac": 97236,
-    "pipe_pvc": 84025,
-    "pump_breakdowns": 50344,
-    "pump_hours_lost": 54747,
-    "total_breakdowns": 151984,
-    "zone": "Zomba"
+    "color": "#b45309",
+    "pipe_breakdowns": 74477,
+    "pipe_di": 68024,
+    "pipe_gi": 64797,
+    "pipe_hdpe_ac": 71251,
+    "pipe_pvc": 61570,
+    "pump_breakdowns": 36890,
+    "pump_hours_lost": 40117,
+    "total_breakdowns": 111367,
+    "zone": "South"
    }
   ],
   "infrastructure_trend": [
    {
-    "month": "April",
-    "pipe_breakdowns": 30894,
-    "power_fail_hours": 19318,
-    "pump_breakdowns": 15302,
-    "stuck_meters": 24636,
-    "supply_hours": 23.9
-   },
-   {
-    "month": "May",
-    "pipe_breakdowns": 22067,
-    "power_fail_hours": 13799,
-    "pump_breakdowns": 10930,
-    "stuck_meters": 17597,
-    "supply_hours": 22.8
-   },
-   {
-    "month": "June",
-    "pipe_breakdowns": 22619,
-    "power_fail_hours": 14144,
-    "pump_breakdowns": 11204,
-    "stuck_meters": 18037,
-    "supply_hours": 23.0
-   },
-   {
     "month": "July",
-    "pipe_breakdowns": 23171,
-    "power_fail_hours": 14488,
-    "pump_breakdowns": 11477,
-    "stuck_meters": 18477,
-    "supply_hours": 23.1
+    "pipe_breakdowns": 11379,
+    "power_fail_hours": 7115,
+    "pump_breakdowns": 5636,
+    "stuck_meters": 9074,
+    "supply_hours": 22.6
    },
    {
     "month": "August",
-    "pipe_breakdowns": 23722,
-    "power_fail_hours": 14833,
-    "pump_breakdowns": 11750,
-    "stuck_meters": 18917,
-    "supply_hours": 23.3
+    "pipe_breakdowns": 11650,
+    "power_fail_hours": 7285,
+    "pump_breakdowns": 5770,
+    "stuck_meters": 9290,
+    "supply_hours": 22.8
    },
    {
     "month": "September",
-    "pipe_breakdowns": 24274,
-    "power_fail_hours": 15178,
-    "pump_breakdowns": 12023,
-    "stuck_meters": 19357,
-    "supply_hours": 23.3
+    "pipe_breakdowns": 11921,
+    "power_fail_hours": 7454,
+    "pump_breakdowns": 5905,
+    "stuck_meters": 9506,
+    "supply_hours": 22.9
    },
    {
     "month": "October",
-    "pipe_breakdowns": 24826,
-    "power_fail_hours": 15523,
-    "pump_breakdowns": 12297,
-    "stuck_meters": 19797,
-    "supply_hours": 23.4
+    "pipe_breakdowns": 12192,
+    "power_fail_hours": 7624,
+    "pump_breakdowns": 6039,
+    "stuck_meters": 9722,
+    "supply_hours": 23.1
    },
    {
     "month": "November",
-    "pipe_breakdowns": 25377,
-    "power_fail_hours": 15868,
-    "pump_breakdowns": 12570,
-    "stuck_meters": 20237,
-    "supply_hours": 23.5
+    "pipe_breakdowns": 12463,
+    "power_fail_hours": 7793,
+    "pump_breakdowns": 6173,
+    "stuck_meters": 9938,
+    "supply_hours": 23.2
    },
    {
     "month": "December",
-    "pipe_breakdowns": 25929,
-    "power_fail_hours": 16213,
-    "pump_breakdowns": 12843,
-    "stuck_meters": 20677,
-    "supply_hours": 23.6
+    "pipe_breakdowns": 12734,
+    "power_fail_hours": 7962,
+    "pump_breakdowns": 6307,
+    "stuck_meters": 10154,
+    "supply_hours": 23.3
    },
    {
     "month": "January",
-    "pipe_breakdowns": 26481,
-    "power_fail_hours": 16558,
-    "pump_breakdowns": 13116,
-    "stuck_meters": 21116,
-    "supply_hours": 23.6
+    "pipe_breakdowns": 13005,
+    "power_fail_hours": 8132,
+    "pump_breakdowns": 6441,
+    "stuck_meters": 10370,
+    "supply_hours": 23.4
    },
    {
     "month": "February",
-    "pipe_breakdowns": 27033,
-    "power_fail_hours": 16903,
-    "pump_breakdowns": 13390,
-    "stuck_meters": 21556,
-    "supply_hours": 23.7
+    "pipe_breakdowns": 13276,
+    "power_fail_hours": 8301,
+    "pump_breakdowns": 6576,
+    "stuck_meters": 10586,
+    "supply_hours": 23.5
    },
    {
     "month": "March",
-    "pipe_breakdowns": 27584,
-    "power_fail_hours": 17248,
-    "pump_breakdowns": 13663,
-    "stuck_meters": 21996,
+    "pipe_breakdowns": 13547,
+    "power_fail_hours": 8471,
+    "pump_breakdowns": 6710,
+    "stuck_meters": 10802,
+    "supply_hours": 23.6
+   },
+   {
+    "month": "April",
+    "pipe_breakdowns": 13818,
+    "power_fail_hours": 8640,
+    "pump_breakdowns": 6844,
+    "stuck_meters": 11018,
+    "supply_hours": 23.6
+   },
+   {
+    "month": "May",
+    "pipe_breakdowns": 14088,
+    "power_fail_hours": 8809,
+    "pump_breakdowns": 6978,
+    "stuck_meters": 11234,
+    "supply_hours": 23.7
+   },
+   {
+    "month": "June",
+    "pipe_breakdowns": 14359,
+    "power_fail_hours": 8979,
+    "pump_breakdowns": 7112,
+    "stuck_meters": 11450,
     "supply_hours": 23.7
    }
   ],
   "pipeline_extensions": [
    {
-    "metres": 203245,
+    "metres": 103255,
     "size": "32mm"
    },
    {
-    "metres": 216415,
+    "metres": 109946,
     "size": "50mm"
    },
    {
-    "metres": 229585,
+    "metres": 116637,
     "size": "63mm"
    },
    {
-    "metres": 242755,
+    "metres": 123328,
     "size": "90mm"
    },
    {
-    "metres": 255925,
+    "metres": 130019,
     "size": "110mm"
    }
   ],
   "pvc_breakdowns_by_size": [
    {
-    "count": 317148,
+    "count": 161122,
     "size": "20mm"
    },
    {
-    "count": 330318,
+    "count": 167813,
     "size": "25mm"
    },
    {
-    "count": 343488,
+    "count": 174503,
     "size": "32mm"
    },
    {
-    "count": 36307,
+    "count": 18445,
     "size": "40mm"
    },
    {
-    "count": 49476,
+    "count": 25136,
     "size": "50mm"
    },
    {
-    "count": 62646,
+    "count": 31827,
     "size": "63mm"
    },
    {
-    "count": 75816,
+    "count": 38517,
     "size": "75mm"
    },
    {
-    "count": 88987,
+    "count": 45208,
     "size": "90mm"
    },
    {
-    "count": 102156,
+    "count": 51899,
     "size": "110mm"
    },
    {
-    "count": 115326,
+    "count": 58590,
     "size": "160mm"
    },
    {
-    "count": 128496,
+    "count": 65281,
     "size": "200mm"
    }
   ],
   "summary": {
    "active_conn_ratio": 93.1,
-   "breakdowns_per_1k_customers": 28372.1,
-   "dev_lines_total": 269095,
-   "pipe_breakdowns": 303978,
-   "power_fail_hours": 190075,
-   "pump_breakdowns": 150565,
-   "pump_hours_lost": 163735,
-   "stuck_meters": 21996,
-   "stuck_new": 255569,
+   "breakdowns_per_1k_customers": 27689.1,
+   "dev_lines_total": 136709,
+   "pipe_breakdowns": 154431,
+   "power_fail_hours": 96565,
+   "pump_breakdowns": 76492,
+   "pump_hours_lost": 83183,
+   "stuck_meters": 11450,
+   "stuck_new": 129838,
    "stuck_pct": 127.8,
-   "stuck_repaired": 268739,
-   "supply_hours_avg_daily": 23.4,
-   "total_breakdowns": 454543,
-   "total_metered": 17216
+   "stuck_repaired": 136529,
+   "supply_hours_avg_daily": 23.3,
+   "total_breakdowns": 230923,
+   "total_metered": 8962
   },
   "year": 2025
  },

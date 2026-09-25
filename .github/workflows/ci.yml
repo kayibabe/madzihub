@@ -23,6 +23,14 @@ jobs:
           MADZI_ENV: development
           MADZI_SECRET_KEY: test-secret-key
         run: python -m unittest discover -s tests -p "test_*.py"
+      - name: Migrations match the models (alembic check)
+        env:
+          MADZI_ENV: development
+          MADZI_SECRET_KEY: test-secret-key
+          DATABASE_URL: sqlite:///${{ runner.temp }}/ci-migrations.db
+        run: |
+          python -m alembic upgrade head
+          python -m alembic check
       - name: Build release bundle
         run: python scripts/build_release_bundle.py
       - name: Validate release bundle

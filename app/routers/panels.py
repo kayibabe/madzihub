@@ -3,7 +3,7 @@ routers/panels.py — v4 (comprehensive data + UX fix)
 
 Changes from v3:
   - _nz_avg() helper: averages only non-zero values with optional outlier cap
-    (fixes days_to_connect inflation from Mangochi data-entry error)
+    (guards days_to_connect against data-entry outliers)
   - _monthly() now returns ALL fields needed by every page's table and charts
   - All panel endpoints now return "monthly": mo (full data, no field filtering)
     so tables never get '—' from a missing key
@@ -110,7 +110,7 @@ def _supply_daily(rows):
     """Average daily supply hours, normalising a mixed source unit.
 
     Some zones record ``supply_hours`` as a daily figure (<=24 h/day) while
-    others (e.g. Liwonde) record a monthly total (up to ~744 h). Converting
+    others record a monthly total (up to ~744 h). Converting
     every value with a blanket ÷30.44 understated continuity ~6x and badged
     healthy utilities as CRITICAL. Here each row is normalised individually:
     a monthly-scale value (>31) is divided to a daily rate, a daily value is

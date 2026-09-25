@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import subprocess
 import sys
 from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile
@@ -36,9 +37,22 @@ def should_exclude(path: Path) -> bool:
     return any(path.match(pattern) for pattern in EXCLUDE_PATTERNS)
 
 
+def candidate_files() -> list[Path]:
+    """Committed files only, so local documents and scratch files never ship.
+
+    Falls back to walking the tree when this is not a git checkout
+    (e.g. building from an unpacked source archive).
+    """
+    try:
+        out = subprocess.run(["git", "ls-files", "-z"], cwd=ROOT, capture_output=True, check=True).stdout
+    except (OSError, subprocess.CalledProcessError):
+        return [p for p in ROOT.rglob("*") if p.is_file()]
+    return [ROOT / name for name in out.decode("utf-8").split("\0") if name]
+
+
 with ZipFile(OUTPUT, "w", compression=ZIP_DEFLATED) as zf:
-    for path in ROOT.rglob("*"):
-        if path.is_dir() or path == OUTPUT:
+    for path in candidate_files():
+        if not path.is_file() or path == OUTPUT:
             continue
         rel = path.relative_to(ROOT)
         if should_exclude(rel):

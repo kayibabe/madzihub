@@ -2,16 +2,16 @@
 # Every name and number here is invented. Use this tenant for demos, training and
 # screenshots; never load real utility data into a demo installation.
 identity:
-  name: Lakeside Water Utility (Demo)
-  short_name: LWU
-  product_title: Lakeside Performance Hub
+  name: MadziHub
+  short_name: MadziHub
+  product_title: MadziHub
   tagline: Every drop, accounted for.
   country: Demo Republic
   regulator: Demo Water Services Regulator
 branding:
   logo: null
-  primary_color: '#0f766e'
-  accent_color: '#0369a1'
+  primary_color: '#142E49'
+  accent_color: '#16A9A8'
 currency:
   code: USD
   symbol: $

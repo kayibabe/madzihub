@@ -846,7 +846,7 @@ def report_nrw_analysis(
         "revenue_water": round(rev_water, 1),
         "nrw_vol": round(nrw_vol, 1),
         "nrw_pct": nrw_pct,
-        "srwb_target_pct": NRW_TARGET_PCT,
+        "nrw_target_pct": NRW_TARGET_PCT,
         "above_target": nrw_pct > NRW_TARGET_PCT,
         "nrw_cost_estimate": nrw_cost_estimate,
         "avg_tariff": avg_tariff,

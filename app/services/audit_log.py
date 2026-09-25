@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-log = logging.getLogger("opsapp.audit")
+log = logging.getLogger("madzihub.audit")
 
 
 def log_event(

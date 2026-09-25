@@ -1,27 +1,18 @@
 {
  "json": {
-  "Liwonde": [
-   "Balaka",
-   "Liwonde",
-   "Machinga"
+  "Central": [
+   "Central Works",
+   "Riverside"
   ],
-  "Mangochi": [
-   "Mangochi",
-   "Monkey Bay"
+  "North": [
+   "Hillside",
+   "Northgate",
+   "Ridgeway"
   ],
-  "Mulanje": [
-   "Mulanje",
-   "Phalombe",
-   "Thyolo"
-  ],
-  "Ngabu": [
-   "Chikwawa",
-   "Ngabu"
-  ],
-  "Zomba": [
-   "Chinamwali",
-   "Domasi",
-   "Zomba"
+  "South": [
+   "Lakeshore",
+   "Southport",
+   "Valley"
   ]
  },
  "status": 200

@@ -44,7 +44,6 @@ set STOPPED=0
 
 rem -- 1. The PID this copy recorded when it started ---------------------------
 call :stop_pidfile "data\madzihub.pid"
-call :stop_pidfile "data\srwb.pid"
 
 rem -- 2. Any Python server still listening on this copy's port ---------------
 if %SILENT%==0 echo  Checking port %PORT%...

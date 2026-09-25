@@ -86,8 +86,28 @@ if errorlevel 1 (
 )
 echo         Done.
 
+rem -- Database schema: never migrated automatically -------------------------
+echo  [3/5] Checking and initialising database...
+rem Read-only check. An empty database is built at startup; an existing one must
+rem already be at the current revision. Upgrades are an operator step (backup first).
+"%PYTHON_EXE%" -m app.migrate status > logs\schema-status.log 2>&1
+if errorlevel 2 (
+    type logs\schema-status.log
+    echo.
+    echo  [STOP] The database needs a migration before MadziHub can start.
+    echo         Follow the instructions above; the command backs the database up first.
+    echo         See docs\DEPLOYMENT_RUNBOOK.md, "Database migrations".
+    pause
+    exit /b 1
+)
+if errorlevel 1 (
+    type logs\schema-status.log
+    echo  [ERROR] Could not check the database. See the messages above.
+    pause
+    exit /b 1
+)
+
 rem -- Database seed (idempotent - safe on every start) ----------------------
-echo  [3/5] Initialising database...
 "%PYTHON_EXE%" scripts\seed_fiscal_years.py >> logs\seed.log 2>&1
 if errorlevel 1 (
     echo  [WARN] Seed script reported an issue - check logs\seed.log

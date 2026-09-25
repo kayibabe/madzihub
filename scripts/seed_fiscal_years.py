@@ -1,154 +1,87 @@
 """
 scripts/seed_fiscal_years.py
 ============================
-One-time (idempotent) migration that:
+Idempotent seed for the multi-FY tables, driven by the tenant's
+``tenants/<tenant>/budget.yaml``:
 
-  1. Populates `fiscal_years` for FY2015/16 → FY2029/30
-  2. Seeds `budget_lines` with the approved FY2025/26 figures
-     (previously hardcoded in app/routers/budget.py)
-  3. Seeds `budget_zone_shares` with the FY2025/26 IPSAS-18 allocation shares
-  4. Seeds `spc_limits` with the FY2025/26 Shewhart ISO-7870-2 control limits
+  1. Registers fiscal years (``fiscal_years``) for the configured range
+  2. Seeds ``budget_lines`` for each fiscal year listed under ``budgets``
+  3. Seeds ``budget_zone_shares`` (IPSAS-18 allocation shares)
+  4. Seeds ``spc_limits`` (Shewhart ISO-7870-2 control limits)
 
-Safe to re-run: uses INSERT OR IGNORE (SQLite) so existing rows are untouched.
+Existing rows are left untouched unless ``--refresh-fy`` names that year.
+A tenant without budget.yaml gets no fiscal years; add them in
+Administration → Fiscal Years instead.
 
 Usage
 -----
     python scripts/seed_fiscal_years.py
-
-To force a full refresh of FY2025/26 budget data:
     python scripts/seed_fiscal_years.py --refresh-fy 2026
+
+budget.yaml layout (all years are FY *end* years)
+-------------------------------------------------
+    fiscal_years: {first: 2022, current: 2027, last: 2030}
+    budgets:
+      2026:
+        tariff_per_m3: 1.15
+        lines:       [{category: water_sales, value: 4800000, notes: "..."}]
+        zone_shares: [{zone: North, rev_share: 0.45, vol_share: 0.42, conn_share: 0.40}]
+        spc:         [{metric: nrw_pct, mean: 30.1, std: 1.2, ucl2: 32.5, lcl2: 27.7}]
+
+Budget-line ``unit`` defaults to the tenant currency code, so monetary lines
+need no unit; give volumes, percentages and counts an explicit one.
 """
 from __future__ import annotations
+
 import argparse
 import os
 import sys
-from datetime import datetime
 
 # ── Make sure project root is on the path ──────────────────────
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
-from app.database import (
-    Base, BudgetLine, BudgetZoneShare, FiscalYear, SpcLimit,
-    SessionLocal, create_tables, engine,
+import yaml  # noqa: E402
+
+from app.core.tenant import tenant  # noqa: E402
+from app.database import (  # noqa: E402
+    BudgetLine, BudgetZoneShare, FiscalYear, SessionLocal, SpcLimit, create_tables,
 )
-from app.utils import fy_label
+from app.utils import fy_dates, fy_label  # noqa: E402
 
-# ─────────────────────────────────────────────────────────────────────────────
-# FY RANGE CONFIGURATION
-# ─────────────────────────────────────────────────────────────────────────────
-# All years here are the FY *end* year (e.g. 2026 = FY2025/26).
-HISTORICAL_RANGE = range(2016, 2027)   # FY2015/16 → FY2025/26 (11 past years)
-CURRENT_YEAR     = 2027                # FY2026/27
-FUTURE_RANGE     = range(2028, 2031)   # FY2027/28 → FY2029/30
-
-# The approved budget figures below belong to FY2025/26 (end-year 2026) and stay
-# attached to that year regardless of which FY is "current". FY2026/27 onward have
-# no approved budget yet (seed via the copy-year admin endpoint when available).
-BUDGET_YEAR      = 2026                # FY2025/26 — owns the seeded budget data
+SPC_FIELDS = ("mean", "std", "ucl2", "lcl2", "ucl3", "lcl3")
 
 
-def _fy_dates(year: int) -> tuple[str, str]:
-    return (f"{year-1}-04-01", f"{year}-03-31")
+def load_budget_config() -> dict:
+    path = tenant.folder / "budget.yaml" if tenant.folder else None
+    if not path or not path.exists():
+        return {}
+    return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# FY2025/26 APPROVED BUDGET  (source: SRWB Draft Revenue & CapEx Budget)
-# These are the exact values that were hardcoded in budget.py
-# ─────────────────────────────────────────────────────────────────────────────
-FY2026_BUDGET = [
-    # category                   value              unit   notes
-    ("tariff_per_m3",            1_450.0,           "MWK/m3", "Fixed tariff, no adjustment in FY"),
-    # Revenue (Table 28)
-    ("water_sales",              16_719_582_000,    "MWK",  "Table 28"),
-    ("bottled_water",             8_881_488_000,    "MWK",  "Table 28 — no DB equivalent"),
-    ("agency_reconnect",            158_494_000,    "MWK",  "Table 28"),
-    ("meter_rental",                417_560_000,    "MWK",  "Table 28"),
-    ("service_charges",             562_898_000,    "MWK",  "Table 28"),
-    ("sundry",                      315_012_000,    "MWK",  "Table 28"),
-    ("rental_income",                43_455_000,    "MWK",  "Table 28"),
-    ("total_revenue",            27_198_591_000,    "MWK",  "Full P&L revenue"),
-    # Plant & Vehicle Operating Costs (Table 29)
-    ("mech_elec_spares",             93_429_000,    "MWK",  "Table 29"),
-    ("plant_maint",                 265_363_000,    "MWK",  "Table 29"),
-    ("electricity",               1_754_765_000,    "MWK",  "Table 29"),
-    ("chemicals",                 1_057_349_000,    "MWK",  "Table 29"),
-    ("bottled_prod",              3_539_978_000,    "MWK",  "Table 29 — no DB equiv"),
-    ("fuel",                      1_317_750_000,    "MWK",  "Table 29"),
-    ("office_equip",                 24_892_000,    "MWK",  "Table 29"),
-    ("pipeline_maint",              879_633_000,    "MWK",  "Table 29"),
-    ("mv_maint",                    379_475_000,    "MWK",  "Table 29"),
-    ("water_purchases",              68_850_000,    "MWK",  "Table 29"),
-    ("plant_veh_total",           9_381_484_000,    "MWK",  "Includes bottled water cost"),
-    # Employee Costs (Table 29)
-    ("salaries",                  5_112_490_000,    "MWK",  "Table 29"),
-    ("wages",                       812_407_000,    "MWK",  "Table 29"),
-    ("pension",                   1_042_202_000,    "MWK",  "Table 29"),
-    ("life_cover",                  219_986_000,    "MWK",  "Table 29"),
-    ("fbt",                         113_612_000,    "MWK",  "Table 29"),
-    ("gratuity",                     21_593_000,    "MWK",  "Table 29"),
-    ("overtime",                    414_317_000,    "MWK",  "Table 29"),
-    ("medical",                     229_558_000,    "MWK",  "Table 29"),
-    ("leave_grant",                  94_071_000,    "MWK",  "Table 29"),
-    ("total_employee",            8_211_793_000,    "MWK",  "Table 29"),
-    # Operating Costs (Table 29)
-    ("security",                    651_398_000,    "MWK",  "Table 29"),
-    ("subsistence",                 512_754_000,    "MWK",  "Table 29"),
-    ("outsourced_mr",               329_982_000,    "MWK",  "Table 29"),
-    ("printing_stat",               436_084_000,    "MWK",  "Table 29"),
-    ("consulting",                  168_073_000,    "MWK",  "Table 29"),
-    ("training",                    142_600_000,    "MWK",  "Table 29"),
-    ("telephone",                   124_920_000,    "MWK",  "Table 29"),
-    ("property_maint",              126_937_000,    "MWK",  "Table 29"),
-    ("total_opex",                5_212_121_000,    "MWK",  "Table 29"),
-    # Other Charges
-    ("depreciation",              2_277_546_000,    "MWK",  "Table 29"),
-    ("finance_costs",             2_066_088_000,    "MWK",  "Table 29"),
-    ("total_other",               4_343_634_000,    "MWK",  "Table 29"),
-    ("total_expenditure",        27_149_032_000,    "MWK",  "Table 29"),
-    # Operational targets (Tables 31, 39)
-    ("vol_produced",             15_883_399,        "m3",   "Table 31/39 annual target"),
-    ("vol_sold",                 11_594_881,        "m3",   "Table 31/39 annual target"),
-    ("nrw_pct",                          27.0,      "pct",  "Table 31/39 NRW target"),
-    ("new_customers",                 8_588,        "count","Table 39"),
-    ("active_customers",             89_824,        "count","Table 39 year-end target"),
-    ("supply_hours",                     19.0,      "hrs",  "hrs/day target"),
-    ("coverage_pct",                     86.0,      "pct",  "Table 39"),
-    ("pipelines_km",                     85.63,     "km",   "Table 39 annual extension"),
-]
-
-
-FY2026_ZONE_SHARES = [
-    # zone         rev_share   vol_share   conn_share
-    ("Zomba",      0.5651,     0.5111,     0.3558),
-    ("Mangochi",   0.2115,     0.2077,     0.2881),
-    ("Liwonde",    0.0970,     0.1014,     0.1287),
-    ("Ngabu",      0.0777,     0.0855,     0.0979),
-    ("Mulanje",    0.0488,     0.0943,     0.1295),
-]
-
-
-FY2026_SPC = [
-    # metric       mean          std         ucl2         lcl2         ucl3         lcl3
-    ("nrw_pct",   31.28,        1.12,       33.52,       29.03,       34.65,       27.91),
-    ("vol_prod",  1_205_597,    65_077,     1_335_751,   1_075_444,   1_400_827,   1_010_367),
-    ("sales",     1_226_744_754,98_900_973, 1_424_547_700,1_028_942_809, None,     None),
-    ("connections",669,         157,        983,         355,         1_140,       198),
-    ("chems",     117_633_260,  14_907_267, 147_447_793, 87_818_726,  None,        None),
-    ("power",     72_666_277,   3_983_747,  80_633_772,  64_698_783,  None,        None),
-]
-
-
-# ─────────────────────────────────────────────────────────────────────────────
 
 def seed(refresh_fy: int | None = None):
+    cfg = load_budget_config()
+    if not cfg:
+        print(f"[SKIP] No budget.yaml for tenant '{tenant.key}'; nothing to seed.")
+        return
     create_tables()
     db = SessionLocal()
     try:
-        _seed_fiscal_years(db)
-        _seed_fy2026_budget(db, refresh=refresh_fy == BUDGET_YEAR)
-        _seed_fy2026_zone_shares(db, refresh=refresh_fy == BUDGET_YEAR)
-        _seed_fy2026_spc(db, refresh=refresh_fy == BUDGET_YEAR)
+        budgets = {int(y): b or {} for y, b in (cfg.get("budgets") or {}).items()}
+        _seed_fiscal_years(db, cfg.get("fiscal_years") or {}, budgets)
+        # Budget rows reference fiscal_years.year; without an ORM relationship the flush
+        # order is not guaranteed, so write the parent rows first (foreign keys are enforced).
+        db.flush()
+        for year, budget in sorted(budgets.items()):
+            refresh = refresh_fy == year
+            lines = list(budget.get("lines") or [])
+            if budget.get("tariff_per_m3") is not None:
+                # Also a budget line, so copy-from carries (and inflates) it into new years.
+                lines.append({"category": "tariff_per_m3", "value": budget["tariff_per_m3"],
+                              "unit": f"{tenant.currency.code}/m3", "notes": "Tariff per m³"})
+            _seed_budget_lines(db, year, lines, refresh)
+            _seed_zone_shares(db, year, budget.get("zone_shares") or [], refresh)
+            _seed_spc(db, year, budget.get("spc") or [], refresh)
         db.commit()
         print("[OK] Seed complete.")
     except Exception as e:
@@ -159,106 +92,74 @@ def seed(refresh_fy: int | None = None):
         db.close()
 
 
-def _seed_fiscal_years(db):
-    """Insert fiscal year rows for all years in range (idempotent)."""
-    years_to_add: list[dict] = []
+def _seed_fiscal_years(db, fy_cfg: dict, budgets: dict[int, dict]):
+    """Insert fiscal year rows for the configured range (idempotent)."""
+    years = set(budgets)
+    if fy_cfg.get("first") and fy_cfg.get("last"):
+        years |= set(range(int(fy_cfg["first"]), int(fy_cfg["last"]) + 1))
+    current = int(fy_cfg["current"]) if fy_cfg.get("current") else None
 
-    for y in HISTORICAL_RANGE:
-        start, end = _fy_dates(y)
-        years_to_add.append(dict(
-            year=y, label=fy_label(y),
-            start_date=start, end_date=end,
-            status="historical", tariff_per_m3=None,
+    added = 0
+    for y in sorted(years):
+        if db.query(FiscalYear).filter(FiscalYear.year == y).first():
+            continue
+        start, end = fy_dates(y)
+        status = ("current" if y == current else
+                  "future" if current is not None and y > current else "historical")
+        db.add(FiscalYear(
+            year=y, label=fy_label(y), start_date=start, end_date=end, status=status,
+            tariff_per_m3=(budgets.get(y) or {}).get("tariff_per_m3"),
+            notes=None if y in budgets else "Budget not loaded yet",
         ))
-
-    start, end = _fy_dates(CURRENT_YEAR)
-    years_to_add.append(dict(
-        year=CURRENT_YEAR, label=fy_label(CURRENT_YEAR),
-        start_date=start, end_date=end,
-        status="current", tariff_per_m3=1_450.0,
-        notes="Current FY — approved budget pending (seed via copy-year)",
-    ))
-
-    for y in FUTURE_RANGE:
-        start, end = _fy_dates(y)
-        years_to_add.append(dict(
-            year=y, label=fy_label(y),
-            start_date=start, end_date=end,
-            status="future", tariff_per_m3=None,
-            notes="Budget TBD — use copy-year to seed from prior FY",
-        ))
-
-    added = 0
-    for row in years_to_add:
-        existing = db.query(FiscalYear).filter(FiscalYear.year == row["year"]).first()
-        if not existing:
-            db.add(FiscalYear(**row))
-            added += 1
-
-    print(f"  fiscal_years: {added} rows inserted ({len(years_to_add)} configured).")
+        added += 1
+    print(f"  fiscal_years: {added} rows inserted ({len(years)} configured).")
 
 
-def _seed_fy2026_budget(db, refresh: bool = False):
-    """Seed FY2025/26 budget lines (exact values from former hardcoded constants)."""
+def _seed_budget_lines(db, year: int, lines: list[dict], refresh: bool):
     if refresh:
-        db.query(BudgetLine).filter(BudgetLine.year == BUDGET_YEAR).delete()
-        print(f"  budget_lines: cleared FY{BUDGET_YEAR} for refresh.")
-
+        db.query(BudgetLine).filter(BudgetLine.year == year).delete()
+        print(f"  budget_lines: cleared FY{year} for refresh.")
     added = 0
-    for category, value, unit, notes in FY2026_BUDGET:
-        existing = (db.query(BudgetLine)
-                    .filter(BudgetLine.year == BUDGET_YEAR,
-                            BudgetLine.category == category)
-                    .first())
-        if not existing:
-            db.add(BudgetLine(year=BUDGET_YEAR, category=category,
-                              value=value, unit=unit, notes=notes))
-            added += 1
-
-    print(f"  budget_lines (FY{BUDGET_YEAR}): {added} rows inserted.")
+    for line in lines:
+        cat = line["category"]
+        if db.query(BudgetLine).filter(BudgetLine.year == year, BudgetLine.category == cat).first():
+            continue
+        db.add(BudgetLine(year=year, category=cat, value=float(line["value"]),
+                          unit=line.get("unit", tenant.currency.code), notes=line.get("notes")))
+        added += 1
+    print(f"  budget_lines (FY{year}): {added} rows inserted.")
 
 
-def _seed_fy2026_zone_shares(db, refresh: bool = False):
+def _seed_zone_shares(db, year: int, shares: list[dict], refresh: bool):
     if refresh:
-        db.query(BudgetZoneShare).filter(BudgetZoneShare.year == BUDGET_YEAR).delete()
-
+        db.query(BudgetZoneShare).filter(BudgetZoneShare.year == year).delete()
     added = 0
-    for zone, rev, vol, conn in FY2026_ZONE_SHARES:
-        existing = (db.query(BudgetZoneShare)
-                    .filter(BudgetZoneShare.year == BUDGET_YEAR,
-                            BudgetZoneShare.zone == zone)
-                    .first())
-        if not existing:
-            db.add(BudgetZoneShare(year=BUDGET_YEAR, zone=zone,
-                                   rev_share=rev, vol_share=vol, conn_share=conn))
-            added += 1
-
-    print(f"  budget_zone_shares (FY{BUDGET_YEAR}): {added} rows inserted.")
+    for s in shares:
+        if db.query(BudgetZoneShare).filter(BudgetZoneShare.year == year,
+                                            BudgetZoneShare.zone == s["zone"]).first():
+            continue
+        db.add(BudgetZoneShare(year=year, zone=s["zone"], rev_share=s["rev_share"],
+                               vol_share=s["vol_share"], conn_share=s["conn_share"]))
+        added += 1
+    print(f"  budget_zone_shares (FY{year}): {added} rows inserted.")
 
 
-def _seed_fy2026_spc(db, refresh: bool = False):
+def _seed_spc(db, year: int, limits: list[dict], refresh: bool):
     if refresh:
-        db.query(SpcLimit).filter(SpcLimit.year == BUDGET_YEAR).delete()
-
+        db.query(SpcLimit).filter(SpcLimit.year == year).delete()
     added = 0
-    for metric, mean, std, ucl2, lcl2, ucl3, lcl3 in FY2026_SPC:
-        existing = (db.query(SpcLimit)
-                    .filter(SpcLimit.year == BUDGET_YEAR,
-                            SpcLimit.metric == metric)
-                    .first())
-        if not existing:
-            db.add(SpcLimit(year=BUDGET_YEAR, metric=metric,
-                            mean=mean, std=std,
-                            ucl2=ucl2, lcl2=lcl2, ucl3=ucl3, lcl3=lcl3))
-            added += 1
-
-    print(f"  spc_limits (FY{BUDGET_YEAR}): {added} rows inserted.")
+    for s in limits:
+        if db.query(SpcLimit).filter(SpcLimit.year == year, SpcLimit.metric == s["metric"]).first():
+            continue
+        db.add(SpcLimit(year=year, metric=s["metric"], **{f: s.get(f) for f in SPC_FIELDS}))
+        added += 1
+    print(f"  spc_limits (FY{year}): {added} rows inserted.")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Seed multi-FY tables")
+    parser = argparse.ArgumentParser(description="Seed multi-FY tables from the tenant budget.yaml")
     parser.add_argument("--refresh-fy", type=int, default=None,
-                        help="FY end-year to force-refresh budget data for (e.g. 2026)")
+                        help="FY end-year whose budget data is replaced from budget.yaml (e.g. 2026)")
     args = parser.parse_args()
     seed(refresh_fy=args.refresh_fy)

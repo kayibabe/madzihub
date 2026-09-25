@@ -193,6 +193,6 @@ A worked example for the first live connection, with view SQL, a client checklis
 | No approval step: loaded values publish immediately | Submit → review → publish states, period locks, correction history (ROADMAP Stage 2) |
 | No unit conversion registry | Units table (m³/ML, kWh/MWh) with conversion at mapping time; `scale` covers simple cases now |
 | Scheduling relies on OS cron/Task Scheduler | Acceptable for on-premises installs; revisit only for a hosted offer |
-| New tables are created by `create_all` | Adopt Alembic before the first non-additive change to these tables |
+| Schema changes to these tables | Alembic revisions (`app/migrations/`); see DEPLOYMENT_RUNBOOK.md, "Database migrations" |
 | SQLite is fine for monthly data; daily telemetry for many sites will grow quickly | Use PostgreSQL for installs with daily feeds |
 | Vendor recipes are untested | Validate each against a client sandbox before it is sold as supported |

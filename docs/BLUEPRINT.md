@@ -3,9 +3,11 @@
 **MadziHub: Water Utility Performance & Intelligence Platform**
 *Every drop, accounted for.*
 
-Working specification, version 1.0, 24 September 2026.
+Working specification, version 1.1, 24 September 2026.
 Baseline: `kayibabe/opsapp` at `efa4a29`, imported into this repository with no utility data.
 This document merges two independent reviews (the `MadziHub_Product_Blueprint.docx` draft and a code-level review), fills gaps in both, and records what the first implementation pass actually changed.
+
+> **Status and scope update (24 September 2026):** MadziHub is a configurable platform, with water and wastewater utilities as the first product domain. It is not an SRWB-branded product and SRWB is no longer a reference tenant. SRWB-specific code, settings and tenant data were removed from this repository; the historical rights and licence question remains open. The existing code has useful generic tenant, fiscal calendar, metric and integration foundations, but arbitrary KPI catalogues, forms and organizational structures are not yet proven. See [RESEARCH_BENCHMARK.md](RESEARCH_BENCHMARK.md) for current external research and the revised implementation order. The working tree includes pending changes; this document does not claim they are committed or released.
 
 ---
 
@@ -13,13 +15,13 @@ This document merges two independent reviews (the `MadziHub_Product_Blueprint.do
 
 | Decision | Choice | Why |
 |---|---|---|
-| Product | Build MadziHub as a configurable product from the SRWB Corporate Performance Hub | The KPI engine, reports and UI already work in production; the problem is that SRWB-specific values are hardcoded everywhere, not that the design is wrong. |
-| First client | SRWB becomes the **reference tenant** (`tenants/srwb`), not the product | Keeps a real installation as the regression baseline for every refactor. |
+| Product | Build a configurable performance, planning and reporting platform for water and wastewater utilities first | Start with this domain's strategy, operations and regulatory reporting needs; do not claim support for arbitrary utilities until their metric models and workflows are validated. |
+| Reference data | Synthetic demo and test tenants only | Never make a real utility's data the product demo or general regression fixture. |
 | Deployment | **One isolated installation per utility** for the first release | Public-sector utilities generally require data on their own servers; per-install SQLite/PostgreSQL + a single process is simple to run, back up and support. |
 | Multi-tenancy | Designed-for, **not built** | Clean config boundaries now; a shared hosted service needs its own architecture review, tenant-aware schema and isolation testing. An `org_id` column alone is not enough. |
-| Refactor safety | API **parity snapshots** on synthetic data | Every change must reproduce SRWB's outputs exactly unless a diff is deliberate and documented. |
+| Refactor safety | Existing API **parity snapshots** on synthetic data | Preserve established endpoint behaviour unless a change is deliberate and documented. New strategy APIs use a separate namespace as specified in [RESEARCH_BENCHMARK.md](RESEARCH_BENCHMARK.md). |
 | AI narratives | **Off by default**, explicit opt-in per install | Narratives send KPI data to an external provider; many utilities cannot allow that. |
-| Demo | Fictional **Lakeside Water Utility** tenant | Sales demos and screenshots must never use real utility data. |
+| Demo | Synthetic **MadziHub** demo tenant identity | Demo identity may use the product brand, but utility records, activity, names and figures remain invented; it must not imply a real regulator or utility. |
 
 ### Where the two reviews differed, and how it was resolved
 
@@ -28,7 +30,11 @@ This document merges two independent reviews (the `MadziHub_Product_Blueprint.do
 | Database | Move to PostgreSQL with `tenant_id` everywhere | Keep SQLite per install | Support SQLite now; validate PostgreSQL in staging and prefer it for larger installs. No `tenant_id` until a hosted offer exists. |
 | Hosting | Tenant-aware shared platform | One install per utility | One install per utility; keep boundaries clean so hosting is possible later. |
 | Security baseline | "Auth needs testing" | README claimed auth was removed | Verified in code: data routers **do** require auth. Found and fixed a real hole instead (dev-preview login, §5). |
-| NRW target | 25 vs 27 inconsistency noted | Same | Root cause: SRWB's Strategic Plan sets a **per-year** target (27 → 26.5 → 26 → 25.5 → 25). One governed value now (27); per-year targets come with the targets table (Stage 2). |
+| Performance targets | Conflicting hard-coded targets found in the source review | Same | Use versioned targets with period, measure, organization scope, basis and source. Never elevate an old SRWB value into a MadziHub default. |
+
+### Product plan update
+
+The current benchmark adds a governed strategy/M&E cycle, explicit score completeness and versioning rules, frozen report instances, evidence and controlled-document lifecycles, shared actions, board resolutions, audit findings, risk, and source-verified regulator packs. The first internal five-band scoring scheme and each regulator's external ranking method are separate configurations. The sequence and acceptance gates are maintained in [RESEARCH_BENCHMARK.md](RESEARCH_BENCHMARK.md); it supersedes conflicting older sequence details in this document.
 
 ---
 
@@ -43,7 +49,7 @@ Tagline options (first is recommended):
 4. The performance heartbeat of your utility.
 5. Know your network.
 
-Each installation presents as the utility's own product, e.g. *SRWB Corporate Performance Hub · powered by MadziHub*.
+Each installation can present the customer's configured identity, with MadziHub shown as the platform provider where appropriate.
 
 Before public launch: formal trademark, domain and regional-language clearance (other Malawian "Madzi" apps exist). Do not use IWA or IBNET in the name.
 
@@ -90,7 +96,7 @@ Principles:
 - **Config precedence:** tenant YAML → admin-edited organisation profile (identity only). Later: versioned DB tables for hierarchy and targets.
 - **API supplies labels, currency and thresholds** to the UI; no business constants in browser code.
 - **Keep the wide `records` table** as a compatibility layer while the metric catalogue arrives. Measure real query needs before any metric-row-store rewrite.
-- **Migrations:** today `create_all` plus additive column checks at startup; adopt Alembic in Stage 2 before the first non-additive change.
+- **Migrations:** Alembic (`app/migrations/`, baseline `0001`). Startup builds only an empty database; existing databases are upgraded or adopted by an operator with `python -m app.migrate`, which backs SQLite up first.
 
 ### Tenant configuration (implemented)
 
@@ -117,7 +123,7 @@ Implemented in this pass:
 - `must_change_password` for the bootstrap admin, admin-created users and admin resets. Every API route except `/api/auth/me` and `/api/auth/change-password` returns `403 password_change_required` until changed, and the login screen shows a blocking dialog.
 - New passwords must be ≥ 8 characters and differ from the current one.
 - `scripts/reset_admin.py` replaces the fixed-password reset script.
-- Environment variables are `MADZI_*`; `SRWB_*` are still honoured for existing installs.
+- Environment variables are `MADZI_*` only (the legacy `SRWB_*` fallback was removed on 2026-09-24).
 
 Still required before any second utility installs (Stage 3):
 - Route-by-route authorization inventory, including exports and downloads. Add tests for denied access by role and, later, by organisational scope.
@@ -170,18 +176,12 @@ These are the pieces that turn a configurable codebase into a supportable produc
 
 ## 9. Delivery stages and exit gates
 
-| Stage | Work | Exit gate |
-|---|---|---|
-| **0 Protect and baseline** | Written rights position with SRWB; opsapp public-data exposure handled; parity baseline; demo tenant | Rights agreed in writing; baseline snapshots committed ✅; demo tenant ✅ |
-| **1 Extract configuration** | Tenant config; identity, currency, FY, zones, targets, plan KPIs, AI switch; security fixes | SRWB parity except documented diffs ✅; demo tenant shows its identity and calendar ✅; UI hierarchy labels ⏳ |
-| **2 Generalise data entry** | Hierarchy table (N levels, effective dates, aliases); versioned targets by KPI × FY × scope; metric catalogue; import mapping profiles; upload validation rules; approval, period locks, audit; Alembic | A fictional utility imports a *different* spreadsheet with no code change; approved/corrected values trace to source |
-| **3 Package and harden** | Module toggles in UI; setup wizard; Docker image; vendored assets; route/role audit; backup/restore runbook and drill; PostgreSQL path | Fresh install via wizard; access tests, restore drill and performance checks pass |
-| **4 Extend** | Vertical modules, regulator packs, connectors, GIS, in order of funded demand | Each module has definitions, acceptance criteria and a pilot validation |
+Use [RESEARCH_BENCHMARK.md](RESEARCH_BENCHMARK.md) for the reviewed delivery sequence and module gates. The working order is migration foundation → shared scope/audit/workflow/actions → strategy and M&E → weighted scorecard → frozen reporting hub → document control → governance/risk → verified regulator packs and restricted HR extensions. Complete one reviewable slice at a time; do not treat this roadmap as authorization for a production migration or release.
 
 ### Acceptance scenarios
 1. A new utility chooses a July–June year, a three-level branch hierarchy and a different currency. Every filter, KPI, chart, export and report follows, with no source edits. *(Calendar, currency and zones: done. Hierarchy depth and labels: Stage 1/2.)*
 2. An administrator maps a new spreadsheet header to the platform's production measure. Invalid units and duplicate periods are flagged before commit, and corrections keep their source references.
-3. SRWB's agreed historical KPIs and exports match the signed baseline, allowing only documented rounding and formula corrections.
+3. Existing compatibility endpoints match their committed synthetic snapshots; any deliberate API change is separately documented and versioned.
 4. A viewer cannot upload, configure targets, access restricted exports or see data outside their scope.
 5. A clean demo instance contains only synthetic data, names and branding.
 
@@ -189,7 +189,8 @@ These are the pieces that turn a configurable codebase into a supportable produc
 
 ## 10. Decisions to record before distribution
 
-- **Ownership and licence** with SRWB for code, design, reporting definitions, the Strategic Plan matrix in `tenants/srwb`, screenshots and branding. The code was built while employed there, so obtain written permission and local legal advice. *No LICENSE file is added until this is settled.*
-- Whether `tenants/srwb` stays in this repository or moves to a private SRWB deployment repository.
+- **Historical ownership and licence** for code, design, reporting definitions, prior Strategic Plan material, screenshots and branding associated with SRWB. Resolve this before public distribution; no SRWB deployment data belongs in the demo or product defaults.
 - The first pilot utility's profile, the commercial support model, and whether clients need on-premises or managed private hosting.
-- An accountable water-operations and finance reviewer to approve the canonical indicator set and local regulatory deviations.
+- An accountable water-operations and finance reviewer to approve the initial common indicator catalogue and each local regulator pack against current primary sources.
+- Exact default five-band labels, thresholds and scale direction for the internal score scheme; missing-data coverage gate and allowed overrides.
+- Each first-market regulator's jurisdiction, current return format, code map, reporting cadence and scoring method. Do not infer a Malawi utility-provider league table from another country's regulator.

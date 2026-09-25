@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- Version: index_v2_2_mobile_hotfix -->
-<html lang="en">
+<html lang="en" data-brand="__BRAND_MODE__">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -20,12 +20,13 @@
 <script src="/static/vendor/xlsx/xlsx.full.min.js?v=0.18.5"></script>
 <script src="/static/vendor/dompurify/purify.min.js?v=3.1.6"></script>
 <link rel="stylesheet" href="/static/vendor/fonts/fonts.css?v=5.3.0">
-<link rel="stylesheet" href="/static/assets/css/base.css?v=20260924-1">
+<link rel="stylesheet" href="/static/assets/css/base.css?v=20260924-4">
 
-<link rel="stylesheet" href="/static/assets/css/reports.css?v=20260613-8">
-<link rel="stylesheet" href="/static/assets/css/print.css">
+<link rel="stylesheet" href="/static/assets/css/reports.css?v=20260924-2">
+<link rel="stylesheet" href="/static/assets/css/print.css?v=20260924-2">
 <link rel="stylesheet" href="/static/assets/css/department-tabs.css?v=20260613-1">
 <link rel="stylesheet" href="/static/assets/css/integration-hub.css?v=20260924-3">
+<link rel="stylesheet" href="/static/assets/css/mod-platform.css?v=20260925-1">
 </head>
 <body>
 
@@ -43,13 +44,20 @@
   <!-- Centred login card -->
   <div class="login-card">
 
-    <div class="login-form-logo-wrap">
+    <!-- Product branding: the full MadziHub lockup (logo, name, strapline, tagline) -->
+    <h1 class="login-lockup brand-product-only">
+      <img class="brand-on-light" src="/static/brand/madzihub-logo-light.svg" alt="MadziHub: Water Utility Performance &amp; Intelligence Platform. Every drop, accounted for.">
+      <img class="brand-on-dark" src="/static/brand/madzihub-logo-dark.svg" alt="MadziHub: Water Utility Performance &amp; Intelligence Platform. Every drop, accounted for.">
+    </h1>
+
+    <!-- Tenant branding: the utility's own logo, title and tagline -->
+    <div class="login-form-logo-wrap brand-tenant-only">
       <img src="/api/config/logo" alt="__ORG_NAME__" class="login-form-logo">
     </div>
 
-    <div class="login-brand" style="text-align:center;margin:.25rem 0 .9rem">
+    <div class="login-brand brand-tenant-only" style="text-align:center;margin:.25rem 0 .9rem">
       <div class="login-brand-name" style="font-size:1.05rem;font-weight:700;letter-spacing:-.01em;color:var(--ds-text-primary,#0f172a)">__PRODUCT_TITLE__</div>
-      <div class="login-brand-strap" style="font-size:.74rem;color:var(--muted,#64748b);margin-top:2px">Enterprise performance &amp; intelligence — IWA/IBNET aligned</div>
+      <div class="login-brand-strap" style="font-size:.74rem;color:var(--muted,#64748b);margin-top:2px">__TAGLINE__</div>
     </div>
 
     <div class="login-sub" style="text-align:center;margin-bottom:1rem">Sign in to continue</div>
@@ -147,7 +155,7 @@
 
     <!-- Footer -->
     <div class="login-footer">
-    <div class="login-powered">
+    <div class="login-powered brand-tenant-only">
       <span>Powered by</span>
       <img class="brand-on-light" src="/static/brand/madzihub-wordmark-light.svg" alt="MadziHub" height="22">
       <img class="brand-on-dark" src="/static/brand/madzihub-wordmark-dark.svg" alt="MadziHub" height="22">
@@ -186,78 +194,12 @@
     <!-- Body -->
     <div class="um-body">
 
-      <!-- Step indicator -->
-      <div class="um-steps" id="um-steps" style="display:flex;align-items:center;gap:8px;margin-bottom:14px;font-size:11.5px;font-weight:700">
-        <div class="um-step active" id="um-step-1" style="display:flex;align-items:center;gap:6px;color:#1A8FD1">
-          <span class="um-step-num" style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#1A8FD1;color:#fff;font-size:10px">1</span>
-          <span>Build RawData</span>
-        </div>
-        <div style="flex:1;height:2px;background:var(--ds-border,#e2e8f0);border-radius:2px" id="um-step-line"></div>
-        <div class="um-step" id="um-step-2" style="display:flex;align-items:center;gap:6px;color:var(--ds-text-muted,#94a3b8)">
-          <span class="um-step-num" style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--ds-border,#e2e8f0);color:var(--ds-text-muted,#64748b);font-size:10px">2</span>
-          <span>Import to database</span>
-        </div>
-      </div>
-
-      <!-- Step 1: Build RawData from the 5 zone workbooks (dataupdater) -->
-      <div id="um-stage-build">
-        <div style="font-size:12px;color:var(--ds-text-muted);line-height:1.5;margin-bottom:12px">
-          Builds <strong>RawData_updated.xlsx</strong> from the five zone workbooks
-          (Liwonde, Mangochi, Mulanje, Ngabu, Zomba) for the selected fiscal year —
-          each year has its own <code>dataupdater/FY&hellip;</code> sub-folder. The
-          chosen year's data is compiled with the correct year and full billing/customer totals.
-        </div>
-
-        <!-- Fiscal year selector -->
-        <label style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-          <span style="font-size:12px;font-weight:650;color:var(--ds-text-secondary)">Fiscal year</span>
-          <select id="um-fy-select" onchange="umFyChange()" style="flex:1;max-width:240px;padding:7px 10px;border:1px solid var(--ds-border);border-radius:8px;font-family:var(--ds-font);font-size:13px;background:var(--ds-surface);color:var(--ds-text-primary)">
-            <option value="">Loading…</option>
-          </select>
-          <span id="um-fy-ready" style="font-size:11px;font-weight:600;color:var(--ds-text-muted);white-space:nowrap"></span>
-        </label>
-
-        <!-- Zone source files status -->
-        <div class="um-zone-status" id="um-zone-status" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"></div>
-
-        <!-- Build mode -->
-        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:6px">
-          <div class="um-mode-label">Build mode:</div>
-          <div class="um-mode-grid">
-            <label class="um-mode-opt selected" id="um-bmode-fill">
-              <input type="radio" name="um-bmode" value="fill" checked onchange="umBuildModeChange(this)">
-              <span>Fill missing only</span>
-            </label>
-            <label class="um-mode-opt" id="um-bmode-force">
-              <input type="radio" name="um-bmode" value="force" onchange="umBuildModeChange(this)">
-              <span>Force full refresh</span>
-            </label>
-          </div>
-        </div>
-
-        <!-- Build result summary (shown after building) -->
-        <div id="um-build-result" style="display:none;margin-top:14px">
-          <div class="um-preview-hdr">
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke="#16a34a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <span class="um-preview-hdr-title">Build Summary</span>
-          </div>
-          <div class="um-stat-row">
-            <div class="um-stat"><div class="um-stat-val" id="um-bstat-files">—</div><div class="um-stat-lbl">Zone Files</div></div>
-            <div class="um-stat"><div class="um-stat-val green" id="um-bstat-filled">—</div><div class="um-stat-lbl">Filled</div></div>
-            <div class="um-stat"><div class="um-stat-val green" id="um-bstat-added">—</div><div class="um-stat-lbl">Added</div></div>
-            <div class="um-stat"><div class="um-stat-val" id="um-bstat-skipped">—</div><div class="um-stat-lbl">Already Done</div></div>
-            <div class="um-stat"><div class="um-stat-val red" id="um-bstat-err">—</div><div class="um-stat-lbl">Errors</div></div>
-          </div>
-          <div class="um-issues" id="um-build-issues"></div>
-        </div>
-      </div><!-- /#um-stage-build -->
-
-      <!-- Stage 2: Drop zone + mode selector -->
-      <div id="um-stage-pick" style="display:none">
+      <!-- Drop zone + mode selector -->
+      <div id="um-stage-pick">
 
         <div style="font-size:12px;color:var(--ds-text-muted);line-height:1.5;margin-bottom:12px" id="um-step2-note">
-          The file built in Step 1 has been validated and is ready to import below.
-          To import a different workbook instead, drop it on the zone below.
+          Choose a RawData workbook (DataEntry sheet). It is validated first;
+          nothing is written until you confirm the import.
         </div>
 
         <!-- Drop zone -->
@@ -268,12 +210,12 @@
           <!-- default state -->
           <div class="um-drop-icon" id="um-drop-icon-wrap">
             <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
-              <rect x="4" y="3" width="16" height="20" rx="2" fill="#BFDBFE"/>
-              <rect x="8" y="3" width="16" height="20" rx="2" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1.2"/>
-              <rect x="10" y="9" width="10" height="1.5" rx=".75" fill="#3B82F6"/>
-              <rect x="10" y="12.5" width="7" height="1.5" rx=".75" fill="#93C5FD"/>
-              <rect x="10" y="16" width="9" height="1.5" rx=".75" fill="#93C5FD"/>
-              <circle cx="24" cy="24" r="7" fill="#1A8FD1"/>
+              <rect x="4" y="3" width="16" height="20" rx="2" fill="#A7E3E2"/>
+              <rect x="8" y="3" width="16" height="20" rx="2" fill="#ECFBFA" stroke="#7FD3D2" stroke-width="1.2"/>
+              <rect x="10" y="9" width="10" height="1.5" rx=".75" fill="#16A9A8"/>
+              <rect x="10" y="12.5" width="7" height="1.5" rx=".75" fill="#7FD3D2"/>
+              <rect x="10" y="16" width="9" height="1.5" rx=".75" fill="#7FD3D2"/>
+              <circle cx="24" cy="24" r="7" fill="#0E7C7B"/>
               <path d="M24 20.5v7M21 24l3-3 3 3" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
@@ -314,7 +256,7 @@
       <!-- Stage 2: Preview summary (shown after parsing) -->
       <div id="um-preview">
         <div class="um-preview-hdr">
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 4v4m0 2v1" stroke="#1A8FD1" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 4v4m0 2v1" stroke="#0E7C7B" stroke-width="1.5" stroke-linecap="round"/></svg>
           <span class="um-preview-hdr-title">Validation Preview</span>
           <span id="um-preview-period" style="font-size:11px;color:var(--ds-text-muted);font-weight:600"></span>
         </div>
@@ -351,15 +293,6 @@
     <!-- Footer -->
     <div class="um-footer">
       <button class="um-btn um-btn-cancel" id="um-btn-cancel" onclick="closeUploadModal()">Cancel</button>
-      <button class="um-btn um-btn-cancel" id="um-btn-back" style="display:none" onclick="umBackToBuild()">← Back</button>
-      <button class="um-btn um-btn-primary" id="um-btn-build" onclick="umBuildRawData()">
-        <div class="um-spinner" id="um-spinner-build"></div>
-        <span id="um-build-label">Build RawData</span>
-      </button>
-      <button class="um-btn um-btn-primary" id="um-btn-continue" style="display:none" onclick="umContinueToImport()">
-        <div class="um-spinner" id="um-spinner-continue"></div>
-        <span id="um-continue-label">Continue to Import →</span>
-      </button>
       <button class="um-btn um-btn-primary" id="um-btn-upload" onclick="umUploadAndPreview()" disabled>
         <div class="um-spinner" id="um-spinner"></div>
         <span id="um-btn-label">Upload &amp; Validate</span>
@@ -405,6 +338,8 @@
           <option value="user" selected>User — view + export</option>
           <option value="admin">Admin — full access</option>
         </select>
+        <div class="mz-help">Access is deny-by-default: a new User or Viewer sees nothing until you grant
+          units in <strong>Performance &amp; Governance › Access &amp; Scope</strong>.</div>
       </div>
       <div id="adm-modal-err" style="color:var(--ds-red);font-size:12px;margin-top:8px;display:none"></div>
     </div>
@@ -568,15 +503,20 @@
 <div id="filter-overlay" onclick="closeFilter()"></div>
 
 <div id="app-view" style="display:none">
-<div id="srwb-app">
+<div id="madzi-app">
 
   <!-- Sidebar nav -->
   <nav id="db-nav">
 
     <!-- Logo -->
     <div class="nav-logo" onclick="goToRoleHome()" title="Open your default home">
-      <img src="/api/config/logo" alt="__ORG_SHORT__">
-      <div>
+      <div class="nav-lockup brand-product-only">
+        <img class="brand-on-light" src="/static/brand/madzihub-wordmark-light.svg" alt="MadziHub">
+        <img class="brand-on-dark" src="/static/brand/madzihub-wordmark-dark.svg" alt="MadziHub">
+        <div class="nls">__ORG_LINE__</div>
+      </div>
+      <img class="brand-tenant-only" src="/api/config/logo" alt="__ORG_SHORT__">
+      <div class="brand-tenant-only">
         <div class="nlt">__PRODUCT_TITLE__</div>
         <div class="nls">__ORG_NAME__</div>
       </div>
@@ -607,9 +547,9 @@
       <div class="nav-section" id="brdsec-main">
         <div class="nav-item nav-item-child" data-page="board" data-section="Board View" data-title="Consolidated Executive Summary" onclick="navigate('board')"><span class="nav-item-label">Consolidated Summary</span></div>
         <div class="nav-item nav-item-child" data-page="overview" data-section="Executive Dashboard" data-title="Executive Dashboard" onclick="navigate('overview')"><span class="nav-item-label">Executive Dashboard</span></div>
-        <div class="nav-item nav-item-child" data-page="strategic" data-section="Board View" data-title="Strategic Plan 2023–2028 Scorecard" onclick="navigate('strategic')"><span class="nav-item-label">Strategic Plan Scorecard</span></div>
+        <div class="nav-item nav-item-child" data-page="strategic" data-section="Board View" data-title="__PLAN_TITLE__ Scorecard" onclick="navigate('strategic')"><span class="nav-item-label">Strategic Plan Scorecard</span></div>
         <div class="nav-item nav-item-child" data-page="position" data-section="Board View" data-title="Strategic Position" onclick="navigate('position')"><span class="nav-item-label">Strategic Position</span></div>
-        <div class="nav-item nav-item-child nav-item-soon"><span class="nav-item-label">Risk Dashboard</span><span class="nav-soon">Soon</span></div>
+        <div class="nav-item nav-item-child" onclick="navigate('risks')" tabindex="0" role="link"><span class="nav-item-label">Risk Register</span></div>
         <div class="nav-item nav-item-child nav-item-soon"><span class="nav-item-label">Budget Performance</span><span class="nav-soon">Soon</span></div>
       </div>
 
@@ -631,9 +571,9 @@
       </div>
       <div class="nav-section collapsed" id="brdsec-governance" style="max-height:0">
         <div class="nav-item nav-item-child" data-page="compliance" data-section="Governance" data-title="Compliance &amp; Data Quality" data-admin-only="compliance" onclick="navigate('compliance')"><span class="nav-item-label">Compliance &amp; Data Quality</span></div>
-        <div class="nav-item nav-item-child nav-item-soon"><span class="nav-item-label">Audit Tracker</span><span class="nav-soon">Soon</span></div>
-        <div class="nav-item nav-item-child nav-item-soon"><span class="nav-item-label">Board Resolutions</span><span class="nav-soon">Soon</span></div>
-        <div class="nav-item nav-item-child nav-item-soon"><span class="nav-item-label">Regulatory Compliance</span><span class="nav-soon">Soon</span></div>
+        <div class="nav-item nav-item-child" onclick="navigate('audit-findings')" tabindex="0" role="link"><span class="nav-item-label">Audit Findings</span></div>
+        <div class="nav-item nav-item-child" onclick="navigate('meetings')" tabindex="0" role="link"><span class="nav-item-label">Board Resolutions</span></div>
+        <div class="nav-item nav-item-child" onclick="navigate('regulatory')" tabindex="0" role="link"><span class="nav-item-label">Regulatory Packs &amp; Returns</span></div>
       </div>
 
     </div>
@@ -810,6 +750,58 @@
       <div class="nav-section" id="rptsec-main">
         <div class="nav-item nav-item-child" data-page="report-centre" data-section="Report Centre" data-title="Report Centre" onclick="navigate('report-centre')"><span class="nav-item-label">Report Centre</span></div>
         <div class="nav-item nav-item-child" data-page="benchmarking" data-section="Reports" data-title="Benchmarking Tool" onclick="navigate('benchmarking')"><span class="nav-item-label">Benchmarking Tool</span></div>
+      </div>
+
+    </div>
+
+    <!-- ── PERFORMANCE & GOVERNANCE menu — scoped modules (mod-*.js) ───────── -->
+    <div class="dept-menu" data-dept-menu="performance">
+
+      <div class="nav-item nav-item-grouphead nav-item-top collapsible" id="pgvgrp-work" onclick="toggleSidebarSection('pgvgrp-work','pgvsec-work',event)">
+        <span class="nav-item-main"><svg class="nav-item-icon nav-item-icon-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M8 12l3 3 5-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="nav-item-label">Workspace</span></span>
+        <button type="button" class="nav-grp-toggle" aria-expanded="true" aria-label="Toggle Workspace section" onclick="toggleSidebarSection('pgvgrp-work','pgvsec-work',event)"><svg class="nav-grp-chevron" viewBox="0 0 10 10" fill="none"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+      <div class="nav-section" id="pgvsec-work">
+        <div class="nav-item nav-item-child" data-page="my-work" data-section="Performance &amp; Governance" data-title="My Work" onclick="navigate('my-work')"><span class="nav-item-label">My Work</span><span class="mz-badge danger" id="mz-nav-unread" hidden style="margin-left:auto"></span></div>
+        <div class="nav-item nav-item-child" data-page="actions" data-section="Performance &amp; Governance" data-title="Actions" onclick="navigate('actions')"><span class="nav-item-label">Actions</span></div>
+      </div>
+
+      <div class="nav-item nav-item-grouphead nav-item-top collapsible" id="pgvgrp-strategy" onclick="toggleSidebarSection('pgvgrp-strategy','pgvsec-strategy',event)">
+        <span class="nav-item-main"><svg class="nav-item-icon nav-item-icon-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span class="nav-item-label">Strategy &amp; M&amp;E</span></span>
+        <button type="button" class="nav-grp-toggle" aria-expanded="true" aria-label="Toggle Strategy section" onclick="toggleSidebarSection('pgvgrp-strategy','pgvsec-strategy',event)"><svg class="nav-grp-chevron" viewBox="0 0 10 10" fill="none"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+      <div class="nav-section" id="pgvsec-strategy">
+        <div class="nav-item nav-item-child" data-page="strategy" data-section="Strategy &amp; M&amp;E" data-title="Plans &amp; Indicators" onclick="navigate('strategy')"><span class="nav-item-label">Plans &amp; Indicators</span></div>
+        <div class="nav-item nav-item-child" data-page="cycles" data-section="Strategy &amp; M&amp;E" data-title="Reporting Cycles" onclick="navigate('cycles')"><span class="nav-item-label">Reporting Cycles</span></div>
+        <div class="nav-item nav-item-child" data-page="updates" data-section="Strategy &amp; M&amp;E" data-title="Progress Updates" onclick="navigate('updates')"><span class="nav-item-label">Progress Updates</span></div>
+        <div class="nav-item nav-item-child" data-page="evaluations" data-section="Strategy &amp; M&amp;E" data-title="Evaluations" onclick="navigate('evaluations')"><span class="nav-item-label">Evaluations</span></div>
+        <div class="nav-item nav-item-child" data-page="scorecard" data-section="Strategy &amp; M&amp;E" data-title="Scorecard" onclick="navigate('scorecard')"><span class="nav-item-label">Scorecard</span></div>
+        <div class="nav-item nav-item-child" data-page="strategy-map" data-section="Strategy &amp; M&amp;E" data-title="Strategy Map" onclick="navigate('strategy-map')"><span class="nav-item-label">Strategy Map</span></div>
+        <div class="nav-item nav-item-child" data-page="schemes" data-section="Strategy &amp; M&amp;E" data-title="Scoring Schemes" onclick="navigate('schemes')"><span class="nav-item-label">Scoring Schemes</span></div>
+        <div class="nav-item nav-item-child" data-page="reports-hub" data-section="Strategy &amp; M&amp;E" data-title="Reporting Hub" onclick="navigate('reports-hub')"><span class="nav-item-label">Reporting Hub</span></div>
+        <div class="nav-item nav-item-child" data-page="documents" data-section="Strategy &amp; M&amp;E" data-title="Documents" onclick="navigate('documents')"><span class="nav-item-label">Documents</span></div>
+      </div>
+
+      <div class="nav-item nav-item-grouphead nav-item-top collapsible" id="pgvgrp-gov" onclick="toggleSidebarSection('pgvgrp-gov','pgvsec-gov',event)">
+        <span class="nav-item-main"><svg class="nav-item-icon nav-item-icon-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 21h16M6 18V10M10 18V10M14 18V10M18 18V10M3 10l9-6 9 6z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg><span class="nav-item-label">Governance &amp; Risk</span></span>
+        <button type="button" class="nav-grp-toggle" aria-expanded="true" aria-label="Toggle Governance and Risk section" onclick="toggleSidebarSection('pgvgrp-gov','pgvsec-gov',event)"><svg class="nav-grp-chevron" viewBox="0 0 10 10" fill="none"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+      <div class="nav-section" id="pgvsec-gov">
+        <div class="nav-item nav-item-child" data-page="meetings" data-section="Governance &amp; Risk" data-title="Meetings &amp; Resolutions" onclick="navigate('meetings')"><span class="nav-item-label">Meetings &amp; Resolutions</span></div>
+        <div class="nav-item nav-item-child" data-page="audit-findings" data-section="Governance &amp; Risk" data-title="Audit Findings" onclick="navigate('audit-findings')"><span class="nav-item-label">Audit Findings</span></div>
+        <div class="nav-item nav-item-child" data-page="risks" data-section="Governance &amp; Risk" data-title="Risk Register" onclick="navigate('risks')"><span class="nav-item-label">Risk Register</span></div>
+        <div class="nav-item nav-item-child" data-page="regulatory" data-section="Governance &amp; Risk" data-title="Regulatory" onclick="navigate('regulatory')"><span class="nav-item-label">Regulatory</span></div>
+        <div class="nav-item nav-item-child" data-page="people" data-section="Governance &amp; Risk" data-title="Contracts &amp; Appraisals" onclick="navigate('people')"><span class="nav-item-label">Contracts &amp; Appraisals</span></div>
+      </div>
+
+      <div class="nav-item nav-item-grouphead nav-item-top collapsible" id="pgvgrp-setup" onclick="toggleSidebarSection('pgvgrp-setup','pgvsec-setup',event)">
+        <span class="nav-item-main"><svg class="nav-item-icon nav-item-icon-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l8 4v5c0 4.4-3.4 8.5-8 9.5-4.6-1-8-5.1-8-9.5V7l8-4z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><span class="nav-item-label">Setup &amp; Assurance</span></span>
+        <button type="button" class="nav-grp-toggle" aria-expanded="true" aria-label="Toggle Setup section" onclick="toggleSidebarSection('pgvgrp-setup','pgvsec-setup',event)"><svg class="nav-grp-chevron" viewBox="0 0 10 10" fill="none"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+      <div class="nav-section" id="pgvsec-setup">
+        <div class="nav-item nav-item-child" data-page="periods" data-section="Setup &amp; Assurance" data-title="Reporting Periods" onclick="navigate('periods')"><span class="nav-item-label">Reporting Periods</span></div>
+        <div class="nav-item nav-item-child" data-page="access" data-section="Setup &amp; Assurance" data-title="Access &amp; Scope" data-mz-requires="admin" hidden onclick="navigate('access')"><span class="nav-item-label">Access &amp; Scope</span></div>
+        <div class="nav-item nav-item-child" data-page="audit-trail" data-section="Setup &amp; Assurance" data-title="Audit Trail" data-mz-requires="admin|function:auditor" hidden onclick="navigate('audit-trail')"><span class="nav-item-label">Audit Trail</span></div>
       </div>
 
     </div>
@@ -1056,11 +1048,11 @@
   <div id="db-main">
 
     <!-- Board View — Consolidated cross-department executive roll-up -->
-    <!-- Strategic Plan 2023-2028 Scorecard -->
+    <!-- Strategic Plan Scorecard -->
     <div id="page-strategic" class="db-page report-page-standard">
       <div class="pg-hdr">
         <div class="pg-hdr-left">
-          <div class="pg-title">Strategic Plan 2023–2028 Scorecard</div>
+          <div class="pg-title">__PLAN_TITLE__ Scorecard</div>
           <div class="pg-meta" id="pg-meta-strategic">FY — · KPI tracking against approved targets</div>
           <div class="pg-sub">Official __PLAN_TITLE__ KPIs vs annual targets · live actuals are computed from captured returns; operational and gap measures flag where a data feed is still needed</div>
         </div>
@@ -1105,6 +1097,27 @@
         <div id="pos-detail-body"></div>
       </div>
     </div>
+
+    <!-- Performance & Governance pages: rendered by mod-*.js into .mz-root -->
+    <div id="page-my-work" class="db-page"><main class="mz-root" id="mz-my-work" aria-label="My work"></main></div>
+    <div id="page-actions" class="db-page"><main class="mz-root" id="mz-actions" aria-label="Actions"></main></div>
+    <div id="page-periods" class="db-page"><main class="mz-root" id="mz-periods" aria-label="Reporting periods"></main></div>
+    <div id="page-access" class="db-page"><main class="mz-root" id="mz-access" aria-label="Access and scope"></main></div>
+    <div id="page-audit-trail" class="db-page"><main class="mz-root" id="mz-audit-trail" aria-label="Audit trail"></main></div>
+    <div id="page-strategy" class="db-page"><main class="mz-root" id="mz-strategy" aria-label="Plans and indicators"></main></div>
+    <div id="page-cycles" class="db-page"><main class="mz-root" id="mz-cycles" aria-label="Reporting cycles"></main></div>
+    <div id="page-updates" class="db-page"><main class="mz-root" id="mz-updates" aria-label="Progress updates"></main></div>
+    <div id="page-evaluations" class="db-page"><main class="mz-root" id="mz-evaluations" aria-label="Evaluations"></main></div>
+    <div id="page-scorecard" class="db-page"><main class="mz-root" id="mz-scorecard" aria-label="Scorecard"></main></div>
+    <div id="page-strategy-map" class="db-page"><main class="mz-root" id="mz-strategy-map" aria-label="Strategy map"></main></div>
+    <div id="page-schemes" class="db-page"><main class="mz-root" id="mz-schemes" aria-label="Scoring schemes"></main></div>
+    <div id="page-reports-hub" class="db-page"><main class="mz-root" id="mz-reports-hub" aria-label="Reporting hub"></main></div>
+    <div id="page-documents" class="db-page"><main class="mz-root" id="mz-documents" aria-label="Documents"></main></div>
+    <div id="page-meetings" class="db-page"><main class="mz-root" id="mz-meetings" aria-label="Meetings and resolutions"></main></div>
+    <div id="page-audit-findings" class="db-page"><main class="mz-root" id="mz-audit-findings" aria-label="Audit findings"></main></div>
+    <div id="page-risks" class="db-page"><main class="mz-root" id="mz-risks" aria-label="Risk register"></main></div>
+    <div id="page-regulatory" class="db-page"><main class="mz-root" id="mz-regulatory" aria-label="Regulatory"></main></div>
+    <div id="page-people" class="db-page"><main class="mz-root" id="mz-people" aria-label="Contracts and appraisals"></main></div>
 
     <div id="page-board" class="db-page">
       <div class="pg-hdr">
@@ -1611,7 +1624,7 @@
       <div class="pg-hdr"><div class="pg-hdr-left"><div class="pg-title">Production &amp; Non-Revenue Water</div><div class="pg-meta" id="pg-meta-production">FY — · All Zones · All Months</div><div class="pg-sub">Volume produced · revenue water · non-revenue water</div></div></div>
 
       <div class="ex-section">
-        <div class="ex-hdr"><span class="ex-dot" style="background:#1A8FD1"></span><span class="ex-title">Key Production Metrics</span><span class="ex-sub">— Volume, NRW rate and efficiency — IWA Op23/Op24</span></div>
+        <div class="ex-hdr"><span class="ex-dot" style="background:#0E7C7B"></span><span class="ex-title">Key Production Metrics</span><span class="ex-sub">— Volume, NRW rate and efficiency — IWA Op23/Op24</span></div>
         <div id="pr-kpis" class="kpi-row kpi-g4"></div>
       </div>
 
@@ -1665,7 +1678,7 @@
       </div>
 
       <div class="ex-section">
-        <div class="ex-hdr"><span class="ex-dot" style="background:#1A8FD1"></span><span class="ex-title">Monthly Cost Trends</span><span class="ex-sub">— Chemical and electricity spend over time</span></div>
+        <div class="ex-hdr"><span class="ex-dot" style="background:#0E7C7B"></span><span class="ex-title">Monthly Cost Trends</span><span class="ex-sub">— Chemical and electricity spend over time</span></div>
         <div class="chart-row">
           <div class="chart-card"><div class="chart-title">Chemical Cost — Monthly (__CURRENCY__)</div><div class="chart-subtitle">Monthly treatment chemical spend across the selected scope.</div><div class="ch-wrap" style="height:185px"><canvas id="ch-wt-chem"></canvas></div></div>
           <div class="chart-card"><div class="chart-title">Power Usage — Monthly (kWh)</div><div class="chart-subtitle">Electricity consumed for treatment and pumping operations.</div><div class="ch-wrap" style="height:185px"><canvas id="ch-wt-power"></canvas></div></div>
@@ -1698,7 +1711,7 @@
       <div class="pg-hdr"><div class="pg-hdr-left"><div class="pg-title">Customer Accounts</div><div class="pg-meta" id="pg-meta-customers">FY — · All Zones · All Months</div><div class="pg-sub">Active accounts · postpaid and prepaid by zone</div></div></div>
 
       <div class="ex-section">
-        <div class="ex-hdr"><span class="ex-dot" style="background:#1A8FD1"></span><span class="ex-title">Customer Base Metrics</span><span class="ex-sub">— Active accounts by segment and zone — IWA Cu1</span></div>
+        <div class="ex-hdr"><span class="ex-dot" style="background:#0E7C7B"></span><span class="ex-title">Customer Base Metrics</span><span class="ex-sub">— Active accounts by segment and zone — IWA Cu1</span></div>
         <div id="cu-kpis" class="kpi-row kpi-g4"></div>
       </div>
 
@@ -1757,7 +1770,7 @@
       </div>
 
       <div class="ex-section">
-        <div class="ex-hdr"><span class="ex-dot" style="background:#1A8FD1"></span><span class="ex-title">Applications & Delivery</span><span class="ex-sub">— Demand vs completions and zone distribution</span></div>
+        <div class="ex-hdr"><span class="ex-dot" style="background:#0E7C7B"></span><span class="ex-title">Applications & Delivery</span><span class="ex-sub">— Demand vs completions and zone distribution</span></div>
         <div class="chart-row">
           <div class="chart-card"><div class="chart-title">Applications vs Connections Completed</div><div class="chart-subtitle">Monthly comparison of new connection demand against completed installations.</div><div class="ch-wrap" style="height:185px"><canvas id="ch-cn-main"></canvas></div></div>
           <div class="chart-card"><div class="chart-title">New Connections by Zone</div><div class="chart-subtitle">Current-period distribution of completed connections by zone.</div><div class="ch-wrap" style="height:185px"><canvas id="ch-cn-zone"></canvas></div></div>
@@ -1886,7 +1899,7 @@
     <!-- Profitability / Income Statement -->
     <div id="page-profitability" class="db-page report-page-standard">
       <div class="pg-hdr"><div class="pg-hdr-left"><div class="pg-title">Profitability</div><div class="pg-meta" id="pg-meta-profitability">FY — · All Zones · All Months</div><div class="pg-sub">Revenue vs operating cost · operating surplus · cost ratio — the plan's turnaround goal</div></div></div>
-      <div id="prof-notice" style="margin:.5rem 0;padding:.6rem 1rem;border-radius:8px;font-size:.8rem;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.2);color:#1e40af">Operating surplus is computed from zone monthly returns (revenue less captured operating costs). It excludes depreciation, finance costs and head-office overheads, so it is an operating measure — not statutory net profit.</div>
+      <div id="prof-notice" style="margin:.5rem 0;padding:.6rem 1rem;border-radius:8px;font-size:.8rem;background:rgba(22,169,168,.07);border:1px solid rgba(22,169,168,.2);color:#142E49">Operating surplus is computed from zone monthly returns (revenue less captured operating costs). It excludes depreciation, finance costs and head-office overheads, so it is an operating measure — not statutory net profit.</div>
       <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#16A34A"></span><span class="ex-title">Operating Result Summary</span><span class="ex-sub">— Revenue, operating cost and surplus</span></div><div id="profitability-kpis" class="kpi-row kpi-g4"></div></div>
       <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#0EA5E9"></span><span class="ex-title">Revenue vs Cost Trend &amp; Zone</span><span class="ex-sub">— Monthly operating result and zone profitability</span></div>
         <div class="chart-row">
@@ -1948,7 +1961,7 @@
       </div>
 
       <div class="ex-section">
-        <div class="ex-hdr"><span class="ex-dot" style="background:#1A8FD1"></span><span class="ex-title">Lead Times & Conversion</span><span class="ex-sub">— Days to quote, days to connect and application delivery</span></div>
+        <div class="ex-hdr"><span class="ex-dot" style="background:#0E7C7B"></span><span class="ex-title">Lead Times & Conversion</span><span class="ex-sub">— Days to quote, days to connect and application delivery</span></div>
         <div class="chart-row">
           <div class="chart-card"><div class="chart-title">Days to Quotation & Days to Connect</div><div class="chart-subtitle">Average service lead times — useful for customer experience and process-efficiency oversight.</div><div class="ch-wrap" style="height:185px"><canvas id="ch-co-days"></canvas></div></div>
           <div class="chart-card"><div class="chart-title">Applications vs Completed Connections</div><div class="chart-subtitle">Demand vs completions — shows conversion performance and service delivery bottlenecks.</div><div class="ch-wrap" style="height:185px"><canvas id="ch-co-conn"></canvas></div></div>
@@ -2003,7 +2016,7 @@
       </div>
 
       <div class="ex-section">
-        <div class="ex-hdr"><span class="ex-dot" style="background:#1A8FD1"></span><span class="ex-title">Extension Activity</span><span class="ex-sub">— Pipe size composition and monthly installation trend</span></div>
+        <div class="ex-hdr"><span class="ex-dot" style="background:#0E7C7B"></span><span class="ex-title">Extension Activity</span><span class="ex-sub">— Pipe size composition and monthly installation trend</span></div>
         <div class="chart-row">
           <div class="chart-card"><div class="chart-title">Development Lines by Size Class (m)</div><div class="chart-subtitle">Installed pipeline length by diameter class, showing network extension composition.</div><div class="ch-wrap" style="height:185px"><canvas id="ch-pl-split"></canvas></div></div>
           <div class="chart-card"><div class="chart-title">Development Lines Installed — Monthly (m)</div><div class="chart-subtitle">Monthly extension activity in metres, supporting capital delivery monitoring.</div><div class="ch-wrap" style="height:185px"><canvas id="ch-pl-main"></canvas></div></div>
@@ -2022,7 +2035,7 @@
       <div class="pg-hdr"><div class="pg-hdr-left"><div class="pg-title">Billed Amounts</div><div class="pg-meta" id="pg-meta-billed">FY — · All Zones · All Months</div><div class="pg-sub">Postpaid and prepaid billing · by month and zone</div></div></div>
 
       <div class="ex-section">
-        <div class="ex-hdr"><span class="ex-dot" style="background:#1A8FD1"></span><span class="ex-title">Billing Summary</span><span class="ex-sub">— Total billed, segment split and revenue performance</span></div>
+        <div class="ex-hdr"><span class="ex-dot" style="background:#0E7C7B"></span><span class="ex-title">Billing Summary</span><span class="ex-sub">— Total billed, segment split and revenue performance</span></div>
         <div id="bi-kpis" class="kpi-row kpi-g3"></div>
       </div>
 
@@ -2058,7 +2071,7 @@
       </div>
 
       <div class="ex-section">
-        <div class="ex-hdr"><span class="ex-dot" style="background:#1A8FD1"></span><span class="ex-title">Billed vs Collected Trend</span><span class="ex-sub">— Monthly cash conversion performance</span></div>
+        <div class="ex-hdr"><span class="ex-dot" style="background:#0E7C7B"></span><span class="ex-title">Billed vs Collected Trend</span><span class="ex-sub">— Monthly cash conversion performance</span></div>
         <div class="chart-row">
           <div class="chart-card chart-full"><div class="chart-title">Billed vs Collected — Monthly (__CURRENCY__)</div><div class="chart-subtitle">Monthly billed revenue against cash collected, showing cash conversion over time.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-cl-main"></canvas></div></div>
         </div>
@@ -2089,7 +2102,7 @@
       </div>
 
       <div class="ex-section">
-        <div class="ex-hdr"><span class="ex-dot" style="background:#1A8FD1"></span><span class="ex-title">Monthly Charge Trend</span><span class="ex-sub">— Service charge vs meter rental over time</span></div>
+        <div class="ex-hdr"><span class="ex-dot" style="background:#0E7C7B"></span><span class="ex-title">Monthly Charge Trend</span><span class="ex-sub">— Service charge vs meter rental over time</span></div>
         <div class="chart-row">
           <div class="chart-card chart-full"><div class="chart-title">Service Charge vs Meter Rental — Monthly (__CURRENCY__)</div><div class="chart-subtitle">Monthly service charge and meter-rental income across the reporting period.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-ch-main"></canvas></div></div>
         </div>
@@ -2180,7 +2193,7 @@
       </div>
 
       <div class="ex-section">
-        <div class="ex-hdr"><span class="ex-dot" style="background:#1A8FD1"></span><span class="ex-title">Fuel and Movement Trend</span><span class="ex-sub">— Fuel consumed, fuel spend, and transport activity over time</span></div>
+        <div class="ex-hdr"><span class="ex-dot" style="background:#0E7C7B"></span><span class="ex-title">Fuel and Movement Trend</span><span class="ex-sub">— Fuel consumed, fuel spend, and transport activity over time</span></div>
         <div class="chart-row">
           <div class="chart-card"><div class="chart-title">Fuel Use vs Fuel Cost</div><div class="chart-subtitle">Whether fuel spend is rising in line with actual litres consumed.</div><div class="ch-wrap" style="height:185px"><canvas id="ch-wf-main"></canvas></div></div>
           <div class="chart-card"><div class="chart-title">Fleet Activity by Zone</div><div class="chart-subtitle">Distance covered and fuel used by zone.</div><div class="ch-wrap" style="height:185px"><canvas id="ch-wf-zone"></canvas></div></div>
@@ -2204,21 +2217,21 @@
     <div id="page-pipe-materials" class="db-page report-page-standard">
       <div class="pg-hdr"><div class="pg-hdr-left"><div class="pg-title">Pipe Failure by Material and Size</div><div class="pg-meta" id="pg-meta-pipe-materials">FY — · All Zones · All Months</div><div class="pg-sub">Engineering-level pipe failures by material family and size class</div></div></div>
       <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#DC2626"></span><span class="ex-title">Material Failure Summary</span><span class="ex-sub">- Pipe failures by material class and engineering detail</span></div><div id="pm-kpis" class="kpi-row kpi-g3"></div></div>
-      <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#1A8FD1"></span><span class="ex-title">Failure Trend and Size Exposure</span><span class="ex-sub">- Material trend over time and the largest size-level problem points</span></div><div class="chart-row"><div class="chart-card"><div class="chart-title">Pipe Failures by Material - Monthly</div><div class="chart-subtitle">Use this to see which material families are driving most failures over time.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-pm-main"></canvas></div></div><div class="chart-card"><div class="chart-title">Top Sizes by Failure Count</div><div class="chart-subtitle">The highest-count size classes show where detailed engineering review is most needed.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-pm-size"></canvas></div></div></div></div>
+      <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#0E7C7B"></span><span class="ex-title">Failure Trend and Size Exposure</span><span class="ex-sub">- Material trend over time and the largest size-level problem points</span></div><div class="chart-row"><div class="chart-card"><div class="chart-title">Pipe Failures by Material - Monthly</div><div class="chart-subtitle">Use this to see which material families are driving most failures over time.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-pm-main"></canvas></div></div><div class="chart-card"><div class="chart-title">Top Sizes by Failure Count</div><div class="chart-subtitle">The highest-count size classes show where detailed engineering review is most needed.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-pm-size"></canvas></div></div></div></div>
       <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#64748B"></span><span class="ex-title">Monthly Size Detail</span><span class="ex-sub">- Detailed table</span></div><div class="tbl-section"><div id="tbl-pipe-materials"></div></div></div>
     </div>
 
     <div id="page-segment-revenue" class="db-page report-page-standard">
       <div class="pg-hdr"><div class="pg-hdr-left"><div class="pg-title">Customer Segment Revenue</div><div class="pg-meta" id="pg-meta-segment-revenue">FY — · All Zones · All Months</div><div class="pg-sub">Revenue, cash, service charge, and meter rental by customer segment</div></div></div>
       <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#16A34A"></span><span class="ex-title">Segment Revenue Summary</span><span class="ex-sub">- What was billed, what was collected, and where secondary revenue comes from</span></div><div id="sr-kpis" class="kpi-row kpi-g3"></div></div>
-      <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#1A8FD1"></span><span class="ex-title">Segment Billing and Collections</span><span class="ex-sub">- Monthly segment mix, cash conversion, and zone concentration</span></div><div class="chart-row"><div class="chart-card"><div class="chart-title">Billed Revenue by Segment</div><div class="chart-subtitle">This shows which customer segments are driving billed revenue each month.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-sr-main"></canvas></div></div><div class="chart-card"><div class="chart-title">Cash Collected by Segment</div><div class="chart-subtitle">Use this to compare whether cash is keeping pace with billed demand by segment.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-sr-cash"></canvas></div></div></div><div class="chart-row" style="margin-top:14px"><div class="chart-card chart-full"><div class="chart-title">Billed vs Collected by Zone</div><div class="chart-subtitle">Zone-level comparison of billed demand against cash realized.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-sr-zone"></canvas></div></div></div></div>
+      <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#0E7C7B"></span><span class="ex-title">Segment Billing and Collections</span><span class="ex-sub">- Monthly segment mix, cash conversion, and zone concentration</span></div><div class="chart-row"><div class="chart-card"><div class="chart-title">Billed Revenue by Segment</div><div class="chart-subtitle">This shows which customer segments are driving billed revenue each month.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-sr-main"></canvas></div></div><div class="chart-card"><div class="chart-title">Cash Collected by Segment</div><div class="chart-subtitle">Use this to compare whether cash is keeping pace with billed demand by segment.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-sr-cash"></canvas></div></div></div><div class="chart-row" style="margin-top:14px"><div class="chart-card chart-full"><div class="chart-title">Billed vs Collected by Zone</div><div class="chart-subtitle">Zone-level comparison of billed demand against cash realized.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-sr-zone"></canvas></div></div></div></div>
       <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#64748B"></span><span class="ex-title">Monthly Scheme Detail</span><span class="ex-sub">- Detailed table</span></div><div class="tbl-section"><div id="tbl-segment-revenue"></div></div></div>
     </div>
 
     <div id="page-class-connections" class="db-page report-page-standard">
       <div class="pg-hdr"><div class="pg-hdr-left"><div class="pg-title">Connection Pipeline by Customer Class</div><div class="pg-meta" id="pg-meta-class-connections">FY — · All Zones · All Months</div><div class="pg-sub">Backlog, applications, completions, and carried-forward pipeline by customer class</div></div></div>
       <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#0D9488"></span><span class="ex-title">Connection Pipeline Summary</span><span class="ex-sub">- Which customer classes are moving, and which are carrying backlog</span></div><div id="cc-kpis" class="kpi-row kpi-g3"></div></div>
-      <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#1A8FD1"></span><span class="ex-title">Class Completion Trend</span><span class="ex-sub">- Monthly completions by class and zone-level concentration</span></div><div class="chart-row"><div class="chart-card"><div class="chart-title">Completed Connections by Class - Monthly</div><div class="chart-subtitle">This shows which classes are being delivered consistently over time.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-cc-main"></canvas></div></div><div class="chart-card"><div class="chart-title">Completed Connections by Zone</div><div class="chart-subtitle">Use this to see where class-level connection work is concentrated.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-cc-zone"></canvas></div></div></div></div>
+      <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#0E7C7B"></span><span class="ex-title">Class Completion Trend</span><span class="ex-sub">- Monthly completions by class and zone-level concentration</span></div><div class="chart-row"><div class="chart-card"><div class="chart-title">Completed Connections by Class - Monthly</div><div class="chart-subtitle">This shows which classes are being delivered consistently over time.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-cc-main"></canvas></div></div><div class="chart-card"><div class="chart-title">Completed Connections by Zone</div><div class="chart-subtitle">Use this to see where class-level connection work is concentrated.</div><div class="ch-wrap" style="height:200px"><canvas id="ch-cc-zone"></canvas></div></div></div></div>
       <div class="ex-section"><div class="ex-hdr"><span class="ex-dot" style="background:#64748B"></span><span class="ex-title">Monthly Class Detail</span><span class="ex-sub">- Detailed table</span></div><div class="tbl-section"><div id="tbl-class-connections"></div></div></div>
     </div>
 
@@ -2228,7 +2241,7 @@
       <!-- Page Header -->
       <div class="pg-hdr">
         <div class="pg-hdr-left">
-          <div class="pg-title">Annual Budget 2025/26</div>
+          <div class="pg-title" id="pg-title-budget">Annual Budget</div>
           <div class="pg-meta" id="pg-meta-budget">Loading…</div>
           <div class="pg-sub">Budget execution, operational variance, and segment performance presented in a board-ready monitoring format.</div>
         </div>
@@ -2238,11 +2251,11 @@
       <div class="bgt-framework-box" role="note" aria-label="Budget methodology and scope">
         <div class="bgt-framework-title">How to read this page</div>
         <div class="bgt-framework-copy">
-          This page compares results with the <strong>approved board budget dated 22 Feb 2025</strong>. Zone budgets are used for comparison only, and costs cover operating-site data in the database, not head-office overheads, depreciation, or finance costs. Revenue uses a fixed tariff of <strong>MK 1,450/m³</strong>. The budget score is <strong>Actual ÷ Budget</strong>; above 1.0 means ahead of budget.
+          This page compares results with the <strong>approved budget</strong> loaded for the selected fiscal year. Zone budgets are used for comparison only, and costs cover operating-site data in the database, not head-office overheads, depreciation, or finance costs. Revenue uses the fiscal-year tariff per m³ (Admin → Fiscal Years). The budget score is <strong>Actual ÷ Budget</strong>; above 1.0 means ahead of budget.
         </div>
       </div>
       <div class="bgt-chip-row" aria-label="Budget assumptions and scope highlights">
-        <span class="bgt-chip bgt-chip-blue">Approved budget basis · 22 Feb 2025</span>
+        <span class="bgt-chip bgt-chip-blue">Approved budget basis</span>
         <span class="bgt-chip bgt-chip-indigo">Zone budgets · IPSAS 18 proportional allocation</span>
         <span class="bgt-chip bgt-chip-amber">Costs shown · field operations only</span>
         <span class="bgt-chip bgt-chip-slate">Control method · ISO 7870-2 SPC</span>
@@ -2255,9 +2268,9 @@
       <!-- §2 Revenue Performance ───────────────────────────────────── -->
       <div class="ex-section">
         <div class="ex-hdr">
-          <span class="ex-dot" style="background:#1A8FD1"></span>
+          <span class="ex-dot" style="background:#0E7C7B"></span>
           <span class="ex-title">Revenue Performance</span>
-          <span class="ex-sub">IWA Fi1 · Fixed tariff MK 1,450/m³ · All revenue variance = volume effect</span>
+          <span class="ex-sub">IWA Fi1 · Fiscal-year tariff per m³ · All revenue variance = volume effect</span>
         </div>
         <div id="bgt-rev-table"></div>
 
@@ -2346,7 +2359,7 @@
           <span class="ex-sub">IWA Op34 (chemicals) · Ee1 (energy) · Field scope only — see note</span>
         </div>
         <div class="bgt-scope-warn">
-          <strong>Field scope:</strong> DB captures scheme-level costs only. Corporate MK 9.38B Plant/Vehicle OpEx includes MK 3.54B bottled water production (not yet operational). Comparable field OpEx budget = MK 5.84B. Chemical and power budget estimates use 2023/24 ratios applied to the approved line items.
+          <strong>Field scope:</strong> the database captures scheme-level costs only, so corporate budget lines with no operating-site data are excluded from the comparison. Chemical and power budget estimates apply recent cost ratios to the approved line items.
         </div>
         <div id="bgt-cost-table"></div>
         <div class="chart-row chart-row-budget-split" style="margin-top:14px">
@@ -2393,7 +2406,7 @@
       <!-- §6b Zone Performance League Table -->
       <div class="ex-section">
         <div class="ex-hdr">
-          <span class="ex-dot" style="background:#1A8FD1"></span>
+          <span class="ex-dot" style="background:#0E7C7B"></span>
           <span class="ex-title">Zone Performance Scorecard</span>
           <span class="ex-sub">5 zones · Composite Performance Score · IWA-aligned dimensions · ranked by overall score</span>
         </div>
@@ -3098,7 +3111,7 @@
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
                   <div>
                     <label style="font-size:11px;font-weight:600;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em">Full Legal Name</label>
-                    <input type="text" id="org-name" class="adm-input" style="margin-top:4px;width:100%" placeholder="e.g. Lakeside Water Utility">
+                    <input type="text" id="org-name" class="adm-input" style="margin-top:4px;width:100%" placeholder="e.g. City Water Utility">
                   </div>
                   <div>
                     <label style="font-size:11px;font-weight:600;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em">Acronym / Short Name</label>
@@ -3110,7 +3123,7 @@
                   </div>
                   <div>
                     <label style="font-size:11px;font-weight:600;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em">Regulatory Body</label>
-                    <input type="text" id="org-regulator" class="adm-input" style="margin-top:4px;width:100%" placeholder="e.g. NWRA, MERA">
+                    <input type="text" id="org-regulator" class="adm-input" style="margin-top:4px;width:100%" placeholder="e.g. National Water Regulator">
                   </div>
                   <div>
                     <label style="font-size:11px;font-weight:600;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em">Country</label>
@@ -3136,7 +3149,7 @@
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
                   <div>
                     <label style="font-size:11px;font-weight:600;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em">Email</label>
-                    <input type="email" id="org-email" class="adm-input" style="margin-top:4px;width:100%" placeholder="admin@srwb.mw">
+                    <input type="email" id="org-email" class="adm-input" style="margin-top:4px;width:100%" placeholder="admin@example-utility.org">
                   </div>
                   <div>
                     <label style="font-size:11px;font-weight:600;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em">Phone</label>
@@ -3144,7 +3157,7 @@
                   </div>
                   <div style="grid-column:1/-1">
                     <label style="font-size:11px;font-weight:600;color:var(--ds-text-muted);text-transform:uppercase;letter-spacing:.07em">Website</label>
-                    <input type="url" id="org-website" class="adm-input" style="margin-top:4px;width:100%" placeholder="https://srwb.mw">
+                    <input type="url" id="org-website" class="adm-input" style="margin-top:4px;width:100%" placeholder="https://example-utility.org">
                   </div>
                 </div>
                 <div id="org-profile-msg" style="display:none;font-size:12px;padding:8px 12px;border-radius:8px"></div>
@@ -3232,7 +3245,7 @@
                     <div class="adm-field"><label class="adm-label" for="ih-map-ext">Source key</label>
                       <input class="adm-input" id="ih-map-ext" placeholder="e.g. CC-1001"></div>
                     <div class="adm-field"><label class="adm-label" for="ih-map-int">MadziHub code</label>
-                      <input class="adm-input" id="ih-map-int" placeholder="e.g. north.zomba"></div>
+                      <input class="adm-input" id="ih-map-int" placeholder="e.g. north.central-works"></div>
                     <button class="adm-btn-secondary" onclick="ihSaveMapping()">Add mapping</button>
                   </div>
                 </div>
@@ -3375,7 +3388,7 @@
             <div class="adm-section-hdr" style="margin-top:2rem">
               <div>
                 <div class="adm-section-title" style="font-size:1rem">Register a New Fiscal Year</div>
-                <div class="adm-section-sub">Create the DB entry for a future FY. The zone data folder <code style="font-size:11px;background:var(--ds-border);padding:1px 4px;border-radius:3px">dataupdater/FY<em>XXYY</em>/</code> must be created separately with the five zone workbooks before running the build step.</div>
+                <div class="adm-section-sub">Create the database entry for a future fiscal year, then load its budget and monthly data.</div>
               </div>
             </div>
             <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;padding:.75rem 0;border-top:1px solid var(--border)">
@@ -3472,12 +3485,20 @@
   </div>
 
   </div><!-- /db-right-col -->
-</div><!-- /srwb-app -->
+</div><!-- /madzi-app -->
 </div><!-- /app-view -->
 
-<script src="/static/assets/js/app-core.js?v=20260924-3"></script>
-<script src="/static/assets/js/department-tabs.js?v=20260613-1"></script>
+<script src="/static/assets/js/app-core.js?v=20260925-1"></script>
+<script src="/static/assets/js/department-tabs.js?v=20260925-1"></script>
 <script src="/static/assets/js/integration-hub.js?v=20260924-3"></script>
+<script src="/static/assets/js/mod-platform.js?v=20260925-3"></script>
+<script src="/static/assets/js/mod-strategy.js?v=20260925-2"></script>
+<script src="/static/assets/js/mod-scorecard.js?v=20260925-2"></script>
+<script src="/static/assets/js/mod-reports.js?v=20260925-1"></script>
+<script src="/static/assets/js/mod-documents.js?v=20260925-1"></script>
+<script src="/static/assets/js/mod-governance.js?v=20260925-1"></script>
+<script src="/static/assets/js/mod-regulatory.js?v=20260925-1"></script>
+<script src="/static/assets/js/mod-people.js?v=20260925-1"></script>
 
 <!-- ══ ATTRIBUTION FOOTER ════════════════════════════════════════════════ -->
 <div id="attr-footer">

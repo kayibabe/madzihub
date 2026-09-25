@@ -34,6 +34,10 @@ def validate_bundle(zip_path: Path) -> int:
             failures.append('Bundle missing .env.example')
         if not any(name.endswith('app/main.py') for name in names):
             failures.append('Bundle missing app/main.py')
+        for required in ('alembic.ini', 'app/migrations/env.py', 'app/migrations/baseline_0001.json',
+                         'app/migrations/versions/0001_baseline_schema.py'):
+            if not any(name.replace('\\', '/').endswith(required) for name in names):
+                failures.append(f'Bundle missing {required} (database migrations)')
         failures.extend(_vendor_failures(zf, names))
 
     if failures:

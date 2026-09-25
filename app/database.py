@@ -7,8 +7,8 @@ database.py — Full schema matching RawData.xlsx DataEntry sheet (222 cols),
 import os
 from datetime import datetime
 from sqlalchemy import (
-    create_engine, Column, Integer, Float, Numeric, String,
-    Boolean, DateTime, Index, UniqueConstraint, inspect, text, ForeignKey,
+    create_engine, event, Column, Integer, Float, Numeric, String,
+    Boolean, DateTime, Index, UniqueConstraint, ForeignKey,
 )
 from sqlalchemy.orm import declarative_base, sessionmaker
 
@@ -23,6 +23,19 @@ if DATABASE_URL.startswith("sqlite"):
     _engine_kwargs["connect_args"] = {"check_same_thread": False}
 
 engine = create_engine(DATABASE_URL, **_engine_kwargs)
+
+if engine.dialect.name == "sqlite":
+    @event.listens_for(engine, "connect")
+    def _sqlite_foreign_keys(dbapi_conn, _record):
+        """Enforce foreign keys (a per-connection setting; nothing is written to the file).
+
+        WAL journaling is persistent in the file, so app.migrate switches it on once the
+        schema is accepted, keeping `migrate status` and refused adoptions read-only.
+        """
+        cur = dbapi_conn.cursor()
+        cur.execute("PRAGMA foreign_keys=ON")
+        cur.close()
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -492,21 +505,17 @@ def get_db():
         db.close()
 
 def create_tables():
-    from app.integration import models as integration_models  # registers integration tables on Base
-    Base.metadata.create_all(bind=engine)
-    _ensure_record_columns()
-    _ensure_table_columns(UploadLog)
-    _ensure_table_columns(ActivityLog)
-    _ensure_table_columns(OrgProfile)
-    _ensure_table_columns(User)
-    _ensure_table_columns(integration_models.Metric)
+    """Build an empty database, or confirm an existing one is at the latest revision.
 
-def recreate_tables():
-    Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
+    Schema changes are Alembic revisions (app/migrations). An existing database is
+    never changed here: app.migrate.SchemaNotReady names the command to run.
+    """
+    from app.migrate import ensure_schema
+    ensure_schema()
 
 
 def _default_sql(column):
+    """SQL DEFAULT clause for adding `column` to an existing table (used by app.migrate adopt)."""
     default = getattr(column.default, "arg", None)
     if default is None or callable(default):
         return ""
@@ -517,40 +526,5 @@ def _default_sql(column):
         return f" DEFAULT {'TRUE' if default else 'FALSE'}"
     return f" DEFAULT {default}"
 
-
-def _ensure_table_columns(model):
-    """Add any columns present in `model` that are missing from the live DB table."""
-    table_name = model.__tablename__
-    inspector = inspect(engine)
-    if table_name not in inspector.get_table_names():
-        return
-    existing = {col["name"] for col in inspector.get_columns(table_name)}
-    with engine.begin() as conn:
-        for column in model.__table__.columns:
-            if column.name in existing or column.primary_key:
-                continue
-            col_type = column.type.compile(dialect=engine.dialect)
-            nullable = "" if column.nullable else " NOT NULL"
-            default_sql = _default_sql(column)
-            conn.execute(text(
-                f"ALTER TABLE {table_name} ADD COLUMN {column.name} {col_type}{nullable}{default_sql}"
-            ))
-
-
-def _ensure_record_columns():
-    inspector = inspect(engine)
-    if "records" not in inspector.get_table_names():
-        return
-    existing = {col["name"] for col in inspector.get_columns("records")}
-    with engine.begin() as conn:
-        for column in Record.__table__.columns:
-            if column.name in existing or column.primary_key:
-                continue
-            col_type = column.type.compile(dialect=engine.dialect)
-            nullable = "" if column.nullable else " NOT NULL"
-            default_sql = _default_sql(column)
-            conn.execute(text(
-                f"ALTER TABLE records ADD COLUMN {column.name} {col_type}{nullable}{default_sql}"
-            ))
 
 # ── Multi-FY support tables ────────────────────────────────────────────────

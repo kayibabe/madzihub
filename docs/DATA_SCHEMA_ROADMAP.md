@@ -1,4 +1,4 @@
-# SRWB Dashboard — New-Data Schema & Migration Plan
+# MadziHub — New-Data Schema & Migration Plan
 
 Scaffolding plan to light up the four placeholder areas that currently lack
 underlying data:
@@ -17,19 +17,14 @@ underlying data:
 ## 0. How migrations work in this app (important)
 
 - **ORM:** SQLAlchemy, `Base = declarative_base()` in `app/database.py`.
-- **No Alembic.** Schema is applied at startup by `create_tables()`:
-  - `Base.metadata.create_all(bind=engine)` → **creates any new table** automatically.
-  - `_ensure_record_columns()` → inspects the `records` table and **auto-adds any
-    missing columns** via `ALTER TABLE ... ADD COLUMN` (SQLite-safe, idempotent).
-- **Implication for this plan:**
-  - New **tables** (HR, assets, maintenance, capital projects) → appear automatically on next restart. Zero migration risk.
-  - New **columns on `records`** (water quality) → auto-added by the existing
-    `_ensure_record_columns()` helper. Zero migration risk.
-  - The only generalisation needed: `_ensure_record_columns()` is hard-coded to
-    the `records` table. If we later add columns to *other* existing tables we
-    should rename it to a generic `_ensure_columns(model)` — not needed for this plan.
-- **Backwards compatible:** every new column/table is nullable or defaults to 0,
-  so existing queries and the current dataset are unaffected.
+- **Alembic** (`app/migrations/`, baseline revision `0001`). Every schema change is a
+  new revision: edit the model, then `python -m alembic revision --autogenerate -m "..."`,
+  review the generated file, and add a test. Startup builds an empty database but never
+  changes an existing one; operators apply revisions with `python -m app.migrate upgrade`
+  (see [DEPLOYMENT_RUNBOOK.md](DEPLOYMENT_RUNBOOK.md#database-migrations)).
+- **Implication for this plan:** new tables and new `records` columns each need a
+  revision. Keep additions nullable or zero-default so existing queries and data are
+  unaffected, and so SQLite can add them without rebuilding the table.
 
 ---
 
@@ -77,7 +72,7 @@ in `services/governance.py`) to read these columns instead of proxies; add a
 `/api/panels/water-quality` panel if a dedicated page is wanted.
 
 **Data entry:** add a `WaterQuality` block to the monthly RawData workbook
-(columns above) → flows through the existing upload pipeline → `_ensure_record_columns`.
+(columns above) → flows through the existing upload pipeline; the columns arrive by an Alembic revision.
 
 ---
 
@@ -244,7 +239,7 @@ currently loaded**, so every trend / YoY / SPC feature renders empty.
 1. Confirm the `fiscal_years` row exists (status `historical`). Seeded already; verify via `GET /api/catalogue/fiscal-years`.
 2. Import that year's `RawData.xlsx` through the existing pipeline:
    - UI: **Administration → Upload Data** (admin), or
-   - CLI: `python scripts/import_data.py --excel uploads/RawData_FY2024-25.xlsx --sheet DataEntry`
+   - UI: **Administration → Upload** (validate, then confirm the import)
    - Rows land in `records` with the correct `year`/`month_no`.
 3. (Optional, per FY) compute comparators via existing admin endpoints:
    - `POST /api/fiscal-years/{year}/budget`, `/zone-shares`, `/spc`.
@@ -272,8 +267,8 @@ last 2–3 years for immediate YoY value.
 4. **Capital projects** — does Finance already track these in a system we can import, or manual entry?
 5. **Data entry** — extend the monthly RawData workbook with new sheets (Water Quality, HR), plus standalone Assets & Capital-Projects registers maintained via an admin screen.
 
-**Migration safety:** all additions are nullable/zero-default and applied
-idempotently at startup (`create_all` + `_ensure_record_columns`). No existing
+**Migration safety:** all additions are nullable/zero-default and applied as
+Alembic revisions by `python -m app.migrate upgrade` (backup first). No existing
 query, the current FY2025/26 dataset, or the live pages are affected until data
 is entered. Placeholder pages already exist and will simply swap their
 "awaiting data feed" panel for live content once each feed is populated.

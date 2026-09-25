@@ -13,6 +13,11 @@ from tests._app_loader import TemporaryDirectory, fresh_app
 from tests.fixtures.synthetic_dataset import build_records
 
 DEMO_ZONES = {"North": ["Lakeview", "Hillside"], "Central": ["Market"], "South": ["Riverside"]}
+# Test-only April-start tenant with a non-USD currency (tests/fixtures/tenants/riverbend).
+RIVERBEND = str(Path(__file__).parent / "fixtures" / "tenants" / "riverbend" / "tenant.yaml")
+# Names from the utility MadziHub started as; none may reach a rendered page.
+LEGACY_NAMES = ("SRWB", "srwb", "MWK", "'MK ", "Liwonde", "Mangochi", "Mulanje", "Ngabu",
+                "Zomba", "Southern Region", "Malawi")
 
 
 def _boot(tmpdir: str, tenant: str):
@@ -75,7 +80,8 @@ class FiscalCalendarTests(unittest.TestCase):
 
 
 PLACEHOLDERS = ("__ORG_NAME_COUNTRY__", "__ORG_COUNTRY__", "__ZONE_COUNT__", "__ZONE_PLURAL__", "__ORG_SHORT__", "__CURRENCY__", "__CUR_SYM__", "__NRW_TARGET__",
-                "__FY_MONTHS__", "__ZONE_COLORS__", "__PRODUCT_TITLE__", "__ORG_NAME__", "__PLAN_TITLE__")
+                "__FY_MONTHS__", "__ZONE_COLORS__", "__PRODUCT_TITLE__", "__TAGLINE__", "__BRAND_MODE__", "__ORG_LINE__", "__PRINT_LOGO__",
+                "__ORG_NAME__", "__PLAN_TITLE__")
 
 
 def _assert_valid_js(test: unittest.TestCase, js: str):
@@ -105,26 +111,54 @@ class RenderedAssetTests(unittest.TestCase):
                 self.assertEqual(again.status_code, 304)
                 return r.text
 
-    def test_srwb_js_keeps_reference_values(self):
-        js = self._render("srwb")
+    def test_april_tenant_js_uses_its_values(self):
+        js = self._render(RIVERBEND)
         for p in PLACEHOLDERS:
             self.assertNotIn(p, js)
         self.assertIn("nrw:27,", js)
-        self.assertIn("'SRWB <27%'", js)
-        self.assertIn("'MK '", js)
+        self.assertIn("'RWS <27%'", js)
+        self.assertIn("'\\u20ac '", js)  # symbol is JSON-escaped into the JS literal
         self.assertIn('const ALL_FY_MONTHS=["April",', js)
+        self.assertIn('"East": "#1d4ed8"', js)
         _assert_valid_js(self, js)
 
     def test_demo_js_uses_demo_values(self):
         js = self._render("demo")
         for p in PLACEHOLDERS:
             self.assertNotIn(p, js)
-        for legacy in ("SRWB", "MWK", "'MK ", "Liwonde", "Southern Region", "Malawi"):
+        for legacy in LEGACY_NAMES:
             self.assertNotIn(legacy, js)
         self.assertIn("nrw:25,", js)
         self.assertIn('const ALL_FY_MONTHS=["July",', js)
         self.assertIn('"North": "#0f766e"', js)
+        # The USD "$" symbol survives, escaped so it can never open a ${...} substitution.
+        self.assertIn("'\\u0024 '", js)
         _assert_valid_js(self, js)
+
+    def test_tenant_logo_switches_to_tenant_branding(self):
+        import shutil
+        import yaml
+        with TemporaryDirectory() as d:
+            folder = Path(d) / "acme"
+            folder.mkdir()
+            cfg = yaml.safe_load(Path(RIVERBEND).read_text(encoding="utf-8"))
+            cfg["branding"]["logo"] = "logo.svg"
+            (folder / "tenant.yaml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
+            shutil.copy(Path(__file__).parents[1] / "app/static/brand/madzihub-mark.svg", folder / "logo.svg")
+            main, *_ = _boot(d, str(folder / "tenant.yaml"))
+            with TestClient(main.app) as c:
+                html = c.get("/").text
+                self.assertIn('data-brand="tenant"', html)
+                self.assertIn('src="/api/config/logo"', c.get("/static/assets/js/app-core.js").text)
+
+    def test_js_text_keeps_dollar_but_blocks_injection(self):
+        with TemporaryDirectory() as d:
+            main, *_ = _boot(d, "demo")
+        self.assertEqual(main._js_text("$"), "\\u0024")
+        self.assertEqual(main._js_text("US$"), "US\\u0024")
+        hostile = main._js_text("${alert(1)}`'\"<b>\\")
+        for bad in ("${", "`", "'", '"', "<", ">", "\\\\"):
+            self.assertNotIn(bad, hostile)
 
 
 class DemoTenantTests(unittest.TestCase):
@@ -143,7 +177,7 @@ class DemoTenantTests(unittest.TestCase):
                 h = {"Authorization": f"Bearer {auth.create_access_token('u', 'admin')}"}
 
                 pub = c.get("/api/config/public").json()
-                self.assertEqual(pub["short_name"], "LWU")
+                self.assertEqual(pub["short_name"], "MadziHub")
                 self.assertNotIn("identity", pub)
                 self.assertEqual(c.get("/api/config").status_code, 401)
 
@@ -170,7 +204,13 @@ class DemoTenantTests(unittest.TestCase):
                 for url in sorted(brand):
                     self.assertEqual(c.get(url).status_code, 200, url)
                 self.assertEqual(c.get("/favicon.ico").status_code, 200)
-                self.assertIn("<title>Lakeside Performance Hub</title>", html)
+                self.assertIn("<title>MadziHub</title>", html)
+                self.assertIn("Every drop, accounted for.", html)
+                self.assertNotIn("Performance Hub", html)
+                # No tenant logo: the full MadziHub lockup is the brand, and printed reports use it too.
+                self.assertIn('data-brand="product"', html)
+                self.assertIn("/static/brand/madzihub-logo-light.svg", html)
+                self.assertIn("/static/brand/madzihub-logo-light.svg", c.get("/static/assets/js/app-core.js").text)
                 self.assertNotIn("SRWB", html)
                 self.assertNotIn("Southern Region", html)
                 self.assertIn("3 Regions", html)
@@ -195,18 +235,50 @@ class DemoTenantTests(unittest.TestCase):
 
     def test_org_profile_overrides_yaml_identity(self):
         with TemporaryDirectory() as d:
-            main, database, _, _ = _boot(d, "srwb")
+            main, database, _, _ = _boot(d, RIVERBEND)
             with TestClient(main.app) as c:
-                self.assertEqual(c.get("/api/config/public").json()["short_name"], "SRWB")
+                self.assertEqual(c.get("/api/config/public").json()["short_name"], "RWS")
                 db = database.SessionLocal()
-                db.add(database.OrgProfile(id=1, short_name="SRWB-X"))
+                db.add(database.OrgProfile(id=1, short_name="RWS-X"))
                 db.commit()
                 prof = db.query(database.OrgProfile).first()
-                self.assertEqual(prof.org_name, "Southern Region Water Board")  # tenant default
-                self.assertEqual(prof.reporting_currency, "MWK")
+                self.assertEqual(prof.org_name, "Riverbend Water Services")  # tenant default
+                self.assertEqual(prof.reporting_currency, "EUR")
                 db.close()
-                self.assertEqual(c.get("/api/config/public").json()["short_name"], "SRWB-X")
-                self.assertIn('alt="SRWB-X"', c.get("/").text)
+                self.assertEqual(c.get("/api/config/public").json()["short_name"], "RWS-X")
+                self.assertIn('alt="RWS-X"', c.get("/").text)
+
+
+class NoLegacyBrandingTests(unittest.TestCase):
+    """The template ships with no trace of the utility it started as."""
+
+    @staticmethod
+    def _fresh_config():
+        # Settings reads the environment at import time, so import it anew.
+        for name in list(sys.modules):
+            if name == "app" or name.startswith("app."):
+                del sys.modules[name]
+        return importlib.import_module("app.core.config")
+
+    def test_default_tenant_is_demo(self):
+        saved = os.environ.pop("MADZI_TENANT", None)
+        try:
+            self.assertEqual(self._fresh_config().settings.tenant, "demo")
+        finally:
+            if saved is not None:
+                os.environ["MADZI_TENANT"] = saved
+
+    def test_served_pages_and_assets_carry_no_legacy_names(self):
+        with TemporaryDirectory() as d:
+            main, *_ = _boot(d, "demo")
+            with TestClient(main.app) as c:
+                html = c.get("/").text
+                assets = set(re.findall(r'"(/static/assets/[^"?]+\.(?:js|css))(?:\?[^"]*)?"', html))
+                self.assertIn("/static/assets/js/app-core.js", assets)
+                for url, text in [("/", html)] + [(u, c.get(u).text) for u in sorted(assets)]:
+                    for legacy in LEGACY_NAMES:
+                        self.assertNotIn(legacy, text, f"{legacy!r} in {url}")
+        os.environ.pop("MADZI_TENANT", None)
 
 
 if __name__ == "__main__":

@@ -5,24 +5,6 @@
     "amt_billed": 0,
     "cash_collected": 0,
     "collection_rate": 0,
-    "month": "April"
-   },
-   {
-    "amt_billed": 0,
-    "cash_collected": 0,
-    "collection_rate": 0,
-    "month": "May"
-   },
-   {
-    "amt_billed": 0,
-    "cash_collected": 0,
-    "collection_rate": 0,
-    "month": "June"
-   },
-   {
-    "amt_billed": 0,
-    "cash_collected": 0,
-    "collection_rate": 0,
     "month": "July"
    },
    {
@@ -72,6 +54,24 @@
     "cash_collected": 0,
     "collection_rate": 0,
     "month": "March"
+   },
+   {
+    "amt_billed": 0,
+    "cash_collected": 0,
+    "collection_rate": 0,
+    "month": "April"
+   },
+   {
+    "amt_billed": 0,
+    "cash_collected": 0,
+    "collection_rate": 0,
+    "month": "May"
+   },
+   {
+    "amt_billed": 0,
+    "cash_collected": 0,
+    "collection_rate": 0,
+    "month": "June"
    }
   ],
   "budget_variance": {},
@@ -80,46 +80,28 @@
     "amt_billed": 0,
     "cash_collected": 0,
     "collection_rate": 0,
-    "color": "#0077b6",
+    "color": "#0369a1",
     "op_cost": 0,
     "total_debtors": 0,
-    "zone": "Liwonde"
+    "zone": "Central"
    },
    {
     "amt_billed": 0,
     "cash_collected": 0,
     "collection_rate": 0,
-    "color": "#0d9488",
+    "color": "#0f766e",
     "op_cost": 0,
     "total_debtors": 0,
-    "zone": "Mangochi"
+    "zone": "North"
    },
    {
     "amt_billed": 0,
     "cash_collected": 0,
     "collection_rate": 0,
-    "color": "#16a34a",
+    "color": "#b45309",
     "op_cost": 0,
     "total_debtors": 0,
-    "zone": "Mulanje"
-   },
-   {
-    "amt_billed": 0,
-    "cash_collected": 0,
-    "collection_rate": 0,
-    "color": "#d97706",
-    "op_cost": 0,
-    "total_debtors": 0,
-    "zone": "Ngabu"
-   },
-   {
-    "amt_billed": 0,
-    "cash_collected": 0,
-    "collection_rate": 0,
-    "color": "#7c3aed",
-    "op_cost": 0,
-    "total_debtors": 0,
-    "zone": "Zomba"
+    "zone": "South"
    }
   ],
   "cost_breakdown": {
@@ -134,44 +116,28 @@
   },
   "debtors_by_zone": [
    {
-    "color": "#0077b6",
+    "color": "#0369a1",
     "debtors_to_billed_pct": 0,
     "private_debtors": 0,
     "public_debtors": 0,
     "total_debtors": 0,
-    "zone": "Liwonde"
+    "zone": "Central"
    },
    {
-    "color": "#0d9488",
+    "color": "#0f766e",
     "debtors_to_billed_pct": 0,
     "private_debtors": 0,
     "public_debtors": 0,
     "total_debtors": 0,
-    "zone": "Mangochi"
+    "zone": "North"
    },
    {
-    "color": "#16a34a",
+    "color": "#b45309",
     "debtors_to_billed_pct": 0,
     "private_debtors": 0,
     "public_debtors": 0,
     "total_debtors": 0,
-    "zone": "Mulanje"
-   },
-   {
-    "color": "#d97706",
-    "debtors_to_billed_pct": 0,
-    "private_debtors": 0,
-    "public_debtors": 0,
-    "total_debtors": 0,
-    "zone": "Ngabu"
-   },
-   {
-    "color": "#7c3aed",
-    "debtors_to_billed_pct": 0,
-    "private_debtors": 0,
-    "public_debtors": 0,
-    "total_debtors": 0,
-    "zone": "Zomba"
+    "zone": "South"
    }
   ],
   "summary": {

@@ -14,6 +14,7 @@ from unittest import mock
 
 from fastapi.testclient import TestClient
 
+from tests._access import grant
 from tests._app_loader import TemporaryDirectory, fresh_app
 
 
@@ -110,6 +111,7 @@ class _HubFixture(unittest.TestCase):
         db.add(self.database.User(username="look", password_hash=self.auth.hash_password("x"), role="viewer"))
         db.commit()
         db.close()
+        grant(self.database, "look", "org", "viewer")   # access is deny-by-default (revision 0002)
         self.admin = {"Authorization": f"Bearer {self.auth.create_access_token('boss', 'admin')}"}
         self.viewer = {"Authorization": f"Bearer {self.auth.create_access_token('look', 'viewer')}"}
         self._seed_catalogue()
@@ -569,7 +571,7 @@ class LegacyBridgeTests(unittest.TestCase):
                 db.add(database.User(username="boss", password_hash=auth.hash_password("x"), role="admin"))
                 db.commit()
                 expected = sum(r.vol_produced for r in db.query(database.Record)
-                               .filter_by(year=2025, month_no=4))
+                               .filter_by(year=2025, month_no=7))
                 db.close()
                 h = {"Authorization": f"Bearer {auth.create_access_token('boss', 'admin')}"}
 
@@ -583,20 +585,23 @@ class LegacyBridgeTests(unittest.TestCase):
                 self.assertEqual(run["status"], "success", run)
                 p = c.get("/api/position/vol_produced", headers=h).json()
                 self.assertTrue(p["rolled_up"])
-                self.assertEqual(p["where_we_are"]["period"], "2025-04-01")
+                self.assertEqual(p["where_we_are"]["period"], "2025-07-01")
                 self.assertAlmostEqual(p["where_we_are"]["value"], expected)
                 self.assertEqual(len(p["where_we_were"]), 24)
                 self.assertIsNotNone(p["trend"])
 
                 # Organisation NRW % is total NRW over total production, from the same records.
                 db = database.SessionLocal()
-                recs = db.query(database.Record).filter_by(year=2025, month_no=4).all()
+                recs = db.query(database.Record).filter_by(year=2025, month_no=7).all()
                 want = sum(r.nrw for r in recs) / sum(r.vol_produced for r in recs) * 100
                 db.close()
                 nrw = c.get("/api/position/nrw_pct", headers=h).json()
                 self.assertAlmostEqual(nrw["where_we_are"]["value"], want)
-                going = c.get("/api/position/nrw_pct?period_type=year", headers=h).json()["where_we_are_going"]
-                self.assertEqual([t["period"] for t in going][:1], ["2025-07-01"])  # FY2026 in a July-start plan
+                yearly = c.get("/api/position/nrw_pct?period_type=year", headers=h).json()
+                # Data reaches July 2025, the first month of FY2026 in a July-start plan:
+                # FY2026 is the current year's target, FY2027 the next one ahead.
+                self.assertEqual(yearly["gap_to_target"]["target_period"], "2025-07-01")
+                self.assertEqual([t["period"] for t in yearly["where_we_are_going"]][:1], ["2026-07-01"])
 
                 again = c.post("/api/integration/sources/legacy-returns/run", headers=h).json()
                 self.assertEqual(again["values_loaded"], run["values_loaded"])

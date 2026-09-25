@@ -9,8 +9,11 @@ Authentication
 All /api/* routes (except /api/auth/login) require a JWT in the header:
     Authorization: Bearer <token>
 
-Role-based access is enforced via FastAPI dependencies at the router level:
-  - All read endpoints        → get_current_user  (any valid role)
+Role-based access is enforced via FastAPI dependencies at the router level.
+Access to data is deny-by-default (see docs/PERFORMANCE_GOVERNANCE.md):
+  - Organisation-wide dashboards/reports/exports → require_org_wide (a grant on the root unit, or admin)
+  - /api/platform/* and module APIs → scope resolved per request; results limited to granted units
+  - /api/position/*           → limited to the units in the user's scope
   - /api/upload/*             → require_admin     (admin only)
   - /api/records/export/csv   → require_export    (admin or user; not viewer)
   - /api/admin/*              → require_admin     (admin only)
@@ -21,7 +24,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 import os
 import time
@@ -31,9 +34,14 @@ from app.auth import ensure_default_admin, get_current_user, require_admin
 from app.core.config import settings
 from app.core.logging import REQUEST_ID_CTX, logger as app_logger
 from app.database import SessionLocal, create_tables
+from app.migrate import SchemaNotReady
 from app.routers import analytics, benchmarking, budget, catalogue, compliance, fiscal_years, integration, panels, records, report_generator, reports, strategic, upload, insights
 from app.routers import config as config_router
 from app.routers.users import admin_router, auth_router
+from app import model_registry as _models  # noqa: F401  (every table registered before start-up)
+from app.platform.errors import PlatformError
+from app.platform.router import router as platform_router
+from app.platform.scope import require_org_wide
 from app.core.limiter import limiter as _limiter
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -44,10 +52,16 @@ from slowapi.middleware import SlowAPIMiddleware
 async def lifespan(app: FastAPI):
     """Startup: create DB tables, bootstrap default admin if needed."""
     settings.validate_startup()
-    create_tables()
+    try:
+        create_tables()
+    except SchemaNotReady as exc:
+        print(f"[STOP] {exc}")
+        raise
     db = SessionLocal()
     try:
         ensure_default_admin(db)
+        from app.platform.bootstrap import at_startup as _platform_startup
+        _platform_startup(db)
         # Auto-import: if records table is empty and an Excel file exists, seed it
         from app.database import Record
         count = db.query(Record).count()
@@ -69,8 +83,8 @@ def _auto_import(db):
         + glob.glob(os.path.join(base, "data", "RawData*.xlsx"))
     )
     if not candidates:
-        print("[WARN] Records table is empty. Upload data via the dashboard or run:")
-        print("   python scripts/import_data.py --excel uploads/RawData.xlsx --sheet DataEntry")
+        print("[WARN] Records table is empty. Upload a RawData workbook from Administration > Upload,")
+        print("   or place RawData*.xlsx in uploads/ or data/ and restart.")
         return
 
     xlsx_path = candidates[0]
@@ -78,7 +92,7 @@ def _auto_import(db):
     try:
         import openpyxl
         from app.database import Record
-        from app.services.excel_parser import COLUMN_MAP, ExcelParser
+        from app.services.excel_parser import ExcelParser, resolve_column
 
         wb = openpyxl.load_workbook(xlsx_path, data_only=True)
         ws = wb["DataEntry"] if "DataEntry" in wb.sheetnames else wb.active
@@ -113,14 +127,14 @@ def _auto_import(db):
             "Chlorine kg": "chlorine_kg", "Alum Sulphate kg": "alum_kg",
             "Soda Ash kg": "soda_ash_kg", "Algae Floc litres": "algae_floc_litres",
             "Sud Floc litres": "sud_floc_litres", "Potassium Permanganate kg": "kmno4_kg",
-            "Cost of Chemicals MWK": "chem_cost", "Chem Cost per m³": "chem_cost_per_m3",
-            "Power Usage kWh": "power_kwh", "Cost of Power MWK": "power_cost",
+            "Cost of Chemicals": "chem_cost", "Chem Cost per m³": "chem_cost_per_m3",
+            "Power Usage kWh": "power_kwh", "Cost of Power": "power_cost",
             "Power Cost per m³": "power_cost_per_m3",
             "Distances Covered km": "distances_km", "Fuel Used litres": "fuel_used_litres",
-            "Cost of Fuel MWK": "fuel_cost", "Maintenance MWK": "maintenance",
-            "Staff Costs MWK": "staff_costs", "Wages MWK": "wages",
-            "Other Overhead MWK": "other_overhead",
-            "TOTAL Operating Costs MWK": "op_cost",
+            "Cost of Fuel": "fuel_cost", "Maintenance": "maintenance",
+            "Staff Costs": "staff_costs", "Wages": "wages",
+            "Other Overhead": "other_overhead",
+            "TOTAL Operating Costs": "op_cost",
             "OpCost per m³ Produced": "op_cost_per_m3_produced",
             "OpCost per m³ Billed": "op_cost_per_m3_billed",
             "Permanent Staff": "perm_staff", "Temporary Staff": "temp_staff",
@@ -160,9 +174,9 @@ def _auto_import(db):
             "TOTAL Amt Billed Prepaid": "amt_billed_prepaid",
             "TOTAL Amount Billed": "amt_billed",
             "TOTAL Service Charge": "service_charge", "TOTAL Meter Rental": "meter_rental",
-            "TOTAL Sales MWK": "total_sales",
-            "Private Debtors MWK": "private_debtors", "Public Debtors MWK": "public_debtors",
-            "TOTAL Debtors MWK": "total_debtors",
+            "TOTAL Sales": "total_sales",
+            "Private Debtors": "private_debtors", "Public Debtors": "public_debtors",
+            "TOTAL Debtors": "total_debtors",
             "OpCost per Sales": "op_cost_per_sales",
             "Cash Collection Rate": "collection_rate",
             "Collection per Total Sales": "collection_per_sales",
@@ -180,7 +194,7 @@ def _auto_import(db):
 
         col_map = {}
         for i, h in enumerate(headers):
-            parser_col = COLUMN_MAP.get(ExcelParser._normalize_header(h))
+            parser_col = resolve_column(ExcelParser._normalize_header(h))
             if parser_col in rec_cols:
                 col_map[i] = parser_col
             elif h in HMAP and HMAP[h] in rec_cols:
@@ -232,11 +246,16 @@ app = FastAPI(
 
 app.state.limiter = _limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+
+@app.exception_handler(PlatformError)
+async def _platform_error(_request: Request, exc: PlatformError):
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 app.add_middleware(SlowAPIMiddleware)
 
 # ── CORS ──────────────────────────────────────────────────────
-# Set MADZI_ALLOWED_ORIGINS (legacy: SRWB_ALLOWED_ORIGINS) to a comma-separated list of origins in
-# production, e.g. "https://dashboard.srwb.mw,https://ops.srwb.mw"
+# Set MADZI_ALLOWED_ORIGINS to a comma-separated list of origins in
+# production, e.g. "https://hub.example-utility.org"
 # Restricted localhost defaults for development; production validation blocks '*'.
 _allowed_origins = settings.allowed_origins
 
@@ -257,20 +276,41 @@ app.include_router(config_router.router)
 # ── Admin user-management (admin role required) ───────────────
 app.include_router(admin_router, dependencies=[Depends(require_admin)])
 
-# ── Data read endpoints (any authenticated user) ──────────────
+# ── Organisation-wide data (any authenticated user with an organisation-wide grant) ──
+# These dashboards, reports and exports aggregate every region. A user whose access
+# is limited to particular units gets 403 here and works in the scoped modules instead.
 # require_export on /export/csv is enforced inside records.py
-app.include_router(records.router,       dependencies=[Depends(get_current_user)])
-app.include_router(analytics.router,    dependencies=[Depends(get_current_user)])
-app.include_router(budget.router,       dependencies=[Depends(get_current_user)])
-app.include_router(catalogue.router,    dependencies=[Depends(get_current_user)])
-app.include_router(fiscal_years.router, dependencies=[Depends(get_current_user)])
-app.include_router(panels.router,       dependencies=[Depends(get_current_user)])
-app.include_router(compliance.router,   dependencies=[Depends(get_current_user)])
-app.include_router(benchmarking.router, dependencies=[Depends(get_current_user)])
-app.include_router(reports.router,          dependencies=[Depends(get_current_user)])
-app.include_router(report_generator.router, dependencies=[Depends(get_current_user)])
-app.include_router(insights.router,     dependencies=[Depends(get_current_user)])
-app.include_router(strategic.router,    dependencies=[Depends(get_current_user)])
+_org_wide = [Depends(require_org_wide)]
+app.include_router(records.router,       dependencies=_org_wide)
+app.include_router(analytics.router,    dependencies=_org_wide)
+app.include_router(budget.router,       dependencies=_org_wide)
+app.include_router(catalogue.router,    dependencies=_org_wide)
+app.include_router(fiscal_years.router, dependencies=_org_wide)
+app.include_router(panels.router,       dependencies=_org_wide)
+app.include_router(compliance.router,   dependencies=_org_wide)
+app.include_router(benchmarking.router, dependencies=_org_wide)
+app.include_router(reports.router,          dependencies=_org_wide)
+app.include_router(report_generator.router, dependencies=_org_wide)
+app.include_router(insights.router,     dependencies=_org_wide)
+app.include_router(strategic.router,    dependencies=_org_wide)
+
+# ── Shared governance foundation and modules (scope resolved per request) ──
+from app.modules.strategy.router import router as strategy_router  # noqa: E402
+from app.modules.scorecard.router import router as scorecard_router  # noqa: E402
+from app.modules.reporting.router import router as reporting_router  # noqa: E402
+from app.modules.documents.router import router as documents_router  # noqa: E402
+from app.modules.governance.router import router as governance_router  # noqa: E402
+from app.modules.regulatory.router import router as regulatory_router  # noqa: E402
+from app.modules.people.router import router as people_router  # noqa: E402
+
+app.include_router(platform_router)
+app.include_router(strategy_router)
+app.include_router(scorecard_router)
+app.include_router(reporting_router)
+app.include_router(documents_router)
+app.include_router(governance_router)
+app.include_router(regulatory_router)
+app.include_router(people_router)
 
 # ── Upload (admin only) ───────────────────────────────────────
 app.include_router(upload.router, dependencies=[Depends(require_admin)])
@@ -297,9 +337,16 @@ def _brand_values() -> dict:
         profile = db.query(OrgProfile).filter(OrgProfile.id == 1).first()
     finally:
         db.close()
+    name = (profile and profile.org_name) or ident.name
     return {
         "product_title": ident.product_title,
-        "name": (profile and profile.org_name) or ident.name,
+        "tagline": ident.tagline,
+        # "product": no tenant logo, so the page shows the full MadziHub lockup.
+        # "tenant": the utility's own logo, title and tagline.
+        "brand_mode": "tenant" if tenant.logo_path else "product",
+        # Organisation line under the sidebar wordmark, blank when it would repeat the product name.
+        "org_line": "" if name.strip().lower() == ident.product_title.strip().lower() else name,
+        "name": name,
         "short_name": (profile and profile.short_name) or ident.short_name,
         "currency": tenant.currency.code,
         "currency_symbol": tenant.currency.symbol,
@@ -311,10 +358,14 @@ def _brand_values() -> dict:
 
 
 def _js_text(value: str) -> str:
-    """Make a value safe inside any JS string literal ('', "", ``) and in innerHTML."""
+    """Make a value safe inside any JS string literal ('', "", ``) and in innerHTML.
+
+    "$" is escaped rather than dropped: currency symbols such as "$" and "US$" must
+    survive, and \\u0024 yields "$" without ever opening a ${...} substitution.
+    """
     import json
-    cleaned = "".join(ch for ch in (value or "") if ch not in "<>\"'`\\$")
-    return json.dumps(cleaned)[1:-1]
+    cleaned = "".join(ch for ch in (value or "") if ch not in "<>\"'`\\")
+    return json.dumps(cleaned)[1:-1].replace("$", "\\u0024")
 
 
 _JS_CACHE: dict = {}
@@ -334,6 +385,9 @@ def serve_app_core_js(request: Request):
         "__ORG_SHORT__": _js_text(brand["short_name"]),
         "__ORG_NAME_COUNTRY__": _js_text(" · ".join(v for v in (brand["name"], brand["country"]) if v)),
         "__ORG_NAME__": _js_text(brand["name"]),
+        "__PRINT_LOGO__": ("/static/brand/madzihub-logo-light.svg" if brand["brand_mode"] == "product"
+                           else "/api/config/logo"),
+        "__PLAN_TITLE__": _js_text(brand["plan_title"]),
         "__CURRENCY__": _js_text(brand["currency"]),
         "__CUR_SYM__": _js_text(brand["currency_symbol"]),
         "__NRW_TARGET__": f"{tenant.target('nrw_pct', 25.0):g}",
@@ -400,6 +454,9 @@ def _brand_html(content: str) -> str:
     brand = _brand_values()
     values = {
         "__PRODUCT_TITLE__": brand["product_title"],
+        "__TAGLINE__": brand["tagline"],
+        "__BRAND_MODE__": brand["brand_mode"],
+        "__ORG_LINE__": brand["org_line"],
         "__ORG_NAME__": brand["name"],
         "__ORG_SHORT__": brand["short_name"],
         "__CURRENCY__": brand["currency"],

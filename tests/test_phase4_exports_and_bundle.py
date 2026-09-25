@@ -33,17 +33,20 @@ class TestReleaseBundleValidator(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             zip_path = Path(tmpdir) / 'bad.zip'
             with zipfile.ZipFile(zip_path, 'w') as zf:
-                zf.writestr('madzihub/data/srwb.secret', 'secret')
+                zf.writestr('madzihub/data/madzihub.secret', 'secret')
                 zf.writestr('madzihub/app/main.py', 'print(1)')
                 zf.writestr('madzihub/requirements.txt', 'fastapi')
                 zf.writestr('madzihub/.env.example', 'KEY=VALUE')
             self.assertEqual(validate_bundle(zip_path), 1)
 
     @staticmethod
-    def _write_minimal(zf, skip_vendor=None):
-        zf.writestr('madzihub/app/main.py', 'print(1)')
-        zf.writestr('madzihub/requirements.txt', 'fastapi')
-        zf.writestr('madzihub/.env.example', 'KEY=VALUE')
+    def _write_minimal(zf, skip_vendor=None, skip=()):
+        for name, body in (('app/main.py', 'print(1)'), ('requirements.txt', 'fastapi'),
+                           ('.env.example', 'KEY=VALUE'), ('alembic.ini', '[alembic]'),
+                           ('app/migrations/env.py', ''), ('app/migrations/baseline_0001.json', '{}'),
+                           ('app/migrations/versions/0001_baseline_schema.py', '')):
+            if name not in skip:
+                zf.writestr(f'madzihub/{name}', body)
         # Offline installs need the vendored front-end files, byte-identical to the manifest.
         vendor = Path(__file__).resolve().parents[1] / 'app' / 'static' / 'vendor'
         zf.write(vendor / 'manifest.json', 'madzihub/app/static/vendor/manifest.json')
@@ -58,6 +61,13 @@ class TestReleaseBundleValidator(unittest.TestCase):
             with zipfile.ZipFile(zip_path, 'w') as zf:
                 self._write_minimal(zf)
             self.assertEqual(validate_bundle(zip_path), 0)
+
+    def test_validator_rejects_bundle_missing_migrations(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            zip_path = Path(tmpdir) / 'no-migrations.zip'
+            with zipfile.ZipFile(zip_path, 'w') as zf:
+                self._write_minimal(zf, skip=('app/migrations/versions/0001_baseline_schema.py',))
+            self.assertEqual(validate_bundle(zip_path), 1)
 
     def test_validator_rejects_bundle_missing_vendored_library(self):
         with tempfile.TemporaryDirectory() as tmpdir:

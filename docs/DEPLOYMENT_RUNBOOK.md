@@ -1,7 +1,7 @@
 # Deployment Runbook
 
 ## Purpose
-This document defines the minimum safe deployment process for the SRWB Operations Dashboard.
+This document defines the minimum safe deployment process for MadziHub.
 
 ## Pre-deployment checklist
 - Confirm all required environment variables are present.
@@ -21,7 +21,7 @@ This document defines the minimum safe deployment process for the SRWB Operation
 Expected values include:
 - `SECRET_KEY`
 - `DATABASE_URL`
-- `SRWB_ALLOWED_ORIGINS`
+- `MADZI_ALLOWED_ORIGINS`
 - `UPLOAD_LIMIT_MB`
 - optional AI provider keys only if AI features are enabled
 
@@ -31,7 +31,8 @@ Expected values include:
 3. Extract into a clean deployment directory.
 4. Create environment variables or a protected `.env` file on the host.
 5. Install dependencies in a fresh virtual environment.
-6. Run migrations if needed.
+6. Check the database: `python -m app.migrate status`. If it reports a next step, follow
+   [Database migrations](#database-migrations) before starting.
 7. Start the service.
 8. Validate health, login, upload, and core dashboard screens.
 
@@ -44,16 +45,88 @@ Expected values include:
 - upload a valid workbook in a test environment
 - confirm request logs and request IDs are visible
 
+## Database migrations
+The schema is managed by Alembic (`app/migrations/`). The app **never changes an existing
+database at startup**: it builds a brand-new empty database, starts normally on one that
+is up to date, and otherwise stops with the command to run. `start.bat` runs the same
+read-only check before starting the server.
+
+Run every command from the install folder with the same `.env` / environment the service
+uses, so it targets the same `DATABASE_URL`.
+
+| `status` says | Meaning | What to do |
+|---|---|---|
+| up to date | at the latest revision | nothing |
+| empty database | new install | nothing; the app builds it at first start |
+| at revision X; revision Y is available | a release added schema changes | stop the service, then `python -m app.migrate upgrade` |
+| created before migrations were introduced | installed before Alembic | stop the service, then `python -m app.migrate adopt` (once per install) |
+| a revision this version does not know | database is newer than the code, or from another branch | do not start; run the release that created it or restore a matching backup |
+
+**Backups.** For SQLite, `upgrade` and `adopt` copy the database to
+`data/backups/<name>-<UTC time>-before-<step>.db` before changing anything (the copy is
+consistent even with WAL). For PostgreSQL take a `pg_dump` first and add `--confirm-backup`.
+
+**Adopting a pre-Alembic database** (`adopt`):
+1. Compares the live schema with the recorded baseline (`app/migrations/baseline_0001.json`):
+   tables, columns, types, nullability, indexes, unique constraints and foreign keys.
+2. If anything cannot be fixed safely in place (a different column type or nullability, a
+   missing unique constraint), it stops **without changing or backing up** the database
+   and lists the problems. `python -m app.migrate status` shows the same report read-only.
+3. Otherwise it backs up, creates the missing baseline tables, columns and indexes, checks
+   again, and only then stamps the database at `0001` and upgrades it to the latest revision.
+4. Extra tables or columns (from older or other builds) and SQLite money columns declared
+   `FLOAT` instead of `NUMERIC` are reported as notes and left untouched; in SQLite both
+   store values identically.
+
+**If a migration fails:** stop the service, copy the backup file over the database (for
+example `copy data\backups\madzihub-...-before-upgrade.db data\madzihub.db`), delete any
+`data\madzihub.db-wal` and `data\madzihub.db-shm` left beside it, reinstall the previous
+release, start it and run the smoke tests. Report the command output. Never downgrade
+below the baseline: revision `0001` refuses to be downgraded because it would drop all data.
+
+**SQLite settings.** Every connection enables foreign keys and WAL journaling (readers do
+not block the writer). WAL adds `-wal` and `-shm` files next to the database while it is
+open; back up with the migrate command or with the service stopped, not by copying the
+`.db` file of a running system.
+
+**For developers:** change the model, run `python -m alembic revision --autogenerate -m "..."`,
+review and edit the generated file under `app/migrations/versions/`, then run the tests.
+`tests/test_migrations.py` fails if the models and the migrations disagree.
+
 ## Backup and restore
-### SQLite mode
-Back up:
-- `data/srwb.db`
-- deployment package version
-- current environment configuration
+
+The database and the **file store** (`MADZI_FILE_STORE`, default `data/files`: approved report
+outputs and uploaded documents) belong together: a database restored without its files has
+documents whose files are missing, and every download of them fails its integrity check.
+
+### Create and check a backup (SQLite)
+
+    python -m app.platform.backup create                 # -> data/backups/madzihub-backup-<utc>.zip
+    python -m app.platform.backup verify data\backups\madzihub-backup-<utc>.zip
+
+`create` copies the database with SQLite's backup API (safe while the service runs in WAL mode)
+and every stored file, and writes `manifest.json` with SHA-256 fingerprints and the schema
+revision. `verify` re-checks every fingerprint. Schedule `create` daily (Task Scheduler, like the
+reminder job) and copy the archives off the server. Keep the deployment package version and the
+`.env` (without printing its secrets) with them.
+
+PostgreSQL: take a `pg_dump`, and run `python -m app.platform.backup create --files-only` at the
+same time for the file store.
 
 ### Restore
 1. Stop the service.
-2. Restore the database file.
-3. Restore matching application version.
-4. Start the service.
-5. Run smoke tests.
+2. Restore into **new** locations (the command never overwrites):
+
+       python -m app.platform.backup restore <archive.zip> --db D:\MadziHub\data\restored.db --files D:\MadziHub\data\files-restored
+
+3. Point `DATABASE_URL` and `MADZI_FILE_STORE` in `.env` at the restored locations (or swap the
+   folders in after moving the old ones aside). Delete any stale `-wal` / `-shm` files beside the old
+   database.
+4. Restore the matching application version.
+5. Check it: `python -m app.migrate status` must report "up to date" (or run `upgrade` if the
+   backup is from an older revision).
+6. Start the service and run the smoke tests; open a document and a report to confirm downloads
+   pass their integrity check.
+
+A restore was exercised end to end by `tests/test_documents.py` (BackupTests): create, verify,
+restore into new locations, refusal to overwrite, and detection of a tampered archive.
