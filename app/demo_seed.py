@@ -158,7 +158,27 @@ def _scorecard(db: Session) -> None:
     sc.approve_snapshot(db, _admin_scope(db), snap.id, "Demo approval")
 
 
-STEPS += [_tree, _users, _actions, _strategy, _scorecard]
+def _reports(db: Session) -> None:
+    from app.modules.reporting import service as rp
+    from app.modules.reporting.models import ReportInstance, ReportTemplate
+    from app.modules.scorecard.models import ScoreSnapshot
+
+    snap = db.query(ScoreSnapshot).filter_by(status="approved").first()
+    if db.query(ReportInstance).count() or snap is None:
+        return
+    rp.ensure_templates(db)
+    tpl = db.query(ReportTemplate).filter_by(code="board-pack").one()
+    planner = _as(db, "planner")
+    inst = rp.create(db, planner, template_id=tpl.id, period_id=snap.period_id, org_unit_code="north",
+                     plan_id=snap.plan_id, audience="board")
+    rp.set_commentary(db, planner, inst.id, {
+        "summary": "North is below target on water losses after a three-week bulk-meter outage; meters are replaced.",
+        "decisions": "Note the corrective action; no decision is required this quarter."})
+    rp.transition(db, planner, inst.id, "submit")
+    rp.transition(db, _admin_scope(db), inst.id, "approve")
+
+
+STEPS += [_tree, _users, _actions, _strategy, _scorecard, _reports]
 
 
 def run(db: Session) -> dict[str, str]:

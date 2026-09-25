@@ -215,3 +215,54 @@ locked period accepts no new snapshots or approvals.
 Pillars with their objectives coloured by rating (from the latest approved snapshot, else a live
 calculation, labelled as such), and the programmes and initiatives that serve them. A table with
 the same information follows the map for screen-reader and print use.
+
+---
+
+## 4. Reporting hub
+
+**Page:** Reporting Hub. **API:** `/api/reports-hub/*`.
+
+### Reports
+
+| Template | Contents |
+|---|---|
+| Board performance pack | Executive summary, strategy status by pillar/objective, trend of approved scores, variance commentary (off-target indicators with the submitter's reason and corrective action), principal risks, decisions required, overdue actions |
+| Scorecard and indicator detail | Every item and indicator: weight, actual, target, achievement, rating, completeness |
+| Submissions and data quality | Completeness of the period's assignments and every recorded data-quality finding |
+| Exception report | Off-target indicators, missing submissions, missing evidence, stale or failing sources, overdue actions |
+
+### Lifecycle
+
+    draft ──submit──► in review ──approve──► approved ──publish──► published
+      ▲                   │ return (reason)       └──────── withdraw (reason) ──► withdrawn
+
+- Report managers (duty), or reviewers on the unit, create reports. Creating a report **freezes its
+  data** from governed sources (approved score snapshots, submissions, actions, source health).
+  While it is a draft the data can be refreshed; each refresh is a new data version with its own
+  fingerprint. Commentary is written in the draft.
+- Approval needs the approver role on the unit or the report-manager duty, and **someone other than
+  the author**. Board packs and scorecard reports can only be approved once the score snapshot they
+  show is approved. Approval fixes a content fingerprint (data + commentary + template).
+- At approval the HTML, PDF and XLSX outputs are rendered **from the frozen data**, stored outside
+  the web root (see *File store*), and their SHA-256 recorded. Every later download is served from
+  storage after an integrity check; a tampered file is refused. Drafts are rendered on request and
+  marked "not approved".
+- Every creation, freeze, decision, preview and download is written to the report's **access log**
+  (append-only).
+- **No external distribution.** Reports are downloaded; e-mail or scheduled distribution is not part
+  of this release and needs its own configured, authorised step.
+
+### Formats
+
+- **HTML** is the accessible format: real headings, captioned tables with header cells, print styles.
+  It is shown in the app inside a sandboxed frame (no scripts).
+- **PDF** is produced by *reportlab* (pure Python, no system libraries; chosen for Windows installs
+  over WeasyPrint, which needs the GTK runtime). Its built-in fonts cover Latin-1, so a few symbols
+  are written out (≥ becomes ">="). The PDF is not tagged for screen readers; use the HTML.
+- **XLSX**: a "Report" sheet with everything, plus one sheet per table (numbers stored as numbers).
+
+### File store
+
+Generated reports (and uploaded documents) are kept in `MADZI_FILE_STORE` (default `data/files`).
+Files are written once with app-generated names, never overwritten, and checked against their
+recorded hash when read. **Back this folder up together with the database** (see the deployment runbook).

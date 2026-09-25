@@ -7,3 +7,4 @@ from app.integration import models as _integration  # noqa: F401
 from app.platform import models as _platform  # noqa: F401
 from app.modules.strategy import models as _strategy  # noqa: F401
 from app.modules.scorecard import models as _scorecard  # noqa: F401
+from app.modules.reporting import models as _reporting  # noqa: F401
