@@ -136,7 +136,29 @@ def _strategy(db: Session) -> None:
         "evidence_note": "Water balance workbook, sheet Q1, rows 4-18."})
 
 
-STEPS += [_tree, _users, _actions, _strategy]
+def _scorecard(db: Session) -> None:
+    from app.modules.scorecard import service as sc
+    from app.modules.scorecard.models import ScoreSnapshot
+    from app.modules.strategy import service as st
+    from app.modules.strategy.models import CycleAssignment, Plan
+
+    if db.query(ScoreSnapshot).count():
+        return
+    plan = db.query(Plan).filter_by(status="active").first()
+    a = db.query(CycleAssignment).filter_by(org_unit_code="north", status="submitted").first()
+    if plan is None or a is None:
+        return
+    st.review_update(db, _as(db, "north.mgr"), a.id, "verify")
+    st.review_update(db, _as(db, "planner"), a.id, "approve")
+    scheme = sc.ensure_default_scheme(db) or sc.pick_scheme(db, None)
+    if scheme.status == "draft":
+        sc.transition_scheme(db, _as(db, "planner"), scheme.id, "approve", "Demo sign-off of the proposed default")
+    cycle = db.get(st.ReportingCycle, a.cycle_id)
+    snap = sc.create_snapshot(db, _as(db, "planner"), plan.id, cycle.period_id, "north", scheme.id, "Demo quarter review")
+    sc.approve_snapshot(db, _admin_scope(db), snap.id, "Demo approval")
+
+
+STEPS += [_tree, _users, _actions, _strategy, _scorecard]
 
 
 def run(db: Session) -> dict[str, str]:

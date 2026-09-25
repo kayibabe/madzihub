@@ -145,3 +145,73 @@ Mid-term, end-term and thematic evaluations record scope, method, optional crite
 criteria are offered as a template, not required), findings and limitations. Every finding needs a
 **management response** before the evaluation can be completed; accepted and partially accepted
 recommendations create an owned, dated **action** linked back to the finding.
+
+---
+
+## 3. Scorecard engine
+
+**Pages:** Scorecard (with Weights) · Strategy Map · Scoring Schemes. **API:** `/api/scorecard/*`.
+The calculation is `app/modules/scorecard/engine.py`: pure functions, versioned (`ENGINE_VERSION`).
+
+### Three separate things
+
+1. **Achievement** — how the approved value compares with its target:
+
+   | Polarity | Rule |
+   |---|---|
+   | Higher is better | actual ÷ target × 100 |
+   | Lower is better | (2 − actual ÷ target) × 100 (default), or target ÷ actual × 100 (scheme option) |
+   | Range | 100 inside the range; outside, 100 × (1 − distance ÷ range width) |
+   | Milestone | % complete ÷ % planned, at most 100 |
+   | Yes / no | yes = 100, no = 0 |
+   | Key risk indicator | within appetite (target) 100; within tolerance (upper) 50; beyond 0 |
+
+   Never below 0. **Capped for rating** at the scheme cap (default 130 %); the **uncapped value is
+   kept and shown**. A zero target is left unscored by default (or binary met/not met, by scheme
+   choice); a negative target is unscored.
+2. **Rating** — the capped achievement falls into one of five bands. The scheme states which end is
+   best; it is never inferred from the numbers.
+3. **Roll-up** — children are combined by weight at each level (pillar ← objectives ← indicators).
+   Each level's weights add up to 100 or are all blank (equal shares, shown as such).
+   - Items that are **not applicable**, **not due** in this period (e.g. an annual indicator in a
+     quarter) or **not reported by this unit** leave the weights; the method says so.
+   - Items with **no approved value** or **no target** count as *missing*. Below the scheme's
+     **coverage gate** (default 80 % of weight) the level is **incomplete**: no score, with the
+     covered weight and the missing items listed. Above it, the score is weighted over the covered
+     weight and the method states the coverage. Missing data is never scored as zero, unless a
+     scheme explicitly chooses "count missing as 0 %".
+   - A node's rating is the weight-averaged rating of its children; its label is the nearest band.
+
+Performance (rating), completeness (coverage) and data quality (DQA fails/warnings from the
+progress update) are separate columns.
+
+### Proposed default scheme — requires sign-off
+
+| Rating | Label | Capped achievement |
+|---|---|---|
+| 5 | Exceeded | 110 % and above |
+| 4 | Achieved | 100 % to below 110 % |
+| 3 | Nearly achieved | 90 % to below 100 % |
+| 2 | Below target | 70 % to below 90 % |
+| 1 | Well below target | below 70 % |
+
+Cap 130 %, coverage gate 80 %, zero targets unscored, lower-is-better (2 − a/t). This is
+MadziHub's proposal, not a regulator's or government method. It is created as a **draft**; scores
+calculated with a draft scheme are *provisional* and cannot be approved. A strategy manager other
+than the author signs a scheme off. An approved scheme is never edited: changes are a new version.
+
+### Snapshots
+
+A snapshot freezes the inputs (the metric-value and target row ids, values, weights, data-quality
+flags), the scheme and engine versions, an **inputs hash**, and the full result. Recalculating makes
+a **new** snapshot; approving it supersedes the previous approved one, which is kept. On a draft,
+an approver may **override** an item's rating with a reason; the calculated value stays visible and
+the override is re-evaluated from the frozen inputs (never from live data). Snapshots are taken by
+a reviewer or strategy manager and approved by an approver on the unit who did not take it. A
+locked period accepts no new snapshots or approvals.
+
+### Strategy map
+
+Pillars with their objectives coloured by rating (from the latest approved snapshot, else a live
+calculation, labelled as such), and the programmes and initiatives that serve them. A table with
+the same information follows the map for screen-reader and print use.
