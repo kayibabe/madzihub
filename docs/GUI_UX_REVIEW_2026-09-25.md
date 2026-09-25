@@ -72,7 +72,7 @@ Correctness exit gate:
 
 Implement UX-02, UX-03, UX-11 and the percentage-point correction from UX-09. Establish shared display states and an explicit page-by-page filter contract before standardising the header.
 
-**Recommended fiscal-filter policy — pending product confirmation before implementing scope changes.** This decision does not block Slice 1a. Inventory every page and map it to the agreed policy before changing the shared header.
+**Fiscal-filter policy — accepted as written by the product owner on 25 September 2026.** Inventory every page and map it to the agreed policy before changing the shared header.
 
 | Page type | Recommended scope behaviour |
 | --- | --- |
@@ -173,7 +173,68 @@ Frozen reports: `app/modules/reporting` does not read these endpoints or fields,
 ### Open findings
 
 - Synthetic data has stuck meters above metered connections (127.8%), which produces a negative meter-read rate. Impossible-input validation belongs to data-quality checks and is not in this slice.
-- Report Centre text cites IBNET <5 staff/1k while the Board cites ≤13. This is a comparator inconsistency for UX-11 (Slice 1b).
+- Report Centre text cites IBNET <5 staff/1k while the Board cites ≤13. This is a comparator inconsistency for UX-11 (Slice 1b). Resolved in Slice 1b.
+
+## Slice 1b implementation record
+
+Base commit `8846326`. The fiscal-filter policy was accepted as written on 25 September 2026.
+
+### UX-02: page scope inventory
+
+The top bar's `api()` calls send the global fiscal year, zones and months. Module pages (`MZ.api`) and Strategic Position (`ihApi`) send none of them. Before this slice, module pages hid zone and period but still showed a fiscal-year selector that had no effect. Strategic Position, Administration and the placeholder page showed every filter while ignoring them. Compliance endpoints take no filter parameters, and the Strategic Plan Scorecard takes the year only.
+
+| Policy class | Pages | Year | Zone / period / advanced | Scope note |
+| --- | --- | --- | --- | --- |
+| Performance dashboard | board, overview, finance, hra, infrastructure, operations, commercial, production, wt-ei, customers, connections, stuck, connectivity, breakdowns, pipelines, billed, collections, charges, expenses, debtors, segment-revenue, workforce, class-connections, pipe-materials, nrw, supply-continuity, disconnections, profitability, staff-productivity, benchmarking, budget, report-centre | shown | shown | none |
+| Scorecard, year only | strategic | shown | hidden | "Fiscal year applies. Zone and period filters do not apply to this page." |
+| Latest dataset | compliance, water-quality | hidden | hidden | "Latest assessed dataset. Not filtered by fiscal year, zone or period." |
+| Work queue (cross-year) | my-work, updates, actions, risks, audit-findings, meetings | hidden | hidden | "Cross-year work queue: items from every fiscal year." |
+| Strategy and scorecards | strategy, strategy-map, scorecard, position, cycles, evaluations | hidden | hidden | "Plan, unit and period are chosen on this page." |
+| Governed reports | reports-hub, regulatory | hidden | hidden | "Each report keeps the period and unit fixed in its record." |
+| Setup | admin, access, people, periods, schemes, documents, audit-trail, soon | hidden | hidden | none |
+
+Decision: the Strategic Plan Scorecard keeps the global year, because that is its only period control. Its zone and period filters are hidden and the note says so. `PAGE_SCOPE` in `app-core.js` is the single source. Page meta lines and export headers use `pageScopeSummary()`. `tests/test_page_scope.py` fails when a page is unclassified or a module page is presented as globally filtered. The Report Centre re-runs saved reports with their stored scope (`scopeOverride`), so reopening a report never adopts the top-bar year.
+
+### UX-03: freshness
+
+`/api/position/sources/freshness` now returns `feed`, `last_value_at` and an explicit `freshness` state: `current`, `overdue`, `failed`, `disabled`, `no_ingestion` or `not_scheduled`. "Current" applies only to a scheduled source that has succeeded within twice its interval. Approved progress updates (`strategy-updates`) are shown as "approved updates · last published …", never as current or never-run. The Strategic Position banner says "All scheduled sources current" only when every enabled source qualifies; otherwise it reads "Freshness not fully assessed" with the reason. Newly frozen Exceptions reports carry `sources_contract: 2` and list sources that are not confirmed current. Reports frozen earlier render exactly as approved.
+
+### UX-09 (pp) and UX-11: comparators
+
+- Strategic Position states a gap as "3.4 pp above target" for percentage measures.
+- Targets resolve by exact period and by basis. The strategic-plan target is primary, and other bases (regulator, budget, internal) are listed separately and never promoted. An earlier period's target is no longer carried forward. Instead, `target_note` says there is no target for the period and cites the latest one. Each comparator carries its type, source (plan or entry route), unit, organisational unit, period and version (`target #id, updated date`).
+- Dashboard KPIs use one governed registry, `app/services/comparators.py`. Its values come from tenant `targets`/`thresholds` where configured, and each boundary records its type and origin. The registry is injected into `app-core.js` as `CMP` and used by API flags, the report scorecard, Board, department cards and Report Centre text. Card tooltips carry the comparator and registry version.
+
+| Measure | Inconsistency found | Now |
+| --- | --- | --- |
+| Staff per 1,000 connections | Board "IBNET ≤13" (watch 20), panels "target 13", report scorecard "IBNET <5" (watch 10) | staffing target ≤13, watch ≤20 everywhere; IBNET 5 shown as unverified context only |
+| Breakdowns per 1,000 connections | Board/pages ≤5 / 10 ("IBNET"), report scorecard <10 / 20 ("IBNET") | band ≤5 / ≤10 (product default, not attributed to IBNET) |
+| Collection rate (company) | cards watch at 80, API watch at 75 (`coll_warn`) | tenant `coll_warn` 75; zone views keep `zone_coll_warn` 80 |
+| Supply hours | Board 20 / 16, supply-continuity panel 21 | 20 / 16 |
+| Active connection ratio | Board ≥90 GOOD, report text ">85%" | ≥90 / ≥75 |
+| Energy intensity | tile watch 0.7, Report Centre watch 0.8 | 0.5 / 0.8 |
+| NRW panel card | "Within 25% target" while the target is 27 | corporate target from configuration |
+| DSO | "<90d (IBNET)" in the scorecard vs "IBNET <60" on cards | ≤60 reference, ≤90 alert band |
+
+Also fixed while touching these paths, all missing-data defects of the UX-01 kind: board-pack `active_customers` reported 1 with no connections (`or 1`); board-pack energy intensity and chemical cost per m³ defaulted to 0; the supply-continuity panel returned a server error on an empty scope; the NRW panel card called a missing rate GOOD (`null<=27`); Report Centre zone supply tables labelled missing data "High risk".
+
+### Snapshot review
+
+- `api_panels_staff_productivity`: `target_per_1000conn` 13 → 13.0 (the same value, now from the registry).
+- `api_panels_supply_continuity`: `target_hours` 21 → 20 and `gap_to_target` 2.3 → 3.3, aligned with the Board band. New `supply_flag: GOOD`.
+- No other snapshot changed. The report scorecard grades the synthetic data as Not assessed, so its flags do not appear.
+
+### Evidence
+
+- Implemented in `51e5692`. Full suite: 243 tests, with the single failure that predates Slice 1a (`test_scoped_user_is_refused_on_every_org_wide_get`) and no new failures.
+- `tests/test_scope_freshness_comparators.py` (13 tests) covers freshness states, legacy and new report rendering, comparator provenance, no carry-forward, basis separation, registry boundaries and origins, report/dashboard agreement and the empty-scope supply panel. `tests/test_page_scope.py` has 5 tests. All 18 pass. `tests/test_tenant_config.py` now checks the injected registry.
+- Browser check (isolated review DB copy, 1440 × 1000 and 390 × 844). The ten representative pages show exactly the controls and note in the table above. Strategic Position for North, quarter view, reads "Strategic plan target 28% · 3.4 pp above target", followed by the plan, North and the quarter, with the version in the tooltip. The freshness banner reads "Freshness not fully assessed (1 without a schedule)", with "strategy-updates: approved updates · last published 3 h ago". The Board staff card reads "Staffing target ≤13 / 1k conn". No console errors. No horizontal overflow at 390 px.
+
+### Open findings (Slice 1b)
+
+- Product confirmation needed for the values marked "product default" in the registry. External benchmark attributions that screens previously disagreed on are no longer asserted: staff <5 IBNET, breakdowns 5 or 10 IBNET. Tenants can override each value through `thresholds`/`targets` keys named in the registry.
+- Comparator details appear in visible card text (source and boundary) and in tooltips (types, origin, version). Card tooltips are not keyboard-reachable. That is an existing pattern, left for Slice 3/4.
+- Strategic Position "View by" wording and leading with reporting measures (the rest of UX-09 and UX-10) remain in Slice 2.
 
 ## Working checklist
 
@@ -181,8 +242,8 @@ Frozen reports: `app/modules/reporting` does not read these endpoints or fields,
 - [ ] Preview the final Markdown and commit this document separately from application changes. (Committed separately as `2ff9c41`; rendered preview not yet done.)
 - [x] Slice 1a: complete the calculation/consumer inventory before editing code.
 - [x] Slice 1a: implement, pass the correctness exit gate and review snapshot changes individually; commit independently (`53c554b`).
-- [ ] Confirm the page-by-page fiscal-filter policy before the relevant Slice 1b changes.
-- [ ] Slice 1b: verify scope, freshness, comparator provenance and percentage-point presentation.
+- [x] Confirm the page-by-page fiscal-filter policy before the relevant Slice 1b changes (accepted as written, 25 September 2026).
+- [x] Slice 1b: verify scope, freshness, comparator provenance and percentage-point presentation (`51e5692`).
 - [ ] Complete populated-year and additional-role journeys before selecting the Slice 2 design.
 - [ ] Deliver Slices 2 and 3 with accessibility checks within each slice.
 - [ ] Complete Slice 4's responsive and accessibility checks across the affected journeys.
