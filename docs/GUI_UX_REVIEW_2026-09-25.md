@@ -135,12 +135,52 @@ Acceptance:
 
 The first implementation should be Slice 1a (missing-data correctness with regression tests), then Slice 1b, then the navigation + My Work + shared-header slice once the coverage gaps are closed. The rendered review raises data-state honesty and scope clarity above cosmetic work. A broad rebrand or wholesale dashboard rewrite is not justified by this review.
 
+## Slice 1a implementation record
+
+Base commit `2ff9c41`. Contract: a ratio whose denominator is zero or missing, or whose flow inputs are incomplete, returns `null` (displayed `—`, Not assessed). A measured zero numerator remains `0`. Stock balances (connections, staff, meters) are backfilled across months, so row completeness is not applied to them. For those balances, only a zero denominator yields Not assessed. The shared helper is `assessment.divide`.
+
+### Inventory
+
+| Calculation | Previous behaviour | Now | Consumers updated |
+| --- | --- | --- | --- |
+| HRA `staff_per_1000_conn`, `payroll_cost_ratio`, `m3_per_staff`, `wages_per_staff`, `fuel_per_km`, zone `m3_per_staff` (`report_generator.py`) | `0` on zero denominator. Staff count used `or 1`, so empty staffing reported volume ÷ 1. | `null`; flow inputs must be complete | Board HR card, HR page, Report Centre HRA and Staff Productivity narratives/tables/chart |
+| Infra `breakdowns_per_1k_customers`, `stuck_pct`, `active_conn_ratio` | `active ... or 1`; `0` on zero denominator (Board: GOOD/CRITICAL on empty scope) | `null`. Breakdowns must be complete because NULL means "not entered" for them. | Board Infra card, Infrastructure page, Report Centre Infrastructure narrative |
+| HRA/Infra responses | no record count; Board passed the summary, so the empty-scope guard never fired | `record_count` added; Board passes the full response | Board `kpis()` empty-scope guard |
+| Executive panel `rev_per_conn` (total/zone), `avg_tariff`, `nrw_cost`, `nrw_per_conn_yr`, `energy_intensity`, `meter_read_rate`, `complaints_1000`/`complaints_flag`, `stuck_pct` (`panels.py`) | `0`; `complaints_flag` "LOW" for no data | `null`; flag `NOT ASSESSED` | Board NRW Cost card; Executive Dashboard exception strip, zone ranking, action list, zone table |
+| Panels `stuck.per_1k_customers`, `stuck.repair_rate`, `breakdowns.per_1k_customers`, `disconnections.disconnection_rate`, `staff-productivity.staff_per_1000conn` | `or 1` / `0` | `null` | Staff-productivity and workforce cards (`null<=13` was true in JS); breakdowns card now accepts a measured 0 |
+| NRW analysis `avg_tariff`, `nrw_cost_estimate` | `0` | `null` | Report Centre NRW narrative |
+| Alert engine stuck-meter rate, company and zone (`insights_engine.py`) | stuck ÷ active accounts with `or 1`; `0` on no data | stuck ÷ metered connections, matching the Board, Infrastructure report and panels; `null` on zero | Alert text, `kpi_snapshot` |
+| Alert engine output | empty list could imply all assessed | `not_assessed` lists indicators without inputs | Alert drawer |
+| Narrative context (`narrative_engine.py`) | `vol or 1`; crashed on `None` zone NRW; zero defaults sent to the LLM | assessed ratios; prompt says "not assessed" and instructs the model not to infer | AI narrative (only when `ai.enabled`) |
+
+Frozen reports: `app/modules/reporting` does not read these endpoints or fields, so approved snapshots are unaffected and are not regenerated. Scorecard (`/api/reports/scorecard`) already refused to grade on zero denominators and was left unchanged.
+
+### Snapshot review (`tests/snapshots/`)
+
+- `api_insights_summary`, `api_reports_recommendations`: `stuck_pct` 137.3 → 127.8, because the denominator changed from active accounts (8,340) to metered connections (8,962). It now equals Infrastructure and Executive (127.8). Alert wording changed accordingly. New `not_assessed: ["Collection rate"]`, because synthetic `amt_billed` is 0.
+- `api_reports_hra`: `payroll_cost_ratio` 0 → null, because `total_revenue` is 0 (a zero denominator). `record_count` added.
+- `api_reports_infrastructure`: `record_count` added.
+- No other snapshot changed.
+
+### Evidence
+
+- Implemented in `53c554b`.
+- New `tests/test_missing_data_contract.py` covers absent keys, explicit NULLs, measured zeros, zero denominators, partial scope, zone roll-up, month-window stock carry-forward, complete data, cross-screen agreement and the narrative prompt. It passes together with `tests/test_assessment.py` (17 tests).
+- Full suite: the baseline at `2ff9c41` ran 213 tests with 1 failure. The changed tree ran 225 tests with the same single failure. That failure, `test_platform_foundation.test_scoped_user_is_refused_on_every_org_wide_get` ("0 not greater than 40"), predates this slice and is unrelated.
+- `node --check app/static/assets/js/app-core.js` passes. The script version was bumped to `20260925-2`.
+- Browser check (isolated copy of the review DB, 1440 × 1000). With no returns, all 16 Board cards show `— / NOT ASSESSED`, and Executive Dashboard actions read "4 of 4 main indicators could not be assessed". With the synthetic FY2024/25 dataset, unassessed exceptions show "Not assessed" in neutral tone, and the zone ranking is withheld where inputs are incomplete. No console errors.
+
+### Open findings
+
+- Synthetic data has stuck meters above metered connections (127.8%), which produces a negative meter-read rate. Impossible-input validation belongs to data-quality checks and is not in this slice.
+- Report Centre text cites IBNET <5 staff/1k while the Board cites ≤13. This is a comparator inconsistency for UX-11 (Slice 1b).
+
 ## Working checklist
 
 - [x] Consolidate browser findings, source causes and agreed review corrections.
-- [ ] Preview the final Markdown and commit this document separately from application changes.
-- [ ] Slice 1a: complete the calculation/consumer inventory before editing code.
-- [ ] Slice 1a: implement, pass the correctness exit gate and review snapshot changes individually; commit independently.
+- [ ] Preview the final Markdown and commit this document separately from application changes. (Committed separately as `2ff9c41`; rendered preview not yet done.)
+- [x] Slice 1a: complete the calculation/consumer inventory before editing code.
+- [x] Slice 1a: implement, pass the correctness exit gate and review snapshot changes individually; commit independently (`53c554b`).
 - [ ] Confirm the page-by-page fiscal-filter policy before the relevant Slice 1b changes.
 - [ ] Slice 1b: verify scope, freshness, comparator provenance and percentage-point presentation.
 - [ ] Complete populated-year and additional-role journeys before selecting the Slice 2 design.
