@@ -194,7 +194,8 @@ def _evaluate(db: Session, c: PerformanceContract) -> dict:
                                       "scored" if band else "missing", a.note))
     r = scoring.rollup(children, sch)
     label = scoring.band_for_rating(r.rating, sch)
-    return {"scheme": f"{scheme.code} v{scheme.version}", "engine_version": scoring.ENGINE_VERSION, "items": rows,
+    return {"scheme": f"{scheme.code} v{scheme.version}", "scheme_id": scheme.id,
+            "engine_version": scoring.ENGINE_VERSION, "items": rows,
             "rating": r.rating, "rating_label": label.label if label else None, "status": r.status,
             "method": r.method, "coverage_pct": r.coverage_pct}
 
@@ -214,20 +215,41 @@ def transition_contract(db: Session, scope: Scope, contract_id: int, name: str, 
     if name == "decide":
         if not _hr(scope) or actor in (c.supervisor, c.holder):
             raise Forbidden("An HR officer who is neither the holder nor the supervisor decides an appeal.")
-        c.appeal_decision = reason
         if adjusted_rating is not None:
-            before = c.final_rating
+            sch = _evaluation_scheme(db, c)
+            ratings = [b.rating for b in sch.bands]
+            lo, hi = min(ratings), max(ratings)
+            if not lo <= float(adjusted_rating) <= hi:
+                raise Invalid(f"The adjusted rating must be between {lo:g} and {hi:g} on the scheme the contract "
+                              f"was evaluated on ({c.evaluation['scheme']}).")
+            before = {"final_rating": c.final_rating, "final_label": c.final_label}
             c.final_rating = float(adjusted_rating)
-            audit.record(db, actor, "performance_contract.correct", "performance_contract", c.id,
-                         before={"final_rating": before}, after={"final_rating": c.final_rating}, reason=reason)
+            c.final_label = scoring.band_for_rating(c.final_rating, sch).label
+            audit.record(db, actor, "performance_contract.correct", "performance_contract", c.id, before=before,
+                         after={"final_rating": c.final_rating, "final_label": c.final_label}, reason=reason)
+        c.appeal_decision = reason
     if name == "evaluate":
         c.evaluation = _evaluate(db, c)
         c.final_rating, c.final_label = c.evaluation["rating"], c.evaluation["rating_label"]
     if name == "appeal":
         c.appeal_reason = reason
     CONTRACT_FLOW.apply(db, c, name, actor, reason=reason, step=name,
-                        extra_after={"final_rating": c.final_rating} if name in ("evaluate", "decide") else None)
+                        extra_after={"final_rating": c.final_rating, "final_label": c.final_label}
+                        if name in ("evaluate", "decide") else None)
     return c
+
+
+def _evaluation_scheme(db: Session, c: PerformanceContract) -> scoring.Scheme:
+    """The scoring scheme the contract was evaluated on (not whichever is approved now)."""
+    ev = c.evaluation or {}
+    scheme = db.get(ScoringScheme, ev["scheme_id"]) if ev.get("scheme_id") else None
+    if scheme is None and ev.get("scheme"):          # evaluations recorded before scheme_id was stored
+        code, _, version = ev["scheme"].rpartition(" v")
+        scheme = db.query(ScoringScheme).filter_by(code=code, version=int(version)).first() if version.isdigit() else None
+    if scheme is None:
+        raise Conflict("The scoring scheme this contract was evaluated on cannot be found, so an adjusted rating "
+                       "cannot be checked against its scale.")
+    return to_engine(scheme)
 
 
 def contract_dict(db: Session, c: PerformanceContract, scope: Scope) -> dict:

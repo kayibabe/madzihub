@@ -272,6 +272,29 @@ class CoverageAndWeightsTests(ScorecardFixture):
         self.assertEqual((root["status"], root["achievement"]), ("incomplete", None))
         self.assertEqual([m["key"] for m in root["missing"]], [f"n{self.pillar}"])
 
+    def test_incomplete_score_is_signed_off_only_as_an_explicit_override(self):
+        self.report(self.i_cov, 99)
+        self.report(self.i_nrw, 30, approve=False)        # 60 % coverage, below the 80 % gate
+        scheme = self.get("/api/scorecard/schemes", self.planner)[0]
+        self.post(f"/api/scorecard/schemes/{scheme['id']}/transition", self.planner, {"name": "approve"})
+        snap = self.post("/api/scorecard/snapshots", self.planner,
+                         {"plan_id": self.pid, "period_id": self.q["id"], "org_unit_code": "north"}, 201)
+        url = f"/api/scorecard/snapshots/{snap['id']}"
+        view = self.get(url, self.nate)
+        self.assertFalse(view["can_approve"])
+        self.assertIn("incomplete", view["approval_blocker"])
+        r = self.c.post(f"{url}/approve", headers=self.nate, json={})
+        self.assertEqual(r.status_code, 409)
+        self.assertIn("overall-rating override", r.json()["detail"])
+        self.assertEqual(self.get(url, self.nate)["status"], "draft")
+        # The exception: an overall-rating override, with a reason, then a second person signs off.
+        self.post(f"{url}/override", self.planner, {"key": "plan", "rating": 3,
+                                                    "reason": "NRW return delayed by the regulator; board accepts COVER alone"})
+        view = self.get(url, self.nate)
+        self.assertEqual((view["can_approve"], view["approval_blocker"]), (True, None))
+        done = self.post(f"{url}/approve", self.nate)
+        self.assertEqual((done["status"], done["rating"], done["tree"]["root"]["status"]), ("approved", 3, "incomplete"))
+
     def test_weight_editor_enforces_100_per_level(self):
         groups = self.get(f"/api/scorecard/plans/{self.pid}/weights", self.planner)
         level = next(g for g in groups if g["parent_id"] == self.pillar)

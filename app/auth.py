@@ -153,7 +153,7 @@ def ensure_default_admin(db: Session) -> None:
         )
         db.add(admin)
         db.commit()
-        print(
+        _print_console_safe(
             "\n"
             "╔══════════════════════════════════════════════════════════╗\n"
             "║          MadziHub — First-Run Setup                      ║\n"
@@ -167,3 +167,18 @@ def ensure_default_admin(db: Session) -> None:
             "║  This message will NOT appear again.                     ║\n"
             "╚══════════════════════════════════════════════════════════╝\n"
         )
+
+
+_ASCII_BOX = str.maketrans({"╔": "+", "╗": "+", "╚": "+", "╝": "+", "╠": "+", "╣": "+", "═": "=", "║": "|", "—": "-"})
+
+
+def _print_console_safe(text: str) -> None:
+    """Print, falling back to plain ASCII on consoles that cannot encode the box drawing (e.g. cp1252).
+
+    The admin account is already committed when the banner prints, so failing here would lose its only
+    copy of the one-time password.
+    """
+    try:
+        print(text)
+    except UnicodeEncodeError:
+        print(text.translate(_ASCII_BOX).encode("ascii", "replace").decode("ascii"))

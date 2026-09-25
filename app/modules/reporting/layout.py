@@ -59,8 +59,15 @@ def _score_blocks(data: dict, full: bool) -> list[dict]:
                                                           "plan, period and unit. Figures are a live calculation."})
     sch = score["scheme"]
     root = score["root"]
+    ov = root.get("override")
+    if ov and root["status"] not in ("complete", "partial"):
+        blocks.append({"t": "p", "tone": "warn", "text": f"Exception: the calculated score is {_label(root['status'])}, "
+                                                          "so the overall rating below is a recorded override."})
     blocks.append({"t": "kv", "items": [
         ["Overall rating", "—" if root["rating"] is None else f"{_n(root['rating'])} · {root['rating_label']}"],
+        *([["Rating override", f"{ov['reason']} (by {ov.get('by')}; calculated "
+                               f"{'—' if root.get('calculated_rating') is None else _n(root['calculated_rating'])})"]]
+          if ov else []),
         ["Weighted achievement", _pct(root["achievement"])],
         ["Status", f"{_label(root['status'])} — {root.get('method') or ''}"],
         ["Scheme", f"{sch['code']} v{sch['version']} ({_label(sch['status'])}); ratings "
