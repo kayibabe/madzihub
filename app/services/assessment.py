@@ -29,6 +29,18 @@ def ratio(rows, numerator, denominator, scale=100, digits=1):
     return round(sum(getattr(row, numerator) for row in rows) / bottom * scale, digits)
 
 
+def divide(numerator, denominator, scale=100, digits=1):
+    """Ratio of two already-aggregated totals; None when it cannot be assessed.
+
+    For stock balances (connections, staff, meters) that are backfilled across
+    months, where row-level completeness cannot be judged. A zero or missing
+    denominator is Not assessed, never a measured 0.
+    """
+    if numerator is None or denominator is None or denominator <= 0:
+        return None
+    return round(numerator / denominator * scale, digits)
+
+
 def flag(value, good, warning=None, *, lower=False):
     if value is None or not math.isfinite(value):
         return "NOT ASSESSED"

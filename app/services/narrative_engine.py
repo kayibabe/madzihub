@@ -47,32 +47,35 @@ def _build_context(db: Session, year: int) -> dict[str, Any]:
     from sqlalchemy import or_, and_
     from app.database import Record
     from app.routers.panels import _base, _monthly, _latest, _nz_sum, _nz_avg, FY_MONTHS
+    from app.services.assessment import ratio as assessed_ratio, divide
 
     rows, bz, mo = _base(None, None, None, year, db)
     if not rows:
         return {}
 
     lv      = _latest(rows)
-    vol     = _nz_sum(rows, 'vol_produced') or 1
+    vol     = _nz_sum(rows, 'vol_produced')
     nrw_v   = _nz_sum(rows, 'nrw')
     cash    = _nz_sum(rows, 'cash_collected')
     billed  = _nz_sum(rows, 'amt_billed')
     opex    = _nz_sum(rows, 'op_cost')
     active  = sum(max(0, r.active_customers or 0) for r in lv)
+    metered = sum(max(0, r.total_metered   or 0) for r in lv)
     stuck   = sum(max(0, r.stuck_meters   or 0) for r in lv)
     debtors = sum(max(0, r.total_debtors  or 0) for r in lv)
     pipe_bd = _nz_sum(rows, 'pipe_breakdowns')
     conns   = _nz_sum(rows, 'new_connections')
     dtc     = _nz_avg(rows, 'days_to_connect', cap=365)
 
-    nrw_pct  = round(nrw_v / vol * 100, 1)
-    coll_pct = round(cash / billed * 100, 1) if billed else 0
-    op_ratio = round(opex / billed, 2) if billed else 0
+    nrw_pct  = assessed_ratio(rows, 'nrw', 'vol_produced')
+    coll_pct = assessed_ratio(rows, 'cash_collected', 'amt_billed')
+    op_ratio = assessed_ratio(rows, 'op_cost', 'amt_billed', scale=1, digits=2)
 
     # MoM trend for NRW
     has_data = [m for m in mo if m.get('has_data')]
-    nrw_trend = "stable"
-    if len(has_data) >= 4:
+    nrw_trend = "not assessed"
+    if len(has_data) >= 4 and all(m.get('pct_nrw') is not None for m in has_data):
+        nrw_trend = "stable"
         mid  = len(has_data) // 2
         h1   = sum(m['pct_nrw'] for m in has_data[:mid]) / mid
         h2   = sum(m['pct_nrw'] for m in has_data[mid:]) / (len(has_data) - mid)
@@ -83,14 +86,11 @@ def _build_context(db: Session, year: int) -> dict[str, Any]:
     # Zone summary
     zones = []
     for z in bz:
-        zcash   = z.get('cash_collected', 0)
-        zbilled = z.get('amt_billed', 0)
-        zcr     = round(zcash / zbilled * 100, 1) if zbilled else 0
         zones.append({
             "zone":             z["zone"],
-            "nrw_pct":          round(z.get('nrw_pct', 0), 1),
-            "collection_rate":  zcr,
-            "pipe_breakdowns":  z.get('pipe_breakdowns', 0),
+            "nrw_pct":          None if z.get('nrw_pct') is None else round(z['nrw_pct'], 1),
+            "collection_rate":  z.get('collection_rate'),
+            "pipe_breakdowns":  z.get('pipe_breakdowns'),
             "stuck_meters":     z.get('stuck_meters', 0),
             "total_debtors_M":  round(z.get('total_debtors', 0) / 1e6, 1),
         })
@@ -107,7 +107,7 @@ def _build_context(db: Session, year: int) -> dict[str, Any]:
         "active_customers":  active,
         "new_connections":   int(conns),
         "stuck_meters":      stuck,
-        "stuck_pct":         round(stuck / active * 100, 1) if active else 0,
+        "stuck_pct":         divide(stuck, metered),
         "pipe_breakdowns":   int(pipe_bd),
         "days_to_connect":   round(dtc, 1),
         "total_debtors_M":   round(debtors / 1e6, 1),
@@ -118,10 +118,15 @@ def _build_context(db: Session, year: int) -> dict[str, Any]:
     }
 
 
+def _v(value, spec="", suffix=""):
+    """Format a metric for the prompt; missing values are stated as not assessed, never 0."""
+    return "not assessed" if value is None else f"{value:{spec}}{suffix}"
+
+
 def _build_prompt(ctx: dict) -> str:
     zones_text = "\n".join(
-        f"  • {z['zone']}: NRW {z['nrw_pct']}%, Collection {z['collection_rate']}%, "
-        f"Pipe failures {z['pipe_breakdowns']:,.0f}, Debtors {_tenant.currency.code} {z['total_debtors_M']:.0f}M"
+        f"  • {z['zone']}: NRW {_v(z['nrw_pct'], suffix='%')}, Collection {_v(z['collection_rate'], suffix='%')}, "
+        f"Pipe failures {_v(z['pipe_breakdowns'], ',.0f')}, Debtors {_tenant.currency.code} {z['total_debtors_M']:.0f}M"
         for z in ctx.get("zones", [])
     )
 
@@ -134,12 +139,12 @@ Write a concise, professional executive narrative (4–6 sentences) summarising 
 FISCAL YEAR: {ctx['fiscal_year']} ({ctx['months_analysed']} months of data)
 
 KEY METRICS:
-- NRW Rate: {ctx['nrw_pct']}% ({ident.short_name} target: <{ctx['nrw_target']}%) — trend: {ctx['nrw_trend']}
-- Collection Rate: {ctx['collection_rate']}% (IBNET benchmark: >{ctx['coll_benchmark']}%)
-- Operating Ratio: {ctx['operating_ratio']} (World Bank target: <0.80)
+- NRW Rate: {_v(ctx['nrw_pct'], suffix='%')} ({ident.short_name} target: <{ctx['nrw_target']}%) — trend: {ctx['nrw_trend']}
+- Collection Rate: {_v(ctx['collection_rate'], suffix='%')} (IBNET benchmark: >{ctx['coll_benchmark']}%)
+- Operating Ratio: {_v(ctx['operating_ratio'])} (World Bank target: <0.80)
 - Active Customers: {ctx['active_customers']:,.0f}
 - New Connections: {ctx['new_connections']:,}
-- Stuck Meters: {ctx['stuck_meters']:,.0f} ({ctx['stuck_pct']}% of accounts)
+- Stuck Meters: {ctx['stuck_meters']:,.0f} ({_v(ctx['stuck_pct'], suffix='% of metered connections')})
 - Pipe Breakdowns: {ctx['pipe_breakdowns']:,}
 - Avg Days to Connect: {ctx['days_to_connect']} days (target: <30)
 - Total Debtors: {cur} {ctx['total_debtors_M']:.0f}M
@@ -154,6 +159,7 @@ Instructions:
 - Acknowledge positives where they exist
 - End with one forward-looking recommendation
 - Do NOT use bullet points — flowing prose only
+- Where a metric is "not assessed", say that data is missing; never infer its performance
 - Maximum 120 words"""
 
 

@@ -39,37 +39,37 @@
    },
    {
     "category": "operations",
-    "detail": "11,450 meters are stuck (137.3% of 8,340 active accounts). Estimated monthly billing at risk: approx USD 0.0M.",
+    "detail": "11,450 meters are stuck (127.8% of 8,962 metered connections). Estimated monthly billing at risk: approx USD 0.0M.",
     "metric": "stuck_meters",
     "severity": "warning",
-    "title": "Stuck Meters — 137.3% of accounts (11,450 meters)",
+    "title": "Stuck Meters — 127.8% of metered connections (11,450 meters)",
     "value": 11450.49,
     "zone": null
    },
    {
     "category": "operations",
-    "detail": "3,248 stuck meters in North zone (137.3% of accounts). Billing integrity at risk — prioritise meter replacement programme.",
+    "detail": "3,248 stuck meters in North zone (127.8% of metered connections). Billing integrity at risk — prioritise meter replacement programme.",
     "metric": "stuck_meters",
     "severity": "warning",
-    "title": "North Zone — High Stuck Meter Rate (137.3%)",
+    "title": "North Zone — High Stuck Meter Rate (127.8%)",
     "value": 3248.36,
     "zone": "North"
    },
    {
     "category": "operations",
-    "detail": "2,680 stuck meters in Central zone (137.3% of accounts). Billing integrity at risk — prioritise meter replacement programme.",
+    "detail": "2,680 stuck meters in Central zone (127.8% of metered connections). Billing integrity at risk — prioritise meter replacement programme.",
     "metric": "stuck_meters",
     "severity": "warning",
-    "title": "Central Zone — High Stuck Meter Rate (137.3%)",
+    "title": "Central Zone — High Stuck Meter Rate (127.8%)",
     "value": 2679.91,
     "zone": "Central"
    },
    {
     "category": "operations",
-    "detail": "5,522 stuck meters in South zone (137.3% of accounts). Billing integrity at risk — prioritise meter replacement programme.",
+    "detail": "5,522 stuck meters in South zone (127.8% of metered connections). Billing integrity at risk — prioritise meter replacement programme.",
     "metric": "stuck_meters",
     "severity": "warning",
-    "title": "South Zone — High Stuck Meter Rate (137.3%)",
+    "title": "South Zone — High Stuck Meter Rate (127.8%)",
     "value": 5522.22,
     "zone": "South"
    }
@@ -82,9 +82,12 @@
    "months_analysed": 12,
    "nrw_pct": 34.4,
    "stuck_meters": 11450.49,
-   "stuck_pct": 137.3,
+   "stuck_pct": 127.8,
    "total_debtors_M": 0.0
   },
+  "not_assessed": [
+   "Collection rate"
+  ],
   "summary": {
    "critical": 1,
    "info": 0,

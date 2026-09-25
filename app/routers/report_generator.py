@@ -28,7 +28,7 @@ from sqlalchemy.orm import Session
 
 from app.core.tenant import tenant as _tenant
 from app.database import BudgetLine, get_db
-from app.services.assessment import ratio as assessed_ratio, flag as assessed_flag, above, complete
+from app.services.assessment import ratio as assessed_ratio, flag as assessed_flag, above, complete, divide
 from app.routers.panels import (
     ZONE_COLORS,
     _base,
@@ -526,7 +526,7 @@ def report_hra(
 
     perm = sum(r.perm_staff for r in lv)
     temp = sum(r.temp_staff for r in lv)
-    total_staff = (perm + temp) or 1
+    total_staff = perm + temp
     vol_prod = _nz_sum(rows, "vol_produced")
     wages = _nz_sum(rows, "wages")
     staff_costs = _nz_sum(rows, "staff_costs")
@@ -545,19 +545,19 @@ def report_hra(
         "total_staff": round(perm + temp),
         "active_customers": round(active),
         # IBNET-standard staffing ratio: employees per 1,000 active connections.
-        "staff_per_1000_conn": round((perm + temp) / active * 1000, 1) if active else 0,
+        "staff_per_1000_conn": divide(total_staff, active, scale=1000),
         "staff_per_1000m3_12h": round(_nz_avg(rows, "staff_per_1000m3_12h"), 3),
-        "m3_per_staff": round(vol_prod / total_staff, 1),
+        "m3_per_staff": divide(vol_prod, total_staff, scale=1) if complete(rows, "vol_produced") else None,
         "wages": round(wages, 2),
         "staff_costs": round(staff_costs, 2),
         "total_payroll": round(total_payroll, 2),
         # Payroll (staff costs + wages) as a share of operating revenue.
-        "payroll_cost_ratio": round(total_payroll / revenue * 100, 1) if revenue else 0,
-        "wages_per_staff": round(wages / total_staff, 2),
+        "payroll_cost_ratio": divide(total_payroll, revenue) if complete(rows, "staff_costs", "wages", "amt_billed") else None,
+        "wages_per_staff": divide(wages, total_staff, scale=1, digits=2) if complete(rows, "wages") else None,
         "fuel_used_litres": round(fuel_litres, 1),
         "fuel_cost": round(fuel_cost, 2),
         "distances_km": round(dist_km, 1),
-        "fuel_per_km": round(fuel_litres / dist_km, 2) if dist_km else 0,
+        "fuel_per_km": divide(fuel_litres, dist_km, scale=1, digits=2) if complete(rows, "fuel_used_litres", "distances_km") else None,
         "maintenance": round(_nz_sum(rows, "maintenance"), 2),
     }
 
@@ -570,14 +570,14 @@ def report_hra(
         z_perm = sum(r.perm_staff for r in zlv)
         z_temp = sum(r.temp_staff for r in zlv)
         z_vol = z.get("vol_produced", 0) or 0
-        z_total = (z_perm + z_temp) or 1
+        z_total = z_perm + z_temp
         staff_by_zone.append({
             "zone": zn,
             "color": z.get("color", "#64748b"),
             "perm_staff": round(z_perm),
             "temp_staff": round(z_temp),
-            "total_staff": round(z_perm + z_temp),
-            "m3_per_staff": round(z_vol / z_total, 1),
+            "total_staff": round(z_total),
+            "m3_per_staff": divide(z_vol, z_total, scale=1) if complete(zr, "vol_produced") else None,
             "wages": z.get("wages", 0),
             "staff_costs": z.get("staff_costs", 0),
             "fuel_used_litres": z.get("fuel_used_litres", 0),
@@ -612,6 +612,7 @@ def report_hra(
 
     return {
         "year": year,
+        "record_count": len(rows),
         "summary": summary,
         "staff_by_zone": staff_by_zone,
         "staff_trend": staff_trend,
@@ -638,7 +639,7 @@ def report_infrastructure(
 
     pipe_bd = _nz_sum(rows, "pipe_breakdowns")
     pump_bd = _nz_sum(rows, "pump_breakdowns")
-    active = sum(max(0, r.active_customers) for r in lv) or 1
+    active = sum(max(0, r.active_customers) for r in lv)
     stuck = sum(max(0, r.stuck_meters) for r in lv)
     metered = sum(max(0, r.total_metered) for r in lv)
 
@@ -646,20 +647,21 @@ def report_infrastructure(
         "pipe_breakdowns": round(pipe_bd),
         "pump_breakdowns": round(pump_bd),
         "total_breakdowns": round(pipe_bd + pump_bd),
-        "breakdowns_per_1k_customers": round((pipe_bd + pump_bd) / active * 1000, 1),
+        # pipe/pump_breakdowns keep NULL for "not entered", so completeness is meaningful here.
+        "breakdowns_per_1k_customers": divide(pipe_bd + pump_bd, active, scale=1000) if complete(rows, "pipe_breakdowns", "pump_breakdowns") else None,
         "pump_hours_lost": round(_nz_sum(rows, "pump_hours_lost")),
         "power_fail_hours": round(_nz_sum(rows, "power_fail_hours")),
         "supply_hours_avg_daily": _supply_daily(rows),
         "stuck_meters": round(stuck),
         "stuck_new": round(_nz_sum(rows, "stuck_new")),
         "stuck_repaired": round(_nz_sum(rows, "stuck_repaired")),
-        "stuck_pct": round(stuck / metered * 100, 1) if metered else 0,
+        "stuck_pct": divide(stuck, metered),
         "dev_lines_total": round(_nz_sum(rows, "dev_lines_total")),
         "total_metered": round(metered),
         # total_metered is the full metered connection base (active +
         # disconnected). Active Connection Ratio = active share of that base;
         # the remainder are disconnected/inactive meters (revenue at risk).
-        "active_conn_ratio": round(active / metered * 100, 1) if metered else 0,
+        "active_conn_ratio": divide(active, metered),
     }
 
     # Breakdowns by zone
@@ -719,6 +721,7 @@ def report_infrastructure(
 
     return {
         "year": year,
+        "record_count": len(rows),
         "summary": summary,
         "breakdowns_by_zone": breakdowns_by_zone,
         "pipeline_extensions": pipeline_extensions,
@@ -842,8 +845,9 @@ def report_nrw_analysis(
         + _nz_sum(rows, "total_vol_billed_prepaid")
     )
     amt_billed = _nz_sum(rows, "amt_billed")
-    avg_tariff = round(amt_billed / vol_billed, 2) if vol_billed else 0
-    nrw_cost_estimate = round(nrw_vol * avg_tariff, 2)
+    avg_tariff = divide(amt_billed, vol_billed, scale=1, digits=2)
+    # Same rule as the executive panel's NRW cost: no tariff or incomplete NRW means no estimate.
+    nrw_cost_estimate = round(nrw_vol * avg_tariff, 2) if avg_tariff is not None and complete(rows, "nrw") else None
 
     summary = {
         "vol_produced": round(vol_prod, 1),

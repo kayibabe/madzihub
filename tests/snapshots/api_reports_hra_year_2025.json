@@ -74,6 +74,7 @@
     "month": "June"
    }
   ],
+  "record_count": 96,
   "staff_by_zone": [
    {
     "color": "#0369a1",
@@ -209,7 +210,7 @@
    "fuel_used_litres": 40506.5,
    "m3_per_staff": 3.7,
    "maintenance": 0,
-   "payroll_cost_ratio": 0,
+   "payroll_cost_ratio": null,
    "perm_staff": 9366,
    "staff_costs": 0,
    "staff_per_1000_conn": 2320.6,

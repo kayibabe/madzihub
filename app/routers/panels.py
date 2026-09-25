@@ -19,7 +19,7 @@ from sqlalchemy import Float, Integer, Numeric
 from sqlalchemy.orm import Session
 from app.core.tenant import tenant as _tenant
 from app.database import Record, get_db
-from app.services.assessment import ratio as assessed_ratio, flag as assessed_flag, complete
+from app.services.assessment import ratio as assessed_ratio, flag as assessed_flag, complete, divide
 from app.utils import MONTHS_ORDER as FY_MONTHS, apply_fy_filter, csv_list
 
 router = APIRouter(prefix="/api/panels", tags=["Panels"])
@@ -849,7 +849,7 @@ def panel_stuck(zones:Optional[str]=None,schemes:Optional[str]=None,
     cf=sum(max(0,r.stuck_meters) for r in lv)
     new=_nz_sum(rows,'stuck_new'); rep=_nz_sum(rows,'stuck_repaired')
     repl=_nz_sum(rows,'stuck_replaced')
-    active=sum(r.active_customers for r in lv) or 1
+    active=sum(r.active_customers for r in lv)
 
     # Previous FY's March C/F → opening B/F for April of the current FY
     prev_fy_march_cf = None
@@ -869,8 +869,8 @@ def panel_stuck(zones:Optional[str]=None,schemes:Optional[str]=None,
     return {
         "kpi":{"stuck_meters":round(cf),"stuck_new":round(new),
                "stuck_repaired":round(rep),"stuck_replaced":round(repl),
-               "per_1k_customers":round(cf/active*1000,1),
-               "repair_rate":round(rep/(new+rep)*100,1) if (new+rep) else 0},
+               "per_1k_customers":divide(cf,active,scale=1000),
+               "repair_rate":divide(rep,new+rep)},
         "by_zone":[{"zone":z["zone"],"color":z["color"],
                     "stuck_meters":z["stuck_meters"],"stuck_new":z["stuck_new"],
                     "stuck_repaired":z["stuck_repaired"]} for z in bz],
@@ -918,7 +918,7 @@ def panel_breakdowns(zones:Optional[str]=None,schemes:Optional[str]=None,
             comp = m.get('pipe_pvc',0)+m.get('pipe_gi',0)+m.get('pipe_di',0)+m.get('pipe_hdpe_ac',0)
             if comp:
                 m['pipe_breakdowns'] = comp
-    lv=_latest(rows); active=sum(r.active_customers for r in lv) or 1
+    lv=_latest(rows); active=sum(r.active_customers for r in lv)
     pvc_sizes=['pvc_20mm','pvc_25mm','pvc_32mm','pvc_40mm','pvc_50mm','pvc_63mm',
                'pvc_75mm','pvc_90mm','pvc_110mm','pvc_160mm','pvc_200mm','pvc_250mm','pvc_315mm']
     pvc_kpis={s:round(_nz_sum(rows,s)) for s in pvc_sizes}
@@ -927,7 +927,7 @@ def panel_breakdowns(zones:Optional[str]=None,schemes:Optional[str]=None,
         "kpi":{
             "pipe_breakdowns":round(pipe),"pump_breakdowns":round(pump),
             "total":round(pipe+pump),
-            "per_1k_customers":round((pipe+pump)/active*1000,1),
+            "per_1k_customers":divide(pipe+pump,active,scale=1000),
             "pump_hours_lost":round(_nz_sum(rows,'pump_hours_lost')),
             "pvc_total":round(_nz_sum(rows,'pipe_pvc')),
             **pvc_kpis,
@@ -1293,13 +1293,13 @@ def panel_executive(zones: Optional[str] = None, schemes: Optional[str] = None,
     pump_breakdowns = _nz_sum(rows, 'pump_breakdowns') if _pump_has_data else None
     vol_billed = (_nz_sum(rows, 'total_vol_billed_pp')
                   + _nz_sum(rows, 'total_vol_billed_prepaid'))
-    avg_tariff = round(revenue / vol_billed, 2) if vol_billed else 0
+    avg_tariff = divide(revenue, vol_billed, scale=1, digits=2)
 
     # ── 1. Financial Health Ratios ────────────────────────────────
     op_ratio    = assessed_ratio(rows, 'op_cost', 'amt_billed', scale=1, digits=2)
     monthly_rev = revenue / n_months if n_months else 0
     dso         = round(total_dbt / monthly_rev * 30, 0) if monthly_rev and complete(rows, "total_debtors", "amt_billed") else None
-    rev_per_conn = round(revenue / active, 0) if active else 0
+    rev_per_conn = divide(revenue, active, scale=1, digits=0)
     net_margin  = round((revenue - opex) / revenue * 100, 1) if revenue and complete(rows, "amt_billed", "op_cost") else None
 
     financial = {
@@ -1318,8 +1318,8 @@ def panel_executive(zones: Optional[str] = None, schemes: Optional[str] = None,
 
     # ── 2. NRW Intelligence ───────────────────────────────────────
     nrw_pct      = assessed_ratio(rows, 'nrw', 'vol_produced')
-    nrw_cost     = round(nrw_vol * avg_tariff, 0)
-    nrw_per_conn = round(nrw_cost / active * 12 / max(n_months, 1), 0) if active else 0
+    nrw_cost     = round(nrw_vol * avg_tariff, 0) if avg_tariff is not None and complete(rows, 'nrw') else None
+    nrw_per_conn = divide(nrw_cost, active, scale=12 / max(n_months, 1), digits=0)
 
     nrw_intel = {
         "nrw_vol": round(nrw_vol, 0),
@@ -1332,17 +1332,17 @@ def panel_executive(zones: Optional[str] = None, schemes: Optional[str] = None,
     }
 
     # ── 3. Service Quality & Asset Health ─────────────────────────
-    energy_int   = round(power_kwh / vol_prod, 2) if vol_prod else 0
-    meter_read   = round((metered - stuck) / metered * 100, 1) if metered else 0
-    comp_1000    = round(queries / active * 1000, 0) if active else 0
+    energy_int   = assessed_ratio(rows, 'power_kwh', 'vol_produced', scale=1, digits=2)
+    meter_read   = divide(metered - stuck, metered)
+    comp_1000    = divide(queries, active, scale=1000, digits=0) if complete(rows, 'queries_received') else None
 
     service = {
         "energy_intensity": energy_int,
         "meter_read_rate": meter_read,
         "stuck_meters": int(stuck),
-        "stuck_pct": round(stuck / metered * 100, 1) if metered else 0,
-        "complaints_1000": int(comp_1000),
-        "complaints_flag": "LOW" if comp_1000 < 30 else ("MONITOR" if comp_1000 < 60 else "HIGH"),
+        "stuck_pct": divide(stuck, metered),
+        "complaints_1000": None if comp_1000 is None else int(comp_1000),
+        "complaints_flag": "NOT ASSESSED" if comp_1000 is None else ("LOW" if comp_1000 < 30 else ("MONITOR" if comp_1000 < 60 else "HIGH")),
         "supply_hours_avg": supply_daily,
     }
 
@@ -1381,7 +1381,7 @@ def panel_executive(zones: Optional[str] = None, schemes: Optional[str] = None,
             "collection_rate": z.get("collection_rate", 0),
             "dso": z_dso,
             "op_ratio": assessed_ratio(zr, "op_cost", "amt_billed", scale=1, digits=2),
-            "rev_per_conn": round(z_rev / z_active, 0) if z_active else 0,
+            "rev_per_conn": divide(z_rev, z_active, scale=1, digits=0),
             "active_customers": round(z_active),
             "breakdowns_total": None if z.get("pipe_breakdowns") is None else round((z.get("pipe_breakdowns") or 0) + (z.get("pump_breakdowns") or 0)),
             "nrw_trend": nrw_trend,
@@ -1530,7 +1530,7 @@ def panel_disconnections(zones: Optional[str] = None, schemes: Optional[str] = N
             "disconnected_commercial": disc_comm,
             "disconnected_cwp":        disc_cwp,
             "active_customers": round(active),
-            "disconnection_rate": round(disc / (active + disc) * 100, 1) if (active + disc) else 0,
+            "disconnection_rate": divide(disc, active + disc),
         },
         "by_zone": [{"zone": z["zone"], "color": z["color"],
                      "total_disconnected": z["total_disconnected"]} for z in bz],
@@ -1552,7 +1552,7 @@ def panel_staff_productivity(zones: Optional[str] = None, schemes: Optional[str]
     return {
         "kpi": {
             "perm_staff": round(perm), "temp_staff": round(temp), "total_staff": round(total),
-            "staff_per_1000conn": round(total / active * 1000, 1) if active else 0,
+            "staff_per_1000conn": divide(total, active, scale=1000),
             # Use the captured, normalised SP indicator (staff per 1,000 m³ /12h)
             # rather than a raw annual ratio so it is comparable to the SP target.
             "staff_per_1000m3": round(_nz_avg(rows, "staff_per_1000m3_12h"), 2),

@@ -14,7 +14,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 from app.core.tenant import tenant as _tenant
 from app.database import Record
-from app.services.assessment import ratio as assessed_ratio
+from app.services.assessment import ratio as assessed_ratio, divide
 
 
 # ── Thresholds ─────────────────────────────────────────────────────────────
@@ -144,7 +144,9 @@ def generate_alerts(db: Session, year: int = None) -> dict[str, Any]:
     stuck_now  = sum(max(0, r.stuck_meters   or 0) for r in lv)
     dbt_now    = sum(max(0, r.total_debtors  or 0) for r in lv)
     dtc_avg    = _nz_avg(rows, 'days_to_connect', cap=365)
-    stuck_pct  = round(stuck_now / active_now * 100, 1) if active_now else 0
+    metered_now = sum(max(0, r.total_metered or 0) for r in lv)
+    # Same definition as the Board/Infrastructure card: share of metered connections.
+    stuck_pct  = divide(stuck_now, metered_now)
 
     kpi_snapshot = {
         "nrw_pct": nrw_pct,
@@ -222,12 +224,12 @@ def generate_alerts(db: Session, year: int = None) -> dict[str, Any]:
                   metric="pipe_breakdowns", value=cur["pipe_breakdowns"])
 
     # ── 4. Stuck Meters ───────────────────────────────────────────────────
-    if stuck_pct > T["stuck_pct_warn"]:
-        unbilled = round(stuck_now * (billed_ytd / max(active_now, 1)) / len(months_with_data) / 1e6, 1)
+    if stuck_pct is not None and stuck_pct > T["stuck_pct_warn"]:
+        unbilled = f"approx {_CUR} {round(stuck_now * (billed_ytd / active_now) / len(months_with_data) / 1e6, 1)}M" if active_now else "not assessed (no active accounts recorded)"
         alert("warning","operations",
-              f"Stuck Meters — {stuck_pct}% of accounts ({stuck_now:,.0f} meters)",
-              f"{stuck_now:,.0f} meters are stuck ({stuck_pct}% of {active_now:,.0f} active accounts). "
-              f"Estimated monthly billing at risk: approx {_CUR} {unbilled}M.",
+              f"Stuck Meters — {stuck_pct}% of metered connections ({stuck_now:,.0f} meters)",
+              f"{stuck_now:,.0f} meters are stuck ({stuck_pct}% of {metered_now:,.0f} metered connections). "
+              f"Estimated monthly billing at risk: {unbilled}.",
               metric="stuck_meters", value=stuck_now)
 
     # ── 5. Days to Connect ────────────────────────────────────────────────
@@ -270,8 +272,8 @@ def generate_alerts(db: Session, year: int = None) -> dict[str, Any]:
         zcoll_pct = assessed_ratio(zrows, 'cash_collected', 'amt_billed')
         zlv = _latest(zrows)
         zstuck = sum(max(0, r.stuck_meters or 0) for r in zlv)
-        zactive= sum(max(0, r.active_customers or 0) for r in zlv) or 1
-        zstuck_pct = round(zstuck / zactive * 100, 1)
+        zmetered = sum(max(0, r.total_metered or 0) for r in zlv)
+        zstuck_pct = divide(zstuck, zmetered)
 
         # Zone NRW critical
         if znrw_pct is not None and znrw_pct > T["zone_nrw_critical"]:
@@ -296,10 +298,10 @@ def generate_alerts(db: Session, year: int = None) -> dict[str, Any]:
                   zone=zone, metric="collection_rate", value=zcoll_pct)
 
         # Zone stuck meters
-        if zstuck_pct > T["stuck_pct_warn"] * 1.5:  # 12% — elevated threshold for zone
+        if zstuck_pct is not None and zstuck_pct > T["stuck_pct_warn"] * 1.5:  # 12% — elevated threshold for zone
             alert("warning","operations",
                   f"{zone} Zone — High Stuck Meter Rate ({zstuck_pct}%)",
-                  f"{zstuck:,.0f} stuck meters in {zone} zone ({zstuck_pct}% of accounts). "
+                  f"{zstuck:,.0f} stuck meters in {zone} zone ({zstuck_pct}% of metered connections). "
                   f"Billing integrity at risk — prioritise meter replacement programme.",
                   zone=zone, metric="stuck_meters", value=zstuck)
 
@@ -335,8 +337,12 @@ def generate_alerts(db: Session, year: int = None) -> dict[str, Any]:
         "total":    len(alerts),
     }
 
+    # An empty alert list only covers indicators that could be assessed.
+    not_assessed = [label for key, label in (("nrw_pct", "NRW rate"), ("collection_rate", "Collection rate"),
+                                             ("stuck_pct", "Stuck-meter rate")) if kpi_snapshot[key] is None]
     return {
         "alerts": alerts,
         "summary": summary,
         "kpi_snapshot": kpi_snapshot,
+        "not_assessed": not_assessed,
     }

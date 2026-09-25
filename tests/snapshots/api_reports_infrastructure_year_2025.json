@@ -204,6 +204,7 @@
     "size": "200mm"
    }
   ],
+  "record_count": 96,
   "summary": {
    "active_conn_ratio": 93.1,
    "breakdowns_per_1k_customers": 27689.1,
