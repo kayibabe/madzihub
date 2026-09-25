@@ -32,7 +32,7 @@ MZ.page('reports-hub', async root => {
   MZ.onAct(root.querySelector('.mz-hdr'), {new: async () => {
     const [plans, periods] = await Promise.all([MZ.api('/api/strategy/plans'), MZ.api('/api/platform/periods')]);
     const units = MZ.unitOptions('reviewer');
-    const r = await MZ.form({title: 'New report', intro: 'The report’s data is captured (frozen) now. You can refresh it until you submit it for review.', fields: [
+    const r = await MZ.form({title: 'New report', intro: `The report’s data is captured (frozen) now. You can refresh it until you submit it for review. ${MZ.periodsIntro(periods)}`, onChange: MZ.bindPeriodsLink, fields: [
       {name: 'template_id', label: 'Template', type: 'select', required: true, options: templates.map(t => ({value: t.id, label: `${t.name} — ${t.description}`}))},
       {name: 'plan_id', label: 'Plan', type: 'select', options: [{value: '', label: '(none)'}, ...plans.map(p => ({value: p.id, label: `${p.code} ${p.title}`}))], value: (plans.find(p => p.status === 'active') || {}).id || ''},
       {name: 'period_id', label: 'Period', type: 'select', required: true, options: periods.map(p => ({value: p.id, label: p.label}))},
@@ -89,10 +89,21 @@ async function detail(){
       let reason = null;
       if(d.name === 'return' || d.name === 'withdraw'){ const x = await MZ.reason({title: labels[d.name]}); if(!x) return; reason = x.reason; }
       await MZ.api(`/api/reports-hub/instances/${r.id}/transition`, {method: 'POST', body: {name: d.name, reason}});
-      MZ.toast(d.name === 'approve' ? 'Approved: outputs rendered and stored.' : 'Done.', 'ok'); MZ.refresh('reports-hub');
+      MZ.toast(d.name === 'approve' ? 'Approved: outputs rendered and stored.' : 'Done.', 'ok'); MZ.refreshUnread(); MZ.refresh('reports-hub');
     },
     dl: d => MZ.download(`/api/reports-hub/instances/${r.id}/output/${d.fmt}?download=true`, `report-${r.id}.${d.fmt}`),
   });
 }
+
+/* ─── My Work: reports waiting for this person's approval ───────────────── */
+MZ.myWorkSections.push(data => {
+  const rows = data.reports_to_approve || [];
+  if(!rows.length) return '';
+  return `<section class="mz-card" aria-label="Reports to approve"><h3>Reports to approve <span class="mz-badge warn">${rows.length}</span></h3>
+    <div class="mz-mw-section" data-open-page="reports-hub" data-open-type="report_instance">${MZ.table({rows, rowId: r => r.id, empty: '', columns: [
+      {label: 'Report', render: r => `<span class="mz-strong">${E(r.title)}</span><div class="mz-meta">${E(r.template.name)}</div>`},
+      {label: 'Unit', render: r => E(MZ.unitName(r.org_unit_code))}, {label: 'Period', render: r => E(r.period)},
+      {label: 'Author', render: r => E(r.created_by)}, {label: 'Status', render: r => MZ.badge(r.status)}]})}</div></section>`;
+});
 
 })();

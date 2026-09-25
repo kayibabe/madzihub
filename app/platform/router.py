@@ -96,7 +96,8 @@ def assignable_users(unit: str, scope: Scope = Depends(get_scope), db: Session =
     for u in db.query(User).filter(User.is_active.is_(True)).order_by(User.username):
         s = resolve_scope(db, u)
         if s.can_see(unit):
-            out.append({"username": u.username, "full_name": u.full_name, "role": s.role_on(unit)})
+            out.append({"username": u.username, "full_name": u.full_name, "role": s.role_on(unit),
+                        "read_only": s.read_only})
     return out
 
 

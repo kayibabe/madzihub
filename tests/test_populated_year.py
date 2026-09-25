@@ -221,6 +221,10 @@ class BuilderEndToEndTest(unittest.TestCase):
                 self.assertEqual(c.execute("select v.count from (select count(*) count from metric_values mv join "
                                            "data_sources s on s.id = mv.source_id where s.code='legacy-returns') v")
                                  .fetchone()[0], entered)
+                # Platform reporting periods exist for the populated year (1 year, 4 quarters, 12 months),
+                # so a cycle or governed report can be opened for it without a manual Setup step (RJ-05).
+                self.assertEqual(c.execute("select count(*) from periods where fiscal_year=?",
+                                           (py.POPULATED_FY,)).fetchone()[0], 17)
             # Freshness as the app computes it, from the built database.
             os.environ.update({"DATABASE_URL": f"sqlite:///{(out / builder.DB_NAME).as_posix()}",
                                "MADZI_SECRET_FILE": str(out / "secret"), "MADZI_FILE_STORE": str(out / "files"),

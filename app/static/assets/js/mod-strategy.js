@@ -18,6 +18,8 @@ const POLARITY_LABELS = {higher: 'Higher is better', lower: 'Lower is better', r
   milestone: 'Milestone (% complete)', yes_no: 'Yes / no', kri: 'Key risk indicator'};
 const RESULT_TYPES = ['pillar', 'objective', 'outcome', 'output'];
 const DELIVERY_TYPES = ['programme', 'initiative', 'activity', 'milestone'];
+const ROLE_RANK = {viewer: 0, contributor: 1, reviewer: 2, approver: 3};
+const STEP_VERB = {contributor: 'submit', reviewer: 'verify', approver: 'approve'};
 
 async function loadPlans(){
   S.plans = await MZ.api('/api/strategy/plans');
@@ -347,7 +349,7 @@ MZ.page('cycles', async root => {
   MZ.onRow(MZ.$('cy-list'), id => { C.cycleId = id; cycleDetail(manager).catch(MZ.fail); });
   MZ.onAct(root.querySelector('.mz-hdr'), {new: async () => {
     const periods = (await MZ.api('/api/platform/periods')).filter(p => p.status === 'open');
-    const c = await MZ.form({title: 'New reporting cycle', fields: [
+    const c = await MZ.form({title: 'New reporting cycle', intro: MZ.periodsIntro(periods), onChange: MZ.bindPeriodsLink, fields: [
       {name: 'period_id', label: 'Period', type: 'select', required: true, options: periods.map(p => ({value: p.id, label: `${p.label} (${MZ.label(p.period_type)})`}))},
       {name: 'name', label: 'Name', help: 'Defaults to "<period> progress".'},
       {name: 'opens_on', label: 'Opens on', type: 'date'}, {name: 'due_on', label: 'Due on', type: 'date', help: 'Defaults to 15 days after the period ends.'},
@@ -361,15 +363,26 @@ async function cycleDetail(manager){
   const host = MZ.$('cy-detail');
   const c = await MZ.api(`/api/strategy/cycles/${C.cycleId}`);
   host.hidden = false;
+  // Routing (managers only): who is named, whether they can act, and who will actually be asked.
+  const route = (a, step, any) => {
+    const r = a.routing && a.routing[step];
+    if(!r) return E(a[step] || any);
+    const asked = r.asked.map(E).join(', ');
+    if(r.named && !r.named_can_act) return `${MZ.badge('warn', 'warn', `${r.named}: no access`)}<div class="mz-meta">${asked ? 'Goes to ' + asked : 'Nobody on this unit can act'}</div>`;
+    if(r.named) return E(r.named);
+    return asked ? `${E(any)}<div class="mz-meta">${asked}</div>` : MZ.badge('danger', 'danger', 'Nobody can act');
+  };
+  const issues = c.assignments.filter(a => a.routing && Object.values(a.routing).some(r => !r.asked.length || (r.named && !r.named_can_act)));
   MZ.html(host, `<div class="mz-hdr"><h3>${E(c.name)} · ${E(c.period)}</h3><div class="mz-btn-row">${MZ.badge(c.status)}
       ${manager && c.status !== 'closed' ? '<button class="mz-btn" data-mz="gen">Generate assignments</button>' : ''}
       ${(c.allowed || []).map(t => `<button class="mz-btn ${t === 'open' ? 'primary' : ''}" data-mz="tr" data-name="${t}">${E(MZ.label(t))} cycle</button>`).join('')}</div></div>
+    ${issues.length ? `<div class="mz-notice warn" role="status">${issues.length} assignment(s) name someone without access to the unit, or have nobody who can act. Use <strong>People</strong> to fix them${c.status === 'draft' ? ' before opening the cycle' : ''}; until then the work goes to the unit’s own role holders shown below each name.</div>` : ''}
     ${MZ.table({rows: c.assignments, rowId: a => a.id, empty: 'No assignments yet: generate them from the plan’s indicators.', columns: [
       {label: 'Indicator', render: a => `<span class="mz-mono">${E(a.indicator.code)}</span> ${E(a.indicator.name)}`},
       {label: 'Unit', render: a => E(MZ.unitName(a.org_unit_code))},
-      {label: 'Submits', render: a => E(a.contributor || 'Any contributor')},
-      {label: 'Verifies', render: a => E(a.reviewer || (c.require_verification ? 'Any reviewer' : '—'))},
-      {label: 'Approves', render: a => E(a.approver || 'Any approver')},
+      {label: 'Submits', render: a => route(a, 'contributor', 'Any contributor')},
+      {label: 'Verifies', render: a => c.require_verification ? route(a, 'reviewer', 'Any reviewer') : '—'},
+      {label: 'Approves', render: a => route(a, 'approver', 'Any approver')},
       {label: 'Latest', num: true, render: a => a.latest ? (a.latest.value_state === 'reported' ? E(MZ.num(a.latest.value)) : MZ.badge(a.latest.value_state)) : '—'},
       {label: 'Status', render: a => MZ.badge(a.status) + (a.overdue ? ' ' + MZ.badge('overdue') : '')},
       {label: '', render: a => manager ? `<button class="mz-btn ghost" data-mz="assign" data-id="${a.id}" data-unit="${E(a.org_unit_code)}">People</button>` : ''}]})}`);
@@ -385,12 +398,19 @@ async function cycleDetail(manager){
     assign: async d => {
       const a = c.assignments.find(x => String(x.id) === d.id);
       const people = await MZ.api(`/api/platform/assignable-users?unit=${encodeURIComponent(d.unit)}`);
-      const opts = role => [{value: '', label: `(any ${role})`}, ...people.map(p => ({value: p.username, label: `${p.full_name || p.username} (${p.role})`}))];
-      const ok = await MZ.form({title: `People for ${a.indicator.code} · ${MZ.unitName(a.org_unit_code)}`, fields: [
-        {name: 'contributor', label: 'Submits', type: 'select', value: a.contributor || '', options: opts('contributor')},
-        {name: 'reviewer', label: 'Verifies', type: 'select', value: a.reviewer || '', options: opts('reviewer')},
-        {name: 'approver', label: 'Approves', type: 'select', value: a.approver || '', options: opts('approver')}],
-        onSubmit: v => MZ.api(`/api/strategy/assignments/${a.id}`, {method: 'PUT', body: {contributor: v.contributor || null, reviewer: v.reviewer || null, approver: v.approver || null}})});
+      // Offer only people who hold the step's role on this unit; keep a current value visible even if it no longer qualifies.
+      const opts = (role, current) => {
+        const able = people.filter(p => !p.read_only && ROLE_RANK[p.role] >= ROLE_RANK[role]);
+        const out = [{value: '', label: `(any ${role} on this unit)`}, ...able.map(p => ({value: p.username, label: `${p.full_name || p.username} (${p.role})`}))];
+        if(current && !able.some(p => p.username === current)) out.push({value: current, label: `${current} (cannot ${STEP_VERB[role]} for this unit)`});
+        return out;
+      };
+      const ok = await MZ.form({title: `People for ${a.indicator.code} · ${MZ.unitName(a.org_unit_code)}`,
+        intro: 'Each list shows only people who hold that role on this unit. Leave a step on “any” to ask the unit’s own role holders.', fields: [
+        {name: 'contributor', label: 'Submits', type: 'select', value: a.contributor || '', options: opts('contributor', a.contributor)},
+        ...(c.require_verification ? [{name: 'reviewer', label: 'Verifies', type: 'select', value: a.reviewer || '', options: opts('reviewer', a.reviewer)}] : []),
+        {name: 'approver', label: 'Approves', type: 'select', value: a.approver || '', options: opts('approver', a.approver)}],
+        onSubmit: v => MZ.api(`/api/strategy/assignments/${a.id}`, {method: 'PUT', body: Object.fromEntries(Object.entries(v).map(([k, x]) => [k, x || null]))})});
       if(ok) cycleDetail(manager);
     },
   });
@@ -402,11 +422,12 @@ const QUEUES = [['submit', 'To submit'], ['verify', 'To verify'], ['approve', 'T
 MZ.page('updates', async root => {
   const pending = MZ.takePending('updates');
   if(pending){ U.selected = pending.id; U.queue = 'all'; }
-  const counts = await Promise.all(QUEUES.slice(0, 4).map(([q]) => MZ.api(`/api/strategy/assignments?queue=${q}`).then(r => r.length).catch(() => 0)));
   MZ.html(root, `${MZ.header('Progress updates', 'Submit figures with their narrative and evidence; reviewers verify, approvers approve. Each submission is kept as a numbered revision that cannot be edited. “Pending”, “not applicable” and zero are different answers.')}
     <div id="up-tabs"></div><div class="mz-split" style="margin-top:12px"><div id="up-list"></div><section class="mz-card" id="up-detail" aria-live="polite"><div class="mz-empty">Select an update.</div></section></div>`);
-  const tabs = QUEUES.map(([k, l], i) => ({key: k, label: l, count: i < 4 ? counts[i] : undefined}));
+  // Queue counts are fetched on every load, so they follow each submit, return, verify or approval.
   const load = async () => {
+    const counts = await Promise.all(QUEUES.slice(0, 4).map(([q]) => MZ.api(`/api/strategy/assignments?queue=${q}`).then(r => r.length).catch(() => 0)));
+    const tabs = QUEUES.map(([k, l], i) => ({key: k, label: l, count: i < 4 ? counts[i] : undefined}));
     MZ.tabs(MZ.$('up-tabs'), tabs, U.queue, k => { U.queue = k; U.selected = null; load(); });
     const rows = await MZ.api(`/api/strategy/assignments?queue=${U.queue}`);
     MZ.html(MZ.$('up-list'), MZ.table({rows, rowId: a => a.id, selected: U.selected, empty: 'Nothing in this queue.', columns: [
@@ -447,8 +468,30 @@ MZ.page('updates', async root => {
     MZ.onAct(MZ.$('up-detail'), {
       submit: async () => {
         const auto = i.collection === 'automatic';
-        const ok = await MZ.form({title: `Submit ${i.code} for ${MZ.unitName(a.org_unit_code)}`, wide: true,
+        const links = i.evidence_required ? await MZ.api(`/api/platform/links?type=cycle_assignment&id=${a.id}`).catch(() => ({links: [], hidden: 0})) : {links: [], hidden: 0};
+        const linkedEvidence = links.hidden > 0 || links.links.some(l => l.relation === 'evidence' && l.direction === 'outgoing');
+        // The same range and evidence checks the server applies; the server stays the authority.
+        const failures = v => {
+          const out = [];
+          const value = auto ? a.published : v.value;
+          if(v.value_state === 'reported' && value != null && ((i.valid_min != null && value < i.valid_min) || (i.valid_max != null && value > i.valid_max)))
+            out.push(`${MZ.num(value)} is outside the valid range ${MZ.num(i.valid_min)} to ${MZ.num(i.valid_max)}.`);
+          if(i.evidence_required && !(v.evidence_note || '').trim() && !linkedEvidence)
+            out.push('Evidence is required for this indicator but none is given.');
+          return out;
+        };
+        const showChecks = (dlg, list) => {
+          const box = dlg.querySelector('[data-checks]');
+          const ack = dlg.querySelector('[name="f_acknowledge_checks"]');
+          if(!box || !ack) return;
+          box.hidden = !list.length;
+          box.innerHTML = list.length ? DOMPurify.sanitize(`<strong>This submission fails its checks.</strong><ul style="margin:6px 0 0 18px">${list.map(t => `<li>${E(t)}</li>`).join('')}</ul>Correct it, or tick the box below to submit it anyway. The failed checks are recorded on the revision for the reviewer.`) : '';
+          ack.closest('.adm-field').hidden = !list.length;
+          if(!list.length) ack.checked = false;
+        };
+        const ok = await MZ.form({title: `Submit ${i.code} for ${MZ.unitName(a.org_unit_code)}`, wide: true, submitLabel: latest ? 'Submit revision' : 'Submit update',
           intro: auto ? 'This indicator takes its value from connected systems; your submission adds the explanation.' : 'Leave the value blank only if it is pending or not applicable; a blank is never treated as zero.',
+          onChange: (_, v, dlg) => showChecks(dlg, failures(v)),
           fields: [
             {name: 'value_state', label: 'Answer', type: 'select', value: latest?.value_state || 'reported', options: [
               {value: 'reported', label: auto ? 'Use the published value' : 'A figure'}, {value: 'pending', label: 'Pending (figure not available yet)'}, {value: 'not_applicable', label: 'Not applicable this period'}]},
@@ -457,15 +500,24 @@ MZ.page('updates', async root => {
             {name: 'narrative', label: 'Narrative', type: 'textarea', value: latest?.narrative || ''},
             {name: 'variance_reason', label: 'Reason for any variance from target', type: 'textarea', value: latest?.variance_reason || ''},
             {name: 'corrective_action', label: 'Corrective action', type: 'textarea', value: latest?.corrective_action || ''},
-            {name: 'evidence_note', label: `Evidence${i.evidence_required ? ' (required)' : ''}`, type: 'textarea', rows: 2, value: latest?.evidence_note || '', help: 'Where the supporting evidence is. Documents can also be linked as evidence.'}],
-          onSubmit: v => MZ.api(`/api/strategy/assignments/${a.id}/submit`, {method: 'POST', body: v})});
-        if(ok){ MZ.toast(`Revision ${ok.submitted_revision} submitted.`, 'ok'); load(); }
+            {name: 'evidence_note', label: `Evidence${i.evidence_required ? ' (required)' : ''}`, type: 'textarea', rows: 2, value: latest?.evidence_note || '', help: 'Where the supporting evidence is. Documents can also be linked as evidence.'},
+            {name: 'checks', type: 'static', html: '<div class="mz-notice warn" data-checks role="status" hidden></div>'},
+            {name: 'acknowledge_checks', type: 'checkbox', label: 'Submit anyway: I confirm this figure, and the failed checks will be recorded on the revision.'}],
+          onSubmit: async (v, dlg) => {
+            try{ return await MZ.api(`/api/strategy/assignments/${a.id}/submit`, {method: 'POST', body: v}); }
+            catch(err){
+              // The server found a failure the form could not see (for example, evidence links): offer the acknowledgement.
+              if(err.status === 422 && /fails its checks/.test(err.message)) showChecks(dlg, [err.message.replace(/^This submission fails its checks: /, '').replace(/ Correct it,.*$/, '')]);
+              throw err;
+            }
+          }});
+        if(ok){ MZ.toast(`Revision ${ok.submitted_revision} submitted${ok.revisions?.[0]?.dqa?.some(r => r.result === 'fail') ? ' with failed checks recorded' : ''}.`, 'ok'); MZ.refreshUnread(); load(); }
       },
       tr: async d => {
         let reason = null;
         if(d.name === 'return' || d.name === 'reopen'){ const r = await MZ.reason({title: `${MZ.label(d.name)} update`, label: d.name === 'return' ? 'What needs correcting' : 'Reason for reopening an approved figure'}); if(!r) return; reason = r.reason; }
         await MZ.api(`/api/strategy/assignments/${a.id}/transition`, {method: 'POST', body: {name: d.name, reason}});
-        MZ.toast(d.name === 'approve' ? 'Approved and published.' : 'Done.', 'ok'); load();
+        MZ.toast(d.name === 'approve' ? 'Approved and published.' : 'Done.', 'ok'); MZ.refreshUnread(); load();
       },
       dqa: async () => {
         const ok = await MZ.form({title: 'Data-quality assessment', intro: 'Recorded against the latest revision. It never changes the submitted value.', fields: [

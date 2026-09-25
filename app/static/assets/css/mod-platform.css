@@ -51,6 +51,7 @@
 .mz-badge.danger{background:var(--ds-red-bg);color:#991b1b;border-color:var(--ds-red-border)}
 .mz-badge.info{background:var(--ds-blue-bg);color:#0b5f5e;border-color:var(--ds-blue-border)}
 .mz-badge.purple{background:var(--ds-purple-bg);color:#5b21b6;border-color:var(--ds-purple-border)}
+.mz-badge[hidden]{display:none}   /* display:inline-flex above would otherwise override the hidden attribute */
 
 .mz-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:10px;font:700 12px var(--ds-font);
   cursor:pointer;border:1px solid var(--ds-blue-border);background:var(--ds-blue-bg);color:#0b5f5e;white-space:nowrap}

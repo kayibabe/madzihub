@@ -30,6 +30,14 @@ def notify(db: Session, username: str | None, kind: str, title: str, *, body: st
     return True
 
 
+def resolve(db: Session, entity_type: str, entity_id, kinds: tuple[str, ...]) -> int:
+    """Mark unread notices about a record as read once the work they asked for is done."""
+    return (db.query(Notification)
+            .filter(Notification.entity_type == entity_type, Notification.entity_id == str(entity_id),
+                    Notification.kind.in_(kinds), Notification.read_at.is_(None))
+            .update({Notification.read_at: datetime.utcnow()}, synchronize_session=False))
+
+
 def notification_dict(n: Notification) -> dict:
     return {"id": n.id, "kind": n.kind, "title": n.title, "body": n.body, "entity_type": n.entity_type,
             "entity_id": n.entity_id, "created_at": n.created_at.isoformat() if n.created_at else None,

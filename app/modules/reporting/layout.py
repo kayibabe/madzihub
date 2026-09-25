@@ -98,22 +98,34 @@ def _trend_blocks(data: dict) -> list[dict]:
                                          _pct(t["achievement"]), _pct(t["completeness_pct"])] for t in trend]}]
 
 
-def _submission_rows(subs: list[dict], names: dict) -> list[list[str]]:
-    return [[s["indicator"], names.get(s["org_unit_code"], s["org_unit_code"]), _label(s["status"]),
-             (_n(s["value"]) if s["value_state"] == "reported" else _label(s["value_state"] or "no submission")),
+_UNAPPROVED = {"returned": "returned", "submitted": "not yet approved", "verified": "not yet approved"}
+
+
+def _value(s: dict, contract: int) -> str:
+    """A submission's value; from contract 2, a value that is not approved says so."""
+    if s["value_state"] != "reported":
+        return _label(s["value_state"] or "no submission")
+    note = _UNAPPROVED.get(s["status"]) if contract >= 2 else None
+    return f"{_n(s['value'])} ({note})" if note else _n(s["value"])
+
+
+def _submission_rows(subs: list[dict], names: dict, contract: int = 1) -> list[list[str]]:
+    return [[s["indicator"], names.get(s["org_unit_code"], s["org_unit_code"]), _label(s["status"]), _value(s, contract),
              _n(s["target"]), "Yes" if s["late"] else "", str(len(s["dq_fails"])), str(len(s["dq_warns"]))] for s in subs]
 
 
 def _variance_blocks(data: dict) -> list[dict]:
     subs = [s for s in data.get("submissions", []) if s["off_target"]]
     names = data.get("unit_names", {})
+    contract = data.get("submissions_contract", 1)
     if not subs:
         return [{"t": "h", "level": 2, "text": "Variance commentary"}, {"t": "p", "tone": "note", "text": "No submitted indicator is off target."}]
     return [{"t": "h", "level": 2, "text": "Variance commentary"},
             {"t": "table", "caption": "Indicators off target, with the submitter's explanation",
              "columns": ["Indicator", "Unit", "Value", "Target", "Variance reason", "Corrective action"], "num": [2, 3],
-             "rows": [[s["indicator"], names.get(s["org_unit_code"], s["org_unit_code"]), _n(s["value"]), _n(s["target"]),
-                       s["variance_reason"] or "Not explained", s["corrective_action"] or "—"] for s in subs]}]
+             "rows": [[s["indicator"], names.get(s["org_unit_code"], s["org_unit_code"]), _value(s, contract),
+                       _n(s["target"]), s["variance_reason"] or "Not explained", s["corrective_action"] or "—"]
+                      for s in subs]}]
 
 
 _FRESHNESS_TEXT = {"overdue": "Overdue", "failed": "Last run failed", "no_ingestion": "No ingestion recorded",
@@ -199,7 +211,7 @@ def build(meta: dict, data: dict, commentary: dict | None) -> list[dict]:
                    {"t": "h", "level": 2, "text": "Submissions"},
                    {"t": "table", "caption": "Every assignment in the period", "num": [3, 4, 6, 7],
                     "columns": ["Indicator", "Unit", "Status", "Value", "Target", "Late", "DQ fails", "DQ warnings"],
-                    "rows": _submission_rows(subs, data.get("unit_names", {}))}]
+                    "rows": _submission_rows(subs, data.get("unit_names", {}), data.get("submissions_contract", 1))}]
         issues = [[s["indicator"], data["unit_names"].get(s["org_unit_code"], s["org_unit_code"]), "Fail", x] for s in subs for x in s["dq_fails"]]
         issues += [[s["indicator"], data["unit_names"].get(s["org_unit_code"], s["org_unit_code"]), "Warning", x] for s in subs for x in s["dq_warns"]]
         blocks += [{"t": "h", "level": 2, "text": "Data-quality findings"},

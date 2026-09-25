@@ -335,6 +335,8 @@ class SubmitIn(BaseModel):
     variance_reason: Optional[str] = Field(default=None, max_length=10000)
     corrective_action: Optional[str] = Field(default=None, max_length=10000)
     evidence_note: Optional[str] = Field(default=None, max_length=5000)
+    # Submit although the value is out of range or required evidence is missing (recorded on the revision).
+    acknowledge_checks: bool = False
 
 
 class DqaIn(BaseModel):
@@ -363,8 +365,11 @@ def get_cycle(cycle_id: int, scope: Scope = Depends(get_scope), db: Session = De
     if c is None:
         raise NotFound("Reporting cycle not found.")
     _visible_plan(db, scope, c.plan_id)
+    # Strategy managers also see who will be asked at each step, to fix routing before the cycle opens.
+    people = service.People(db) if scope.has_function("strategy_manager") else None
     return {**service.cycle_dict(db, c, scope),
-            "assignments": [service.assignment_dict(db, a, scope) for a in service.assignment_query(db, scope, cycle_id=c.id)]}
+            "assignments": [service.assignment_dict(db, a, scope, people=people)
+                            for a in service.assignment_query(db, scope, cycle_id=c.id)]}
 
 
 @router.post("/cycles/{cycle_id}/generate")

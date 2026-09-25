@@ -9,6 +9,11 @@ Who may do what
   verifies; an approver approves. Nobody verifies or approves their own submission.
   A locked period or closed cycle refuses every change; an approved value is corrected
   only through a reasoned reopen.
+- Routing: a person named for a step must hold that step's role on the unit. Unnamed work
+  goes to the unit's closest holders of the role (see ``People``), and each hand-off
+  notifies the next actor and closes the notices that asked for the step just done.
+- A value outside the valid range, or missing required evidence, is submitted only with
+  the submitter's explicit acknowledgement; the failed checks stay on the revision.
 
 Values
 - Approved manual updates are published to ``metric_values`` under the "strategy-updates"
@@ -32,8 +37,8 @@ from app.platform import actions as platform_actions
 from app.platform import audit, entities, periods
 from app.platform.errors import Conflict, Forbidden, IllegalTransition, Invalid, NotFound
 from app.platform.models import Period
-from app.platform.notifications import REMINDER_PRODUCERS, notify
-from app.platform.scope import ROOT_ORG, Scope, check_unit, resolve_scope
+from app.platform.notifications import REMINDER_PRODUCERS, notify, resolve
+from app.platform.scope import ROOT_ORG, Scope, check_unit, closest_holders, resolve_scope, user_scopes
 from app.platform.workflow import Transition, Workflow, approval_history
 from app.modules.strategy.models import (
     DEFAULT_LABELS, DELIVERY_STATUSES, DELIVERY_TYPES, DQA_CHECKS, DQA_RESULTS, FREQUENCIES, NODE_TYPES,
@@ -110,6 +115,61 @@ def plan_visible(scope: Scope, plan: Plan) -> bool:
 
 def _period(db: Session, cycle: ReportingCycle) -> Period:
     return periods.get(db, cycle.period_id)
+
+
+# ── routing: who is asked to act ────────────────────────────────────────────
+
+STEP_ROLE = {"contributor": "contributor", "reviewer": "reviewer", "approver": "approver"}
+STEP_VERB = {"contributor": "submit", "reviewer": "verify", "approver": "approve"}
+# Notices that ask for a step; they are closed (marked read) once the step is done.
+ASKS_TO_SUBMIT = ("update_requested", "update_due_soon", "update_overdue", "update_returned")
+ASKS_TO_REVIEW = ("update_submitted", "update_verified")
+
+
+class People:
+    """Who can act on a unit, resolved once per request from every active user's grants."""
+
+    def __init__(self, db: Session):
+        self.db = db
+        self._scopes: dict[str, Scope] | None = None
+
+    @property
+    def scopes(self) -> dict[str, Scope]:
+        if self._scopes is None:
+            self._scopes = user_scopes(self.db)
+        return self._scopes
+
+    def can(self, username: str | None, unit: str, role: str) -> bool:
+        s = self.scopes.get(username or "")
+        return bool(s and s.can(unit, role))
+
+    def named(self, a: CycleAssignment, step: str) -> str | None:
+        """The person named for a step, if they can still do it; otherwise nobody in particular."""
+        who = getattr(a, step)
+        return who if who and self.can(who, a.org_unit_code, STEP_ROLE[step]) else None
+
+    def route(self, a: CycleAssignment, step: str, exclude=()) -> list[str]:
+        """The people to ask: the named person if they can act, else the unit's closest holders of the role."""
+        who = self.named(a, step)
+        if who and who not in exclude:
+            return [who]
+        return closest_holders(self.scopes, a.org_unit_code, STEP_ROLE[step], exclude=exclude)
+
+    def routing(self, a: CycleAssignment, cycle: ReportingCycle) -> dict:
+        """Per step: who is named, whether they can act, and who will actually be asked."""
+        out = {}
+        for step in ("contributor", "reviewer", "approver"):
+            if step == "reviewer" and not cycle.require_verification:
+                continue
+            who = getattr(a, step)
+            out[step] = {"named": who, "named_can_act": who is None or self.can(who, a.org_unit_code, STEP_ROLE[step]),
+                         "asked": self.route(a, step)}
+        return out
+
+
+def _ask(db: Session, people: list[str], kind: str, title: str, a: CycleAssignment, body: str | None = None) -> None:
+    for who in people:
+        notify(db, who, kind, title, body=body, entity_type="cycle_assignment", entity_id=a.id)
 
 
 # ── record types for links, comments and history ────────────────────────────
@@ -532,21 +592,27 @@ def create_cycle(db: Session, scope: Scope, plan_id: int, *, period_id: int, nam
 
 
 def generate_assignments(db: Session, scope: Scope, cycle_id: int) -> int:
-    """One assignment per active indicator of the cycle's frequency and per reporting unit."""
+    """One assignment per active indicator of the cycle's frequency and per reporting unit.
+
+    The indicator's owner submits for a unit only if they can contribute on it; otherwise
+    nobody is named and the unit's own contributors are asked.
+    """
     _manager(scope)
     cycle = _get(db, ReportingCycle, cycle_id, "Reporting cycle")
     if cycle.status == "closed":
         raise Conflict("The cycle is closed.")
     period = _period(db, cycle)
     existing = {(a.indicator_id, a.org_unit_code) for a in db.query(CycleAssignment).filter_by(cycle_id=cycle.id)}
+    people = People(db)
     created = 0
     for ind in db.query(Indicator).filter_by(plan_id=cycle.plan_id, status="active",
                                              frequency=period.period_type).order_by(Indicator.code):
         for unit in indicator_units(ind):
             if (ind.id, unit) in existing:
                 continue
+            owner = ind.owner if people.can(ind.owner, unit, "contributor") else None
             db.add(CycleAssignment(cycle_id=cycle.id, indicator_id=ind.id, org_unit_code=unit,
-                                   contributor=ind.owner, status="not_submitted"))
+                                   contributor=owner, status="not_submitted"))
             created += 1
     db.flush()
     if created:
@@ -563,10 +629,10 @@ def transition_cycle(db: Session, scope: Scope, cycle_id: int, name: str, reason
         raise Invalid("Generate the assignments before opening the cycle.")
     CYCLE_FLOW.apply(db, cycle, name, scope.username, reason=reason)
     if name == "open":
+        people = People(db)
         for a in db.query(CycleAssignment).filter_by(cycle_id=cycle.id, status="not_submitted"):
-            notify(db, a.contributor, "update_requested", f"Progress update requested: {cycle.name}",
-                   body=f"Due {cycle.due_on.isoformat()}." if cycle.due_on else None,
-                   entity_type="cycle_assignment", entity_id=a.id)
+            _ask(db, people.route(a, "contributor"), "update_requested", f"Progress update requested: {cycle.name}", a,
+                 body=f"Due {cycle.due_on.isoformat()}." if cycle.due_on else None)
     return cycle
 
 
@@ -575,9 +641,14 @@ def update_assignment(db: Session, scope: Scope, assignment_id: int, data: dict)
     a = _get(db, CycleAssignment, assignment_id, "Assignment")
     fields = ("contributor", "reviewer", "approver")
     before = audit.snapshot(a, fields)
+    people = People(db)
     for k in fields:
         if k in data:
-            setattr(a, k, _user_exists(db, data[k]))
+            who = _user_exists(db, data[k])
+            if who and not people.can(who, a.org_unit_code, STEP_ROLE[k]):
+                raise Invalid(f"{who} cannot {STEP_VERB[k]} for this unit: that needs the {STEP_ROLE[k]} role "
+                              "on it (read-only accounts cannot act).")
+            setattr(a, k, who)
     b, after = audit.changed(before, audit.snapshot(a, fields))
     if after:
         audit.record(db, scope.username, "cycle_assignment.assign", "cycle_assignment", a.id, before=b, after=after,
@@ -625,8 +696,22 @@ def previous_value(db: Session, ind: Indicator, unit: str, period: Period) -> di
     return series[-1] if series else None
 
 
+def blocking_failures(db: Session, a: CycleAssignment, ind: Indicator, value_state: str, value: float | None,
+                      evidence_note: str | None) -> list[tuple[str, str]]:
+    """Checks that stop a submission unless the submitter acknowledges them: (check, reason)."""
+    out = []
+    lo, hi = ind.valid_min, ind.valid_max
+    if value_state == "reported" and value is not None and (
+            (lo is not None and value < lo) or (hi is not None and value > hi)):
+        out.append(("range", f"{value:g} is outside the valid range "
+                             f"{'' if lo is None else f'{lo:g}'}–{'' if hi is None else f'{hi:g}'}."))
+    if ind.evidence_required and not (evidence_note or "").strip() and not _evidence_links(db, a.id):
+        out.append(("evidence", "Evidence is required for this indicator but none was supplied."))
+    return out
+
+
 def run_dqa(db: Session, a: CycleAssignment, cycle: ReportingCycle, ind: Indicator, period: Period,
-            upd: ProgressUpdate) -> list[DqaAssessment]:
+            upd: ProgressUpdate, acknowledged: bool = False) -> list[DqaAssessment]:
     """Automatic checks at submission. Results are recorded; the value is never changed."""
     out: list[tuple[str, str, str]] = []
     reported = upd.value_state == "reported"
@@ -635,13 +720,11 @@ def run_dqa(db: Session, a: CycleAssignment, cycle: ReportingCycle, ind: Indicat
         out.append(("timeliness", "warn", f"Submitted {days} day(s) after the due date ({cycle.due_on.isoformat()})."))
     else:
         out.append(("timeliness", "pass", "Submitted on time."))
+    fails = dict(blocking_failures(db, a, ind, upd.value_state, upd.value, upd.evidence_note))
+    ack = " The submitter acknowledged this and submitted anyway." if fails and acknowledged else ""
     if reported and (ind.valid_min is not None or ind.valid_max is not None):
-        lo, hi = ind.valid_min, ind.valid_max
-        if (lo is not None and upd.value < lo) or (hi is not None and upd.value > hi):
-            out.append(("range", "fail", f"{upd.value:g} is outside the valid range "
-                                         f"{'' if lo is None else f'{lo:g}'}–{'' if hi is None else f'{hi:g}'}."))
-        else:
-            out.append(("range", "pass", "Within the valid range."))
+        out.append(("range", "fail", fails["range"] + ack) if "range" in fails
+                   else ("range", "pass", "Within the valid range."))
     if upd.value_state == "pending":
         out.append(("completeness", "warn", "No figure yet: the value is pending."))
     elif reported:
@@ -651,11 +734,8 @@ def run_dqa(db: Session, a: CycleAssignment, cycle: ReportingCycle, ind: Indicat
         else:
             out.append(("completeness", "pass", "Required explanations present."))
     if ind.evidence_required:
-        has_links = bool(_evidence_links(db, a.id))
-        if not (upd.evidence_note or "").strip() and not has_links:
-            out.append(("evidence", "fail", "Evidence is required for this indicator but none was supplied."))
-        else:
-            out.append(("evidence", "pass", "Evidence supplied."))
+        out.append(("evidence", "fail", fails["evidence"] + ack) if "evidence" in fails
+                   else ("evidence", "pass", "Evidence supplied."))
     if reported:
         prev = previous_value(db, ind, a.org_unit_code, period)
         notes = []
@@ -684,7 +764,8 @@ def submit_update(db: Session, scope: Scope, assignment_id: int, data: dict) -> 
     if cycle.status != "open":
         raise Conflict("This cycle is not open for submissions.")
     periods.assert_open(db, period)
-    if not (a.contributor == scope.username or scope.can(a.org_unit_code, "contributor")) or scope.read_only:
+    if not scope.can(a.org_unit_code, "contributor"):
+        # Being named is not enough: the named person must still hold the role on the unit.
         raise Forbidden("Only the assigned contributor or a contributor on this unit can submit.")
     state = data.get("value_state") or "reported"
     if state not in VALUE_STATES:
@@ -707,6 +788,12 @@ def submit_update(db: Session, scope: Scope, assignment_id: int, data: dict) -> 
         value = None
     if state == "not_applicable" and not (data.get("narrative") or "").strip():
         raise Invalid("Explain why the indicator does not apply this period.")
+    fails = blocking_failures(db, a, ind, state, None if value is None else float(value), data.get("evidence_note"))
+    acknowledged = bool(fails and data.get("acknowledge_checks"))
+    if fails and not acknowledged:
+        raise Invalid("This submission fails its checks: " + " ".join(why for _, why in fails)
+                      + " Correct it, or confirm that you want to submit it anyway; the failed checks are recorded "
+                        "on the revision.")
     revision = (db.query(ProgressUpdate).filter_by(assignment_id=a.id).count()) + 1
     now = datetime.utcnow()
     upd = ProgressUpdate(assignment_id=a.id, revision=revision, value_state=state,
@@ -717,15 +804,19 @@ def submit_update(db: Session, scope: Scope, assignment_id: int, data: dict) -> 
                          late=bool(cycle.due_on and now.date() > cycle.due_on))
     db.add(upd)
     db.flush()
-    ASSIGNMENT_FLOW.apply(db, a, "submit", scope.username, org_unit_code=a.org_unit_code,
-                          extra_after={"revision": revision, "value_state": state, "value": upd.value},
+    extra = {"revision": revision, "value_state": state, "value": upd.value}
+    if acknowledged:
+        extra["acknowledged_checks"] = [check for check, _ in fails]
+    ASSIGNMENT_FLOW.apply(db, a, "submit", scope.username, org_unit_code=a.org_unit_code, extra_after=extra,
                           step="submit", decision="submitted")
     a.current_update_id = upd.id
-    run_dqa(db, a, cycle, ind, period, upd)
-    reviewer = a.reviewer if cycle.require_verification else a.approver
-    if reviewer and reviewer != scope.username:
-        notify(db, reviewer, "update_submitted", f"Progress update to review: {ind.code} {ind.name}",
-               entity_type="cycle_assignment", entity_id=a.id)
+    run_dqa(db, a, cycle, ind, period, upd, acknowledged=acknowledged)
+    # The request is answered; a resubmission also supersedes any review notice for the old revision.
+    resolve(db, "cycle_assignment", a.id, ASKS_TO_SUBMIT + ASKS_TO_REVIEW)
+    step = "reviewer" if cycle.require_verification else "approver"
+    _ask(db, People(db).route(a, step, exclude={scope.username}), "update_submitted",
+         f"Progress update to {'verify' if step == 'reviewer' else 'approve'}: {ind.code} {ind.name}", a,
+         body=f"Revision {revision} from {scope.username}.")
     return upd
 
 
@@ -791,12 +882,18 @@ def review_update(db: Session, scope: Scope, assignment_id: int, name: str, reas
                           extra_after={"revision": upd.revision if upd else None}, step=name, decision=decision)
     if name == "approve" and upd:
         _publish(db, scope.username, a, ind, period, upd)
-    if name == "verify" and a.approver and a.approver != scope.username:
-        notify(db, a.approver, "update_verified", f"Verified, awaiting approval: {ind.code} {ind.name}",
-               entity_type="cycle_assignment", entity_id=a.id)
-    if name in ("return", "reopen") and submitter:
-        notify(db, a.contributor or submitter, "update_returned", f"Returned for correction: {ind.code} {ind.name}",
-               body=reason, entity_type="cycle_assignment", entity_id=a.id)
+    # Close the notices that asked for this step, then ask whoever acts next.
+    resolve(db, "cycle_assignment", a.id, ASKS_TO_REVIEW)
+    people = People(db)
+    if name == "verify":
+        _ask(db, people.route(a, "approver", exclude={scope.username, submitter}), "update_verified",
+             f"Verified, awaiting approval: {ind.code} {ind.name}", a, body=f"Verified by {scope.username}.")
+    elif name in ("approve", "return", "reopen"):
+        # Tell the person who submitted, and the named contributor if someone else submitted for them.
+        told = {w for w in (submitter, people.named(a, "contributor")) if w and w != scope.username}
+        kind, title = (("update_approved", f"Approved: {ind.code} {ind.name}") if name == "approve" else
+                       ("update_returned", f"Returned for correction: {ind.code} {ind.name}"))
+        _ask(db, sorted(told), kind, title, a, body=reason)
     return a
 
 
@@ -829,19 +926,27 @@ def assignment_query(db: Session, scope: Scope, *, cycle_id: int | None = None, 
     cycles = {c.id: c for c in db.query(ReportingCycle).filter(ReportingCycle.id.in_({r.cycle_id for r in rows} or {0}))}
     out = []
     today = date.today()
+    people = People(db)
+
+    def mine_to_do(step: str) -> bool:
+        # Named work is the named person's; unnamed work (or work named to someone who can no
+        # longer do it) is open to everyone on the unit who holds the role.
+        if not scope.can(a.org_unit_code, STEP_ROLE[step]):
+            return False
+        named = getattr(a, step)
+        return named in (None, scope.username) or people.named(a, step) is None
+
     for a in rows:
         c = cycles[a.cycle_id]
         upd = _latest(db, a)
         mine = upd is not None and upd.submitted_by == scope.username
         if queue == "submit":
-            ok = c.status == "open" and a.status in ("not_submitted", "returned") and (
-                a.contributor == scope.username or (a.contributor is None and scope.can(a.org_unit_code, "contributor")))
+            ok = c.status == "open" and a.status in ("not_submitted", "returned") and mine_to_do("contributor")
         elif queue == "verify":
-            ok = c.require_verification and a.status == "submitted" and not mine and \
-                scope.can(a.org_unit_code, "reviewer") and (a.reviewer in (None, scope.username))
+            ok = c.require_verification and a.status == "submitted" and not mine and mine_to_do("reviewer")
         elif queue == "approve":
             ok = a.status == ("verified" if c.require_verification else "submitted") and not mine and \
-                scope.can(a.org_unit_code, "approver") and (a.approver in (None, scope.username))
+                mine_to_do("approver")
         elif queue == "overdue":
             ok = c.status == "open" and a.status in ("not_submitted", "returned") and c.due_on is not None and c.due_on < today
         else:
@@ -851,7 +956,9 @@ def assignment_query(db: Session, scope: Scope, *, cycle_id: int | None = None, 
     return out
 
 
-def assignment_dict(db: Session, a: CycleAssignment, scope: Scope, detail: bool = False) -> dict:
+def assignment_dict(db: Session, a: CycleAssignment, scope: Scope, detail: bool = False,
+                    people: People | None = None) -> dict:
+    """``people`` adds who is asked at each step (for the cycle table, where managers fix routing)."""
     cycle = db.get(ReportingCycle, a.cycle_id)
     ind = db.get(Indicator, a.indicator_id)
     period = db.get(Period, cycle.period_id)
@@ -872,6 +979,8 @@ def assignment_dict(db: Session, a: CycleAssignment, scope: Scope, detail: bool 
          "latest": None if upd is None else update_dict(upd),
          "off_target": off_target(ind.polarity, upd.value if upd else None, target)}
     d["allowed"] = _allowed(scope, a, cycle, upd)
+    if people is not None:
+        d["routing"] = people.routing(a, cycle)
     if detail:
         d["revisions"] = [update_dict(u, db) for u in db.query(ProgressUpdate).filter_by(assignment_id=a.id)
                           .order_by(ProgressUpdate.revision.desc())]
@@ -891,8 +1000,8 @@ def _allowed(scope: Scope, a: CycleAssignment, cycle: ReportingCycle, upd: Progr
         return []
     out = []
     mine = upd is not None and upd.submitted_by == scope.username
-    if cycle.status == "open" and a.status in ("not_submitted", "returned", "submitted") and (
-            a.contributor == scope.username or scope.can(a.org_unit_code, "contributor")):
+    if cycle.status == "open" and a.status in ("not_submitted", "returned", "submitted") and \
+            scope.can(a.org_unit_code, "contributor"):
         out.append("submit")
     if a.status == "submitted" and cycle.require_verification and not mine and scope.can(a.org_unit_code, "reviewer"):
         out.append("verify")
@@ -1053,19 +1162,21 @@ def my_work(db: Session, scope: Scope) -> dict:
 
 def _update_reminders(db: Session, today: date) -> int:
     sent = 0
+    people = People(db)
     for c in db.query(ReportingCycle).filter_by(status="open"):
         if not c.due_on:
             continue
         for a in db.query(CycleAssignment).filter(CycleAssignment.cycle_id == c.id,
                                                   CycleAssignment.status.in_(("not_submitted", "returned"))):
-            if c.due_on < today:
-                sent += notify(db, a.contributor, "update_overdue", f"Overdue progress update: {c.name}",
-                               body=f"Was due {c.due_on.isoformat()}.", entity_type="cycle_assignment",
-                               entity_id=a.id, dedupe_key=f"assignment:{a.id}:overdue:{today.isoformat()}")
-            elif c.due_on <= today + timedelta(days=5):
-                sent += notify(db, a.contributor, "update_due_soon", f"Progress update due {c.due_on.isoformat()}",
-                               body=c.name, entity_type="cycle_assignment", entity_id=a.id,
-                               dedupe_key=f"assignment:{a.id}:due:{c.due_on.isoformat()}")
+            for who in people.route(a, "contributor"):
+                if c.due_on < today:
+                    sent += notify(db, who, "update_overdue", f"Overdue progress update: {c.name}",
+                                   body=f"Was due {c.due_on.isoformat()}.", entity_type="cycle_assignment",
+                                   entity_id=a.id, dedupe_key=f"assignment:{a.id}:overdue:{today.isoformat()}")
+                elif c.due_on <= today + timedelta(days=5):
+                    sent += notify(db, who, "update_due_soon", f"Progress update due {c.due_on.isoformat()}",
+                                   body=c.name, entity_type="cycle_assignment", entity_id=a.id,
+                                   dedupe_key=f"assignment:{a.id}:due:{c.due_on.isoformat()}")
     return sent
 
 

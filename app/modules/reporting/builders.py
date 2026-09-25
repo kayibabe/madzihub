@@ -136,6 +136,7 @@ def freeze(db: Session, scope: Scope, kind: str, plan_id: int | None, period: Pe
         data["trend"] = trend_section(db, plan_id, period, unit)
     if kind in ("board_pack", "submission_dq", "exceptions"):
         data["submissions"] = submissions_section(db, scope, plan_id, period, units)
+        data["submissions_contract"] = 2   # values not yet approved are labelled; older frozen reports render as approved
     if kind in ("board_pack", "exceptions"):
         data["actions"] = actions_section(db, scope, units)
     if kind == "exceptions":

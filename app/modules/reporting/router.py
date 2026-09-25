@@ -24,9 +24,11 @@ from app.database import get_db
 from app.modules.reporting import service
 from app.modules.reporting.models import ReportTemplate
 from app.platform.errors import NotFound
+from app.platform.router import MY_WORK_PROVIDERS
 from app.platform.scope import Scope, get_scope
 
 router = APIRouter(prefix="/api/reports-hub", tags=["Reporting hub"])
+MY_WORK_PROVIDERS.append(service.my_work)
 
 
 class InstanceIn(BaseModel):

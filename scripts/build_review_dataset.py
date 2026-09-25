@@ -116,6 +116,7 @@ def build(out: Path) -> dict:
     from app.core.tenant import tenant
     from app.integration import pipeline
     from app.integration.models import DataSource
+    from app.platform import periods
     from app.platform.bootstrap import at_startup
     from scripts.seed_fiscal_years import seed as seed_fiscal_years
     from tests.fixtures import populated_year
@@ -133,6 +134,10 @@ def build(out: Path) -> dict:
     with database.SessionLocal() as db:
         populated_year.load(db, database.Record)
         _sources(db)
+        # Platform reporting periods for the populated year too, so cycles and governed
+        # reports can be opened for it without a manual Setup step (the catalogue's
+        # fiscal years above are a separate calendar).
+        periods.ensure_fiscal_year(db, populated_year.POPULATED_FY)
         db.commit()
         count = db.query(database.Record).count()
         # Publish the returns to the measure catalogue (Strategic Position) the way an

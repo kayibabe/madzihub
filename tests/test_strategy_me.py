@@ -234,13 +234,29 @@ class QuarterlyReviewTests(StrategyFixture):
                    if a["indicator"]["id"] == ev["id"])
         overdue = self.get("/api/strategy/assignments?queue=overdue", self.nick)
         self.assertIn(aid, [a["id"] for a in overdue])
-        out = self.post(f"/api/strategy/assignments/{aid}/submit", self.nick, {"value": 140}, 201)
+        # Out of range and without evidence: refused unless the submitter acknowledges it (RJ-03).
+        r = self.c.post(f"/api/strategy/assignments/{aid}/submit", headers=self.nick, json={"value": 140})
+        self.assertEqual(r.status_code, 422)
+        self.assertIn("140 is outside the valid range 0–100", r.json()["detail"])
+        self.assertIn("Evidence is required", r.json()["detail"])
+        self.assertEqual(self.get(f"/api/strategy/assignments/{aid}", self.nick)["revisions"], [])   # nothing saved
+        out = self.post(f"/api/strategy/assignments/{aid}/submit", self.nick,
+                        {"value": 140, "acknowledge_checks": True}, 201)
         dqa = {d["check"]: d for d in out["revisions"][0]["dqa"]}
         self.assertEqual(dqa["range"]["result"], "fail")
         self.assertEqual(dqa["evidence"]["result"], "fail")
+        self.assertIn("acknowledged", dqa["range"]["reason"])
         self.assertEqual(dqa["timeliness"]["result"], "warn")
         self.assertEqual(out["latest"]["value"], 140)        # recorded as submitted, never adjusted
         self.assertTrue(out["latest"]["late"])
+        hist = self.get(f"/api/platform/history?type=cycle_assignment&id={aid}", self.nora)
+        submit = [e for e in hist if (e["after"] or {}).get("revision") == 1 and e["action"].endswith("submit")][0]
+        self.assertEqual(submit["after"]["acknowledged_checks"], ["range", "evidence"])
+        # An in-range value with evidence needs no acknowledgement, and none is recorded.
+        out = self.post(f"/api/strategy/assignments/{aid}/submit", self.nick,
+                        {"value": 95, "evidence_note": "CRM export", "acknowledge_checks": True}, 201)
+        dqa = {d["check"]: d for d in out["revisions"][0]["dqa"]}
+        self.assertEqual((dqa["range"]["result"], dqa["evidence"]["result"]), ("pass", "pass"))
         self.assertEqual(self.status("post", f"/api/strategy/assignments/{aid}/dqa", self.nick,
                                      {"check": "reviewer", "result": "fail", "reason": "x"}), 403)
         out = self.post(f"/api/strategy/assignments/{aid}/dqa", self.nora,
@@ -262,6 +278,108 @@ class QuarterlyReviewTests(StrategyFixture):
         self.assertEqual([a["id"] for a in self.get("/api/platform/my-work", self.nora)["updates_to_verify"]], [north])
         notes = [n["kind"] for n in self.get("/api/platform/notifications", self.nora)]
         self.assertIn("update_submitted", notes)
+
+
+class RoutingTests(StrategyFixture):
+    """Slice 1c: work reaches people who can open it, and every hand-off asks the next actor."""
+
+    def notices(self, h, unread=True):
+        return [(n["kind"], n["entity_id"]) for n in
+                self.get(f"/api/platform/notifications?unread_only={'true' if unread else 'false'}", h)]
+
+    def set_contributor(self, aid, username):
+        """Name someone directly, as older data or a later loss of access can leave it."""
+        from app.modules.strategy.models import CycleAssignment
+        db = self.db()
+        try:
+            db.get(CycleAssignment, aid).contributor = username
+            db.commit()
+        finally:
+            db.close()
+
+    def test_owner_submits_only_where_they_have_access(self):
+        # RJ-01: the owner has North access only; South goes to South's own contributor.
+        self.put(f"/api/strategy/indicators/{self.ind['id']}", self.planner, {"owner": "nick"})
+        cycle, north, south = self.open_cycle()
+        rows = {a["id"]: a for a in self.get(f"/api/strategy/cycles/{cycle['id']}", self.planner)["assignments"]}
+        self.assertEqual((rows[north]["contributor"], rows[south]["contributor"]), ("nick", None))
+        self.assertEqual(rows[south]["routing"]["contributor"], {"named": None, "named_can_act": True, "asked": ["sam"]})
+        # South has no reviewer: its approver is asked before anyone organisation-wide.
+        self.assertEqual(rows[south]["routing"]["reviewer"]["asked"], ["sue"])
+        self.assertEqual(rows[north]["routing"]["approver"]["asked"], ["nate"])
+        self.assertEqual(self.notices(self.nick), [("update_requested", str(north))])
+        self.assertEqual(self.notices(self.sam), [("update_requested", str(south))])
+        for h in (self.sue, self.planner, self.nora):      # higher roles are not asked to submit
+            self.assertEqual(self.notices(h), [])
+        self.assertEqual([a["id"] for a in self.get("/api/platform/my-work", self.sam)["updates_to_submit"]], [south])
+        self.assertNotIn(south, [a["id"] for a in self.get("/api/platform/my-work", self.nick)["updates_to_submit"]])
+        # Routing is visible to strategy managers only.
+        self.assertNotIn("routing", self.get(f"/api/strategy/cycles/{cycle['id']}", self.sam)["assignments"][0])
+
+    def test_named_person_without_access_is_flagged_and_bypassed(self):
+        cycle, north, south = self.open_cycle()
+        self.set_contributor(south, "nick")              # e.g. generated before this fix
+        row = next(a for a in self.get(f"/api/strategy/cycles/{cycle['id']}", self.planner)["assignments"]
+                   if a["id"] == south)
+        self.assertEqual(row["routing"]["contributor"], {"named": "nick", "named_can_act": False, "asked": ["sam"]})
+        self.assertNotIn(south, [a["id"] for a in self.get("/api/strategy/assignments?queue=submit", self.nick)])
+        self.assertIn(south, [a["id"] for a in self.get("/api/strategy/assignments?queue=submit", self.sam)])
+        self.assertEqual(self.status("post", f"/api/strategy/assignments/{south}/submit", self.nick, {"value": 30}), 404)
+        # Only people holding the step's role on the unit can be named; read-only accounts never.
+        for body in ({"contributor": "nick"}, {"reviewer": "sam"}, {"approver": "nora"}):
+            r = self.c.put(f"/api/strategy/assignments/{south if 'contributor' in body else north}",
+                           headers=self.planner, json=body)
+            self.assertEqual(r.status_code, 422, body)
+        r = self.c.put(f"/api/strategy/assignments/{north}", headers=self.planner, json={"contributor": "vic"})
+        self.assertEqual(r.status_code, 422)
+        self.assertIn("read-only", r.json()["detail"])
+        self.put(f"/api/strategy/assignments/{south}", self.planner, {"contributor": "sam", "approver": "sue"})
+        self.put(f"/api/strategy/assignments/{north}", self.planner, {"contributor": "nora"})   # reviewers may submit
+
+    def test_each_hand_off_asks_the_next_actor_and_closes_the_request(self):
+        # RJ-02, South: submit -> sue verifies (no South reviewer) -> planner approves (no other approver).
+        cycle, north, south = self.open_cycle()
+        url = f"/api/strategy/assignments/{south}"
+        self.post(f"{url}/submit", self.sam, {"value": 30}, 201)
+        self.assertEqual(self.notices(self.sam), [])                       # the request is answered
+        self.assertEqual(self.notices(self.sue), [("update_submitted", str(south))])
+        self.assertEqual(self.get("/api/platform/me", self.sue)["unread_notifications"], 1)
+        self.post(f"{url}/transition", self.sue, {"name": "verify"})
+        self.assertEqual(self.notices(self.sue), [])
+        self.assertEqual(self.notices(self.planner), [("update_verified", str(south))])
+        self.post(f"{url}/transition", self.planner, {"name": "approve"})
+        self.assertEqual(self.notices(self.planner), [])
+        self.assertEqual(self.notices(self.sam), [("update_approved", str(south))])
+
+        # North: a return reaches the person who actually submitted, with the reason.
+        url = f"/api/strategy/assignments/{north}"
+        self.put(url, self.planner, {"contributor": "nick"})
+        self.post("/api/platform/notifications/read-all", self.nick)
+        self.post(f"{url}/submit", self.nate, {"value": 29}, 201)           # an approver submits for the unit
+        self.assertEqual(self.notices(self.nora), [("update_submitted", str(north))])
+        self.assertEqual(self.notices(self.nate), [])                       # never asked to review their own
+        self.post(f"{url}/transition", self.nora, {"name": "return", "reason": "Use the audited figure"})
+        returned = self.get("/api/platform/notifications?unread_only=true", self.nate)
+        self.assertEqual([(n["kind"], n["body"]) for n in returned], [("update_returned", "Use the audited figure")])
+        self.assertEqual([n["kind"] for n in self.get("/api/platform/notifications?unread_only=true", self.nick)],
+                         ["update_returned"])                                # and the named contributor
+        self.assertEqual(self.notices(self.nora), [])
+        # A resubmission closes the return notices and asks the reviewer again.
+        self.post(f"{url}/submit", self.nick, {"value": 28}, 201)
+        self.assertEqual(self.notices(self.nick), [])
+        self.assertEqual(self.notices(self.nora), [("update_submitted", str(north))])
+
+    def test_reminders_follow_routing(self):
+        from app.platform.notifications import run_reminders
+        cycle, north, south = self.open_cycle(due_on=(date.today() + timedelta(days=2)).isoformat())
+        self.post("/api/platform/notifications/read-all", self.sam)
+        db = self.db()
+        try:
+            run_reminders(db)
+        finally:
+            db.close()
+        self.assertEqual(self.notices(self.sam), [("update_due_soon", str(south))])
+        self.assertEqual(self.notices(self.sue), [])
 
 
 class EvaluationTests(StrategyFixture):

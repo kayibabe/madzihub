@@ -104,9 +104,16 @@ MZ.loadMe = async function(force = false){
   MZ.me = me; MZ.units = units;
   applyNavVisibility();
   const badge = MZ.$('mz-nav-unread');
-  if(badge){ badge.textContent = me.unread_notifications || ''; badge.hidden = !me.unread_notifications; }
+  if(badge){
+    const n = me.unread_notifications || 0;
+    badge.textContent = n || '';
+    badge.hidden = !n;
+    badge.setAttribute('aria-label', `${n} unread notice${n === 1 ? '' : 's'}`);
+  }
   return me;
 };
+/* After a hand-off the unread count changes (notices are closed or created): refresh the badge. */
+MZ.refreshUnread = () => MZ.loadMe(true).catch(e => console.error(e));
 MZ.roleOn = code => {
   if(!MZ.me) return null;
   if(MZ.me.account_role === 'admin') return 'approver';
@@ -357,6 +364,21 @@ MZ.setOptions = (dlg, name, options, value) => {
   sel.innerHTML = DOMPurify.sanitize(options.map(o => `<option value="${MZ.esc(o.value)}">${MZ.esc(o.label)}</option>`).join(''));
   if(options.some(o => String(o.value) === String(keep))) sel.value = keep;
 };
+/* Period pickers list only periods that exist on the platform calendar. Say which fiscal years
+   that covers, and how to add another, so a missing year is not a dead end. */
+MZ.periodsIntro = periods => {
+  const years = [...new Set(periods.map(p => p.fiscal_year))].sort();
+  const label = y => periods.find(p => p.fiscal_year === y && p.period_type === 'year')?.label || `FY ending ${y}`;
+  const canAdd = MZ.isAdmin() || MZ.hasFunction('strategy_manager');
+  const have = years.length ? `Periods available here: ${years.map(y => MZ.esc(label(y))).join(', ')}.` : '<strong>No reporting periods are available here yet.</strong>';
+  const how = canAdd ? ' To use another fiscal year, first add its periods under <button type="button" class="mz-link" data-goto-periods>Setup › Reporting periods</button>.'
+    : ' To use another fiscal year, ask an administrator or strategy manager to add its periods under Setup › Reporting periods.';
+  return have + how;
+};
+MZ.bindPeriodsLink = (_name, _values, dlg) => {
+  const link = dlg.querySelector('[data-goto-periods]');
+  if(link && !link.__mzBound){ link.__mzBound = true; link.addEventListener('click', () => { dlg.close(); navigate('periods'); }); }
+};
 MZ.reason = ({title, label = 'Reason', required = true, submitLabel = 'Confirm', intro = ''}) =>
   MZ.form({title, intro, submitLabel, fields: [{name: 'reason', label, type: 'textarea', required}],
            onSubmit: v => ({reason: v.reason || ''})});
@@ -471,6 +493,7 @@ MZ.page('my-work', async root => {
     'read': async d => { await MZ.api(`/api/platform/notifications/${d.id}/read`, {method: 'POST'}); MZ.refresh('my-work'); },
     'open-note': async d => {
       await MZ.api(`/api/platform/notifications/${d.id}/read`, {method: 'POST'});
+      MZ.refreshUnread();
       const page = MZ.entityPages[d.type];
       if(page) MZ.open(page, d.type, d.eid); else MZ.refresh('my-work');
     },

@@ -30,7 +30,8 @@ from app.modules.scorecard import engine
 from app.modules.scorecard.service import score_gap
 from app.platform import audit, entities, filestore, periods
 from app.platform.errors import Conflict, Forbidden, Invalid, NotFound
-from app.platform.scope import Scope, check_unit
+from app.platform.notifications import notify, resolve
+from app.platform.scope import Scope, check_unit, closest_holders, user_scopes
 from app.platform.workflow import Transition, Workflow, approval_history
 
 FLOW = Workflow("report_instance", ("draft", "in_review", "approved", "published", "withdrawn"), [
@@ -214,7 +215,39 @@ def transition(db: Session, scope: Scope, inst_id: int, name: str, reason: str |
     if name == "approve":
         for fmt in FORMATS:        # render and store the approved outputs once
             _stored_output(db, inst, fmt, scope.username)
+    _hand_off(db, scope, inst, name, reason)
     return inst
+
+
+def approvers(db: Session, inst: ReportInstance) -> list[str]:
+    """Who is asked to approve: the unit's closest approvers other than the author, else the report
+    managers who can see the unit (a notice must lead to a report its reader can open)."""
+    scopes = user_scopes(db)
+    authors = {inst.created_by, inst.submitted_by}
+    asked = closest_holders(scopes, inst.org_unit_code, "approver", exclude=authors)
+    return asked or sorted(n for n, s in scopes.items() if n not in authors and s.has_function("report_manager")
+                           and not s.read_only and s.can_see(inst.org_unit_code))
+
+
+def _hand_off(db: Session, scope: Scope, inst: ReportInstance, name: str, reason: str | None) -> None:
+    """Close the review request once decided, and tell the next person (approvers on submit, authors after)."""
+    if name in ("approve", "return"):
+        resolve(db, "report_instance", inst.id, ("report_submitted",))
+    if name == "submit":
+        for who in approvers(db, inst):
+            notify(db, who, "report_submitted", f"Report to approve: {inst.title}"[:200],
+                   body=f"Submitted by {scope.username}.", entity_type="report_instance", entity_id=inst.id)
+    elif name in ("approve", "return"):
+        for who in sorted({inst.created_by, inst.submitted_by} - {None, scope.username}):
+            notify(db, who, f"report_{'approved' if name == 'approve' else 'returned'}",
+                   f"Report {'approved' if name == 'approve' else 'returned'}: {inst.title}"[:200],
+                   body=reason, entity_type="report_instance", entity_id=inst.id)
+
+
+def my_work(db: Session, scope: Scope) -> dict:
+    """Reports in review that this person may approve (not their own)."""
+    rows = [instance_dict(db, r, scope) for r in visible(db, scope, "in_review")]
+    return {"reports_to_approve": [d for d in rows if "approve" in d["allowed"]]}
 
 
 def _meta(db: Session, inst: ReportInstance) -> dict:

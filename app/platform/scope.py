@@ -185,6 +185,27 @@ async def require_org_wide(scope: Scope = Depends(get_scope)) -> Scope:
     return scope
 
 
+def user_scopes(db: Session) -> dict[str, Scope]:
+    """Every active user's scope, keyed by username (for routing work to people)."""
+    return {u.username: resolve_scope(db, u) for u in db.query(User).filter(User.is_active.is_(True))}
+
+
+def closest_holders(scopes: dict[str, Scope], unit: str, role: str, exclude=()) -> list[str]:
+    """The people who should be asked to act as ``role`` on ``unit``: those who can, closest first.
+
+    Holders granted on the unit (or a unit above it) come before organisation-wide holders,
+    and the lowest sufficient role before higher ones, so a unit's own contributor is asked
+    before its approver and a unit approver before an organisation-wide one. Only the
+    closest group is returned; nobody is asked when nobody can act.
+    """
+    able = [(s.org_wide, ROLE_RANK[s.role_on(unit)], name) for name, s in scopes.items()
+            if name not in exclude and s.can(unit, role)]
+    if not able:
+        return []
+    best = min((w, r) for w, r, _ in able)
+    return sorted(name for w, r, name in able if (w, r) == best)
+
+
 def check_unit(db: Session, code: str) -> str:
     """A unit code that exists (or the root), for records being created or moved."""
     code = (code or "").strip()

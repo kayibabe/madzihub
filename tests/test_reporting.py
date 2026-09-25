@@ -192,5 +192,65 @@ class DraftAndScopeTests(ReportingFixture):
         self.assertIn("Indicators off target", blocks_html)
 
 
+class HandOffAndLabelTests(ReportingFixture):
+    """Slice 1c: reports in review reach approvers (RJ-02); unapproved values say so (RJ-04)."""
+
+    def unread(self, h):
+        return [(n["kind"], n["entity_id"], n["body"]) for n in
+                self.get("/api/platform/notifications?unread_only=true", h)]
+
+    def test_report_in_review_reaches_approvers_and_their_my_work(self):
+        r = self.new("submission_dq", self.nora)
+        url = f"/api/reports-hub/instances/{r['id']}"
+        for h in (self.nate, self.nora, self.planner):
+            self.post("/api/platform/notifications/read-all", h)
+        self.post(f"{url}/transition", self.nora, {"name": "submit"})
+        # North's own approver is asked; organisation-wide approvers are not notified.
+        self.assertEqual(self.unread(self.nate), [("report_submitted", str(r["id"]), "Submitted by nora.")])
+        self.assertEqual(self.unread(self.planner), [])
+        self.assertEqual([x["id"] for x in self.get("/api/platform/my-work", self.nate)["reports_to_approve"]], [r["id"]])
+        self.assertEqual(self.get("/api/platform/my-work", self.nora)["reports_to_approve"], [])   # the author
+        self.assertEqual(self.get("/api/platform/my-work", self.nick)["reports_to_approve"], [])
+        self.post(f"{url}/transition", self.nate, {"name": "return", "reason": "Add the commentary"})
+        self.assertEqual(self.unread(self.nate), [])                       # request closed
+        self.assertEqual(self.unread(self.nora), [("report_returned", str(r["id"]), "Add the commentary")])
+        self.assertEqual(self.get("/api/platform/my-work", self.nate)["reports_to_approve"], [])
+
+    def test_report_managers_are_asked_when_the_unit_has_no_other_approver(self):
+        from tests._access import add_user
+        rita = add_user(self.database, self.auth, "rita", "user", {"org": "viewer"}, functions=("report_manager",))
+        rex = add_user(self.database, self.auth, "rex", "user", {"south": "viewer"}, functions=("report_manager",))
+        db = self.db()
+        try:                                     # leave the author (planner) as Central's only approver
+            for admin in db.query(self.database.User).filter_by(role="admin"):   # boss and the default admin
+                admin.is_active = False
+            db.commit()
+        finally:
+            db.close()
+        r = self.new("submission_dq", self.planner, unit="central")
+        self.post(f"/api/reports-hub/instances/{r['id']}/transition", self.planner, {"name": "submit"})
+        self.assertEqual(self.unread(rita), [("report_submitted", str(r["id"]), "Submitted by planner.")])
+        self.assertEqual(self.unread(rex), [])       # cannot see Central, so is not asked
+        self.assertEqual([x["id"] for x in self.get("/api/platform/my-work", rita)["reports_to_approve"]], [r["id"]])
+
+    def test_returned_and_unapproved_values_are_labelled(self):
+        nrw = self.assign[self.i_nrw]
+        self.post(f"/api/strategy/assignments/{nrw}/transition", self.nate,
+                  {"name": "reopen", "reason": "Meter reading under review"})
+        html = self.out(self.new("submission_dq")["id"], "html", self.planner).text
+        self.assertIn("30 (returned)", html)
+        self.assertIn(">99<", html)                                  # approved: the bare value
+        self.assertNotIn("99 (", html)
+        self.post(f"/api/strategy/assignments/{nrw}/submit", self.nick, {"value": 27, "variance_reason": "x"}, 201)
+        html = self.out(self.new("exceptions")["id"], "html", self.planner).text
+        self.assertIn("27 (not yet approved)", html)
+        # Reports frozen before the label existed render exactly as they were approved.
+        from app.modules.reporting import layout
+        sub = {"indicator": "NRW NRW", "org_unit_code": "north", "status": "returned", "value_state": "reported",
+               "value": 30.0, "target": 25.0, "late": False, "dq_fails": [], "dq_warns": []}
+        self.assertEqual(layout._submission_rows([sub], {})[0][3], "30")
+        self.assertEqual(layout._submission_rows([sub], {}, 2)[0][3], "30 (returned)")
+
+
 if __name__ == "__main__":
     unittest.main()
