@@ -15,7 +15,7 @@ from app.platform.models import Comment, EntityLink
 from app.platform.scope import Scope
 
 RELATIONS = ("related", "supports", "contributes_to", "evidence", "mitigates", "treats",
-             "responds_to", "supersedes", "derived_from", "implements")
+             "responds_to", "supersedes", "derived_from", "implements", "affects")
 
 
 def add_link(db: Session, scope: Scope, from_type: str, from_id, to_type: str, to_id, *,

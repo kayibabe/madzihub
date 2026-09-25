@@ -23,7 +23,7 @@ DEMO_USERS = [
     ("north.ops", "Nia North (demo)", "user", {"north": "contributor"}, ()),
     ("north.mgr", "Noah North (demo)", "user", {"north": "reviewer"}, ()),
     ("south.mgr", "Sade South (demo)", "user", {"south": "approver"}, ()),
-    ("auditor", "Ada Auditor (demo)", "viewer", {"org": "viewer"}, ("auditor",)),
+    ("auditor", "Ada Auditor (demo)", "user", {"org": "viewer"}, ("auditor",)),
     ("board", "Ben Board (demo)", "viewer", {"org": "viewer"}, ()),
 ]
 
@@ -214,7 +214,40 @@ def _demo_docx(text: str) -> bytes:
     return buf.getvalue()
 
 
-STEPS += [_tree, _users, _actions, _strategy, _scorecard, _reports, _documents]
+def _governance(db: Session) -> None:
+    from app.modules.governance import service as gv
+    from app.modules.governance.models import Meeting, RiskMatrix
+
+    if db.query(RiskMatrix).count() or db.query(Meeting).count():
+        return
+    admin = _admin_scope(db)
+    t = gv.matrix_template(4, 4)
+    t["name"] = "Demo utility risk criteria (4 x 4)"
+    t["likelihood_levels"] = [{"value": v, "label": lbl} for v, lbl in
+                              enumerate(("Unlikely", "Possible", "Likely", "Almost certain"), start=1)]
+    t["impact_levels"] = [{"value": v, "label": lbl} for v, lbl in
+                          enumerate(("Minor", "Moderate", "Major", "Severe"), start=1)]
+    m = gv.save_matrix(db, admin, t)
+    gv.activate_matrix(db, admin, m.id)
+    gv.create_risk(db, _as(db, "north.ops"), {
+        "title": "Prolonged power outage at Hilltop pumping station", "org_unit_code": "north.hilltop",
+        "category": "Operational", "cause": "Grid instability", "consequence": "Supply interruption to 4,000 customers",
+        "inherent_l": 3, "inherent_i": 4, "residual_l": 2, "residual_i": 3, "review_date": date.today() + timedelta(days=60)})
+    gv.create_risk(db, _as(db, "south.mgr"), {
+        "title": "Revenue loss from illegal connections", "org_unit_code": "south", "category": "Financial",
+        "inherent_l": 4, "inherent_i": 3, "residual_l": 3, "residual_i": 3, "review_date": date.today() + timedelta(days=30)})
+    meeting = gv.create_meeting(db, admin, body="Board", title="Quarterly board meeting",
+                                meeting_date=date.today() - timedelta(days=7))
+    gv.transition_meeting(db, admin, meeting.id, "hold")
+    gv.add_resolution(db, admin, meeting.id, text="Management to present a costed NRW reduction programme.",
+                      owner="planner", org_unit_code="org", due_date=date.today() + timedelta(days=45))
+    gv.create_finding(db, _as(db, "auditor"), {
+        "audit_name": "2026 revenue assurance audit (demo)", "title": "Bulk customer accounts not reconciled monthly",
+        "rating": "high", "owner": "south.mgr", "org_unit_code": "south",
+        "recommendation": "Reconcile bulk customer accounts against meter readings every month."})
+
+
+STEPS += [_tree, _users, _actions, _strategy, _scorecard, _reports, _documents, _governance]
 
 
 def run(db: Session) -> dict[str, str]:

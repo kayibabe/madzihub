@@ -431,7 +431,7 @@ function keyboardNav(){
 }
 document.addEventListener('keydown', e => {
   if(e.key !== 'Enter' && e.key !== ' ') return;
-  const el = e.target.closest && e.target.closest('#db-nav .nav-item[data-page]');
+  const el = e.target.closest && e.target.closest('#db-nav .nav-item[data-page], #db-nav .nav-item[role="link"]');
   if(el && e.target === el){ e.preventDefault(); el.click(); }
 });
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', keyboardNav); else keyboardNav();

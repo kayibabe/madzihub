@@ -323,3 +323,48 @@ not included). Results and snippets only ever come from documents the reader may
 
 Retention schedules, legal holds and disposal are **not** automated in this release: they need
 each utility's approved records schedule first.
+
+---
+
+## 6. Governance and risk
+
+**Pages:** Meetings & Resolutions · Audit Findings · Risk Register. **API:** `/api/governance/*`.
+The Board menu's Risk Register, Audit Findings and Board Resolutions entries open the same pages.
+
+### Meetings and resolutions (board secretary duty)
+
+    meeting:    scheduled → held → minutes approved (the minutes document must be attached)
+    resolution: open ─implement (owner, note)→ implemented ─close (secretary, not the owner)→ closed
+                open ─cancel (reason)→ cancelled;  reopen (reason) from implemented or closed
+
+Resolutions are numbered per body and year (e.g. `B/2026/001`). A resolution with an owner creates
+an owned, dated action linked back to it.
+
+### Audit findings — auditor and management kept apart
+
+    open ─respond (management)→ response submitted ─accept (auditor)→ agreed
+          ↑─────────── reject response (auditor, reason) ───────────┘
+    agreed ─request closure (management, note)→ closure requested ─validate (auditor)→ closed
+             ↑──────────── reject closure (auditor, reason) ─────────────┘
+    closed ─reopen (auditor, reason)→ agreed
+
+- Only people holding the **auditor** duty (granted explicitly; administrators do not act as
+  auditors) raise, rate and edit findings, accept responses and validate closure.
+- Only **management** — the named owner or an approver on the unit — responds (with an agreed
+  date) and asks for closure. Someone holding the auditor duty can never do that, and the owner can
+  never validate.
+- Accepting the response creates the follow-up action; a finding cannot be closed while any of its
+  actions is still open. Ratings: critical, high, medium, low.
+
+### Risk register
+
+- **Criteria are the organisation's own.** A risk manager defines a matrix: likelihood and impact
+  scales of any size (2–10 levels each, with your own labels), score bands (likelihood × impact) and
+  the appetite of each band (within, tolerance, outside). Templates are offered as starting points
+  only; nothing assumes a 5×5 grid and MadziHub makes no ISO 31000 certification claim. A matrix
+  with rated risks cannot be edited: create a new one and activate it.
+- Risks carry owner, unit, category, cause, consequence, review date, inherent and residual ratings
+  (every re-rating is kept in an append-only history with its reason), controls with their
+  effectiveness, **treatments as actions**, and links to the plan objectives they affect.
+- Owners are reminded of due and overdue reviews. Open risks outside appetite appear in exception
+  reports; the principal risks appear in the board pack.

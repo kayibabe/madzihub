@@ -9,3 +9,4 @@ from app.modules.strategy import models as _strategy  # noqa: F401
 from app.modules.scorecard import models as _scorecard  # noqa: F401
 from app.modules.reporting import models as _reporting  # noqa: F401
 from app.modules.documents import models as _documents  # noqa: F401
+from app.modules.governance import models as _governance  # noqa: F401

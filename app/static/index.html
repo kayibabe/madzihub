@@ -549,7 +549,7 @@
         <div class="nav-item nav-item-child" data-page="overview" data-section="Executive Dashboard" data-title="Executive Dashboard" onclick="navigate('overview')"><span class="nav-item-label">Executive Dashboard</span></div>
         <div class="nav-item nav-item-child" data-page="strategic" data-section="Board View" data-title="__PLAN_TITLE__ Scorecard" onclick="navigate('strategic')"><span class="nav-item-label">Strategic Plan Scorecard</span></div>
         <div class="nav-item nav-item-child" data-page="position" data-section="Board View" data-title="Strategic Position" onclick="navigate('position')"><span class="nav-item-label">Strategic Position</span></div>
-        <div class="nav-item nav-item-child nav-item-soon"><span class="nav-item-label">Risk Dashboard</span><span class="nav-soon">Soon</span></div>
+        <div class="nav-item nav-item-child" onclick="navigate('risks')" tabindex="0" role="link"><span class="nav-item-label">Risk Register</span></div>
         <div class="nav-item nav-item-child nav-item-soon"><span class="nav-item-label">Budget Performance</span><span class="nav-soon">Soon</span></div>
       </div>
 
@@ -571,8 +571,8 @@
       </div>
       <div class="nav-section collapsed" id="brdsec-governance" style="max-height:0">
         <div class="nav-item nav-item-child" data-page="compliance" data-section="Governance" data-title="Compliance &amp; Data Quality" data-admin-only="compliance" onclick="navigate('compliance')"><span class="nav-item-label">Compliance &amp; Data Quality</span></div>
-        <div class="nav-item nav-item-child nav-item-soon"><span class="nav-item-label">Audit Tracker</span><span class="nav-soon">Soon</span></div>
-        <div class="nav-item nav-item-child nav-item-soon"><span class="nav-item-label">Board Resolutions</span><span class="nav-soon">Soon</span></div>
+        <div class="nav-item nav-item-child" onclick="navigate('audit-findings')" tabindex="0" role="link"><span class="nav-item-label">Audit Findings</span></div>
+        <div class="nav-item nav-item-child" onclick="navigate('meetings')" tabindex="0" role="link"><span class="nav-item-label">Board Resolutions</span></div>
         <div class="nav-item nav-item-child nav-item-soon"><span class="nav-item-label">Regulatory Compliance</span><span class="nav-soon">Soon</span></div>
       </div>
 
@@ -780,6 +780,16 @@
         <div class="nav-item nav-item-child" data-page="schemes" data-section="Strategy &amp; M&amp;E" data-title="Scoring Schemes" onclick="navigate('schemes')"><span class="nav-item-label">Scoring Schemes</span></div>
         <div class="nav-item nav-item-child" data-page="reports-hub" data-section="Strategy &amp; M&amp;E" data-title="Reporting Hub" onclick="navigate('reports-hub')"><span class="nav-item-label">Reporting Hub</span></div>
         <div class="nav-item nav-item-child" data-page="documents" data-section="Strategy &amp; M&amp;E" data-title="Documents" onclick="navigate('documents')"><span class="nav-item-label">Documents</span></div>
+      </div>
+
+      <div class="nav-item nav-item-grouphead nav-item-top collapsible" id="pgvgrp-gov" onclick="toggleSidebarSection('pgvgrp-gov','pgvsec-gov',event)">
+        <span class="nav-item-main"><svg class="nav-item-icon nav-item-icon-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 21h16M6 18V10M10 18V10M14 18V10M18 18V10M3 10l9-6 9 6z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg><span class="nav-item-label">Governance &amp; Risk</span></span>
+        <button type="button" class="nav-grp-toggle" aria-expanded="true" aria-label="Toggle Governance and Risk section" onclick="toggleSidebarSection('pgvgrp-gov','pgvsec-gov',event)"><svg class="nav-grp-chevron" viewBox="0 0 10 10" fill="none"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+      <div class="nav-section" id="pgvsec-gov">
+        <div class="nav-item nav-item-child" data-page="meetings" data-section="Governance &amp; Risk" data-title="Meetings &amp; Resolutions" onclick="navigate('meetings')"><span class="nav-item-label">Meetings &amp; Resolutions</span></div>
+        <div class="nav-item nav-item-child" data-page="audit-findings" data-section="Governance &amp; Risk" data-title="Audit Findings" onclick="navigate('audit-findings')"><span class="nav-item-label">Audit Findings</span></div>
+        <div class="nav-item nav-item-child" data-page="risks" data-section="Governance &amp; Risk" data-title="Risk Register" onclick="navigate('risks')"><span class="nav-item-label">Risk Register</span></div>
       </div>
 
       <div class="nav-item nav-item-grouphead nav-item-top collapsible" id="pgvgrp-setup" onclick="toggleSidebarSection('pgvgrp-setup','pgvsec-setup',event)">
@@ -1101,6 +1111,9 @@
     <div id="page-schemes" class="db-page"><main class="mz-root" id="mz-schemes" aria-label="Scoring schemes"></main></div>
     <div id="page-reports-hub" class="db-page"><main class="mz-root" id="mz-reports-hub" aria-label="Reporting hub"></main></div>
     <div id="page-documents" class="db-page"><main class="mz-root" id="mz-documents" aria-label="Documents"></main></div>
+    <div id="page-meetings" class="db-page"><main class="mz-root" id="mz-meetings" aria-label="Meetings and resolutions"></main></div>
+    <div id="page-audit-findings" class="db-page"><main class="mz-root" id="mz-audit-findings" aria-label="Audit findings"></main></div>
+    <div id="page-risks" class="db-page"><main class="mz-root" id="mz-risks" aria-label="Risk register"></main></div>
 
     <div id="page-board" class="db-page">
       <div class="pg-hdr">
@@ -3479,6 +3492,7 @@
 <script src="/static/assets/js/mod-scorecard.js?v=20260925-2"></script>
 <script src="/static/assets/js/mod-reports.js?v=20260925-1"></script>
 <script src="/static/assets/js/mod-documents.js?v=20260925-1"></script>
+<script src="/static/assets/js/mod-governance.js?v=20260925-1"></script>
 
 <!-- ══ ATTRIBUTION FOOTER ════════════════════════════════════════════════ -->
 <div id="attr-footer">
