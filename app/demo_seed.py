@@ -247,7 +247,19 @@ def _governance(db: Session) -> None:
         "recommendation": "Reconcile bulk customer accounts against meter readings every month."})
 
 
-STEPS += [_tree, _users, _actions, _strategy, _scorecard, _reports, _documents, _governance]
+def _regulatory(db: Session) -> None:
+    from app.modules.regulatory import service as rg
+    from app.modules.regulatory.models import RegulatorPack
+
+    if db.query(RegulatorPack).count():
+        return
+    admin = _admin_scope(db)
+    for f in rg.available_files():
+        if not f.get("error"):
+            rg.import_pack(db, admin, f["file"])      # drafts: they stay unusable until verified and approved
+
+
+STEPS += [_tree, _users, _actions, _strategy, _scorecard, _reports, _documents, _governance, _regulatory]
 
 
 def run(db: Session) -> dict[str, str]:

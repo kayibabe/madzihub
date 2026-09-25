@@ -368,3 +368,51 @@ an owned, dated action linked back to it.
   effectiveness, **treatments as actions**, and links to the plan objectives they affect.
 - Owners are reminded of due and overdue reviews. Open risks outside appetite appear in exception
   reports; the principal risks appear in the board pack.
+
+---
+
+## 7. Regulator packs, returns and league tables
+
+**Page:** Regulatory. **API:** `/api/regulatory/*`. **Pack files:** `tenants/_packs/regulators/`
+(format and verification rules in that folder's README).
+
+- A regulator's method is a **versioned, source-cited pack**. Regulatory officers (duty) import a
+  pack file as a draft, fill and verify its figures against the cited report (every edit needs a
+  reason and is audited), and a **second** regulatory officer approves it. Approval is refused
+  while anything is unverified or missing, and retires the previous approved version for that cycle.
+- **Returns** use an approved pack. Raw values are kept as entered, with their source (manual or a
+  catalogue measure for the fiscal year), in an append-only history; each value is checked against
+  the pack's validation rules. A submitted return is final. Returns export to Excel in the pack's
+  template.
+- **League tables** score the utility and the peer values you enter on the same approved pack and
+  are saved with their inputs and fingerprints. They are MadziHub comparisons for management use,
+  **never presented as an official regulator ranking**, and an internal plan score is never
+  presented as a regulator score.
+- **Shipped drafts (not approved):** WASREB IMPACT 17 (FY 2023/24) and EWURA FY 2023/24. Their
+  structure was verified from the reports; their numbers could not be read reliably from the PDF
+  text and are left empty for a reviewer to fill from the cited tables. NWASCO and IBNET packs are
+  deliberately not shipped until their sources are verified.
+
+---
+
+## 8. Performance contracts and staff appraisal
+
+**Page:** Contracts & Appraisals. **API:** `/api/people/*`.
+
+- **Gated.** Each module stays off until an HR officer records the organisation's *approved* HR
+  policy for it (policy reference, audited), and it can be switched off entirely with
+  `modules.performance_contracts: false` / `modules.staff_appraisal: false` in `tenant.yaml`.
+- **Private.** A contract or appraisal is visible only to the people named on it and to HR
+  officers. The HR officer duty must be granted explicitly; administrators do not hold it, and unit
+  approvers do not see appraisals. These records never appear in the general audit trail.
+- **Contracts** (HR officer drafts; holder signs; supervisor countersigns and evaluates): items are
+  plan indicators with weights summing to 100, scored on the signed-off scoring scheme from
+  published values and targets; the evaluation is frozen on the contract. The holder accepts or
+  appeals; an HR officer who is not party to the contract decides, optionally adjusting the rating.
+- **Appraisals** (HR officer or appraiser sets objectives with weights summing to 100): the employee
+  agrees and self-assesses, the appraiser appraises (overall = weighted mean, on a stated 1–5 scale
+  where 5 is best), the employee acknowledges or appeals, an uninvolved HR officer decides. After
+  closure an HR officer can correct the rating with a reason; every step, before and after, stays in
+  the record's history.
+- No country-specific contract method is implemented. A Kenya performance-contract adapter will
+  only be added when it can reproduce the exact current rules and indicator-specific exceptions.

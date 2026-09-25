@@ -56,20 +56,27 @@ All development happens in this repository; `kayibabe/opsapp` is frozen. For the
 - [ ] Import mapping profiles: upload sample → map columns → validate → save a versioned profile (per-source mappings ✅; versioning and UI ⏳) (targets metric codes, not DB columns; single-row and grouped headers; unit conversion)
 - [x] SRWB zone-workbook builder (`rawdata_builder.py`) removed; source-specific formats belong in the integration hub as adapters
 - [ ] Per-tenant validation rules replace calculation-time data quirks (days-to-connect outliers, supply-hours units, stub rows)
-- [ ] Approval workflow: preparer → reviewer → publish; period locks; correction history and lineage
-- [ ] Distinct zero / missing / not-applicable / pending states
+- [x] Approval workflow: submit → verify → approve; period locks; reasoned reopen; correction history and lineage (strategy module, revision 0003)
+- [x] Distinct zero / missing / not-applicable / pending states (progress updates)
 
-- [ ] Org-scoped access (users see only their region/department)
+- [x] Org-scoped access, deny-by-default (revision 0002; route sweep test)
 
-## Stage 2b: Strategy & balanced scorecard (sequence and design in [RESEARCH_BENCHMARK.md](RESEARCH_BENCHMARK.md))
-- [ ] Plan → perspective → objective → KPI/initiative tree in DB (migrate from tenant YAML)
-- [ ] Owners, weights, scoring and roll-up; cascading to departments
-- [ ] Quarterly updates with commentary and approval; action tracker
-- [ ] Strategy map; performance contracts
+## Stage 2b: Strategy & balanced scorecard (sequence and design in [RESEARCH_BENCHMARK.md](RESEARCH_BENCHMARK.md); guide in [PERFORMANCE_GOVERNANCE.md](PERFORMANCE_GOVERNANCE.md))
+- [x] Plan → configurable levels → results and delivery trees in DB; importer from tenant YAML (0003)
+- [x] Owners, weights (100 per level), scoring and roll-up with coverage gate (0004)
+- [x] Quarterly updates with commentary, DQA and approval; action tracker (0002–0003)
+- [x] Strategy map (0004); performance contracts and staff appraisal behind policy/privacy gates (0009)
 - [ ] Budget versions and approval; capital project register
-- [ ] Risk register linked to objectives; audit findings
-- [ ] Separate internal plan score schemes from versioned regulator scoring packs; require explicit band direction and missing-data policy
-- [ ] Freeze score inputs, scheme version, engine version, and approval evidence for every approved score
+- [x] Risk register linked to objectives; audit findings; meetings and resolutions (0007)
+- [x] Internal plan score schemes separate from versioned regulator packs; explicit rating order and missing-data policy (0004, 0008)
+- [x] Frozen score inputs, scheme and engine versions, inputs hash and approval for every approved score (0004)
+- [x] Reporting hub: frozen instances, approval, HTML/PDF/XLSX outputs, access log (0005)
+- [x] Document control: evidence versions, controlled documents, search, backup/restore (0006)
+- [ ] Regulator packs: fill and verify WASREB IMPACT 17 / EWURA FY2023/24 figures from the cited tables; add the EWURA four-component KPI scoring; second-officer approval
+- [ ] NWASCO / IBNET packs after primary-source verification
+- [ ] Kenya performance-contract adapter only if it reproduces the exact current rules
+- [ ] Scheduled/e-mail report distribution (needs explicit configuration and authorisation)
+- [ ] Records retention, legal holds, disposal (needs each utility's approved schedule); OCR
 
 ## Research-led module order
 
@@ -83,8 +90,8 @@ Use [RESEARCH_BENCHMARK.md](RESEARCH_BENCHMARK.md) as the working plan for the r
 - [ ] Setup wizard: identity → hierarchy → calendar → currency/units → mapping → targets → users
 - [ ] Docker image and compose file; `production` default in service scripts
 - [x] Replace python-jose with PyJWT (removes ecdsa, which has an unpatched timing advisory)
-- [ ] Route-by-route authorization inventory and tests (roles; later org scope)
-- [ ] Backup/restore runbook + automated restore drill in CI
+- [x] Route-by-route authorization inventory and tests (every /api route must be admin, org-wide or scope-guarded)
+- [x] Backup/restore runbook + restore round-trip test (`python -m app.platform.backup`)
 - [ ] PostgreSQL validated in staging; documented migration from SQLite
 - [ ] `madzihub` CLI (`init-tenant`, `import`, `backup`, `restore`, `reset-admin`, `check`)
 - [ ] Version/installation endpoint; upgrade policy

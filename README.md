@@ -13,6 +13,7 @@ One installation serves one utility. Everything that differs between utilities l
 - **Product plan:** [docs/BLUEPRINT.md](docs/BLUEPRINT.md)
 - **Roadmap / checklist:** [docs/ROADMAP.md](docs/ROADMAP.md)
 - **Market gap analysis:** [docs/COMPETITIVE_GAP_ANALYSIS.md](docs/COMPETITIVE_GAP_ANALYSIS.md)
+- **Performance & Governance (strategy and M&E, scorecard, reporting hub, documents, governance and risk, regulator packs, contracts and appraisals):** [docs/PERFORMANCE_GOVERNANCE.md](docs/PERFORMANCE_GOVERNANCE.md)
 - **Integration hub (SAP, Maximo, billing, SCADA, HR, spreadsheets):** [docs/INTEGRATION_HUB.md](docs/INTEGRATION_HUB.md)
 - **First live connection, the billing pilot:** [docs/pilots/BILLING_PILOT.md](docs/pilots/BILLING_PILOT.md)
 
@@ -30,6 +31,10 @@ uvicorn app.main:app --port 8000
 ```
 
 On first start MadziHub creates an `admin` account, prints a one-time password to the console, and requires a new password at first login. Open http://localhost:8000 and upload a return from **Administration → Upload**.
+
+Access is **deny-by-default**: other users see nothing until an administrator grants them units and duties in **Performance & Governance → Access & Scope**. To explore every module with fictional data, run `python -m app.demo_seed` (demo tenant only; it prints the demo passwords once).
+
+Existing databases are never migrated at start-up: run `python -m app.migrate status`, then `python -m app.migrate upgrade` (it backs up first). Back up the database and file store together with `python -m app.platform.backup create`; schedule `python -m app.platform.cli reminders` daily for due and overdue notices.
 
 Production installs: copy `.env.example`, then set `MADZI_ENV=production`, a strong `MADZI_SECRET_KEY` and `MADZI_ALLOWED_ORIGINS`. Production startup refuses insecure defaults. Only `MADZI_*` variables are read; the database defaults to `data/madzihub.db`.
 
@@ -58,13 +63,16 @@ Administrators can override identity fields in **Administration → Organisation
 ## Architecture
 
 - **Backend:** FastAPI + SQLAlchemy; SQLite by default, PostgreSQL supported through `DATABASE_URL`.
-- **Frontend:** a single-page app (`app/static/index.html`, `app/static/assets/js/app-core.js`). Tenant values are filled in server-side when these files are served.
+- **Frontend:** a single-page app (`app/static/index.html`, `app/static/assets/js/app-core.js`). Tenant values are filled in server-side when these files are served. Governance modules are separate `mod-*.js` files built on a shared toolkit (`mod-platform.js`).
 - **Tenant layer:** `app/core/tenant.py` (validated YAML) → `app/utils.py` (fiscal calendar) → routers and services.
-- **Auth:** JWT bearer tokens, bcrypt, roles `admin` / `user` / `viewer`, and a forced password change for bootstrap and reset accounts.
+- **Auth:** JWT bearer tokens, bcrypt, roles `admin` / `user` / `viewer`, and a forced password change for bootstrap and reset accounts. Data access is resolved per request from unit grants and duties (`app/platform/scope.py`).
+- **Schema:** Alembic revisions `0001`–`0009` in `app/migrations/versions`.
 
 ```
 app/            FastAPI app (core/, routers/, services/, static/)
-tenants/        one folder per utility (demo = fictional default)
+app/platform/   shared governance: scope, periods, audit, workflow, actions, links, file store, backup
+app/modules/    strategy, scorecard, reporting, documents, governance, regulatory, people
+tenants/        one folder per utility (demo = fictional default); _packs/regulators = regulator packs
 tests/          unit, security, tenant and API parity-snapshot tests
 scripts/        admin, import, release-bundle tooling
 docs/           blueprint, roadmap, runbooks

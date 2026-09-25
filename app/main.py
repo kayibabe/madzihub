@@ -300,6 +300,8 @@ from app.modules.scorecard.router import router as scorecard_router  # noqa: E40
 from app.modules.reporting.router import router as reporting_router  # noqa: E402
 from app.modules.documents.router import router as documents_router  # noqa: E402
 from app.modules.governance.router import router as governance_router  # noqa: E402
+from app.modules.regulatory.router import router as regulatory_router  # noqa: E402
+from app.modules.people.router import router as people_router  # noqa: E402
 
 app.include_router(platform_router)
 app.include_router(strategy_router)
@@ -307,6 +309,8 @@ app.include_router(scorecard_router)
 app.include_router(reporting_router)
 app.include_router(documents_router)
 app.include_router(governance_router)
+app.include_router(regulatory_router)
+app.include_router(people_router)
 
 # ── Upload (admin only) ───────────────────────────────────────
 app.include_router(upload.router, dependencies=[Depends(require_admin)])

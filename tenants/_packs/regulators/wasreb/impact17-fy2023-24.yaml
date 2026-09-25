@@ -1,0 +1,69 @@
+# WASREB IMPACT 17 (FY 2023/24) — DRAFT pack, NOT approved for scoring.
+#
+# What was verified (MadziHub team, 25 Sep 2026) from the text of the cited report:
+#  - Ranking uses nine KPIs; thresholds and benchmarks are in Table 3.3 "Performance Indicators,
+#    Sector Benchmarks and Scoring Regime" (report page 39).                              (§3.6)
+#  - KPIs are grouped in three clusters: Quality of Service, Operational Sustainability,
+#    Economic Efficiency; performance is classed good / acceptable / not acceptable.   (§3.6, §3.6.2)
+#  - Water Coverage is in Quality of Service, NRW in Operational Sustainability, O+M Cost Coverage
+#    in Economic Efficiency.                                                              (§3.6.2)
+#  - NRW's acceptable benchmark is "less than 25%".                                       (§3.6.2)
+#  - Section 3.7 describes ten indicators (a–j) listed below.
+# NOT verified: which nine indicators enter the ranking, their weights, the thresholds and points
+# of each class. Table 3.3 is set in an embedded font whose text cannot be extracted, so every
+# number below is empty. A regulatory officer must fill them from Table 3.3, set verified: true
+# with the page reference, and a second officer must approve the pack before any score is made.
+regulator: WASREB
+jurisdiction: Kenya
+cycle: "FY2023/24 (IMPACT 17)"
+title: "WASREB IMPACT 17 utility ranking"
+method: weighted_points
+source:
+  title: "IMPACT: A Performance Report of Kenya's Water Services Sector 2023/24 (Issue 17)"
+  url: "https://wasreb.go.ke/wp-content/uploads/2025/06/IMPACT-REPORT-17.pdf"
+  accessed: 2026-09-25
+verification:
+  source_checked: false
+  notes: "Structure verified from report text; Table 3.3 numbers not machine-readable. See header."
+groups:
+  - {code: RANK, name: "KPI ranking score", share_pct: 100, verified: true,
+     source_ref: "§3.6: ranking is determined by performance across the KPIs"}
+peer_groups:
+  - {code: size, name: "Utility size (small, medium, large, very large by connections)", verified: true,
+     source_ref: "§3.4"}
+  - {code: ownership, name: "Ownership (public / private)", verified: true, source_ref: "§3.4, Table 3.4(a)/(b)"}
+indicators:
+  - {code: WC, name: "Water coverage", cluster: "Quality of Service", unit: "%", polarity: higher,
+     group: RANK, weight: null, in_score: true, verified: false, source_ref: "§3.7(a); cluster §3.6.2",
+     validation: {min: 0, max: 100}, scoring: {type: bands, bands: []}, madzihub_metric: null}
+  - {code: SC, name: "Sanitation coverage", cluster: null, unit: "%", polarity: higher, group: RANK,
+     weight: null, in_score: false, verified: false, source_ref: "§3.7(b); inclusion in the nine not verified",
+     validation: {min: 0, max: 100}, scoring: {type: bands, bands: []}}
+  - {code: DWQ, name: "Drinking water quality", cluster: null, unit: "%", polarity: higher, group: RANK,
+     weight: null, in_score: true, verified: false, source_ref: "§3.7(c)", validation: {min: 0, max: 100},
+     scoring: {type: bands, bands: []}}
+  - {code: HOS, name: "Hours of supply", cluster: null, unit: "hours/day", polarity: higher, group: RANK,
+     weight: null, in_score: true, verified: false, source_ref: "§3.7(d)", validation: {min: 0, max: 24},
+     scoring: {type: bands, bands: []}}
+  - {code: NRW, name: "Non-revenue water", cluster: "Operational Sustainability", unit: "%", polarity: lower,
+     group: RANK, weight: null, in_score: true, verified: false,
+     source_ref: "§3.7(e); acceptable benchmark < 25% (§3.6.2)", benchmark_acceptable: "< 25%",
+     validation: {min: 0, max: 100}, scoring: {type: bands, bands: []}, madzihub_metric: nrw_pct}
+  - {code: DC, name: "Dormant connections", cluster: null, unit: "%", polarity: lower, group: RANK,
+     weight: null, in_score: true, verified: false, source_ref: "§3.7(f)", validation: {min: 0, max: 100},
+     scoring: {type: bands, bands: []}}
+  - {code: MR, name: "Metering ratio", cluster: null, unit: "%", polarity: higher, group: RANK, weight: null,
+     in_score: true, verified: false, source_ref: "§3.7(g)", validation: {min: 0, max: 100},
+     scoring: {type: bands, bands: []}}
+  - {code: SP, name: "Staff productivity (staff per 1,000 connections)", cluster: null, unit: "staff/1000",
+     polarity: lower, group: RANK, weight: null, in_score: true, verified: false, source_ref: "§3.7(h)",
+     validation: {min: 0}, scoring: {type: bands, bands: []}}
+  - {code: RCE, name: "Revenue collection efficiency", cluster: null, unit: "%", polarity: higher, group: RANK,
+     weight: null, in_score: true, verified: false, source_ref: "§3.7(i)", validation: {min: 0, max: 150},
+     scoring: {type: bands, bands: []}, madzihub_metric: collection_efficiency}
+  - {code: OMCC, name: "O+M cost coverage", cluster: "Economic Efficiency", unit: "%", polarity: higher,
+     group: RANK, weight: null, in_score: true, verified: false, source_ref: "§3.7(j); cluster §3.6.2",
+     validation: {min: 0}, scoring: {type: bands, bands: []}}
+export_template:
+  sheet: "WASREB return"
+  columns: [code, name, unit, value, source]

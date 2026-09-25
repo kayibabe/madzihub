@@ -1,0 +1,89 @@
+# EWURA Water Utilities Performance Review, FY 2023/24 — DRAFT pack, NOT approved for scoring.
+#
+# What was verified (MadziHub team, 25 Sep 2026) from the text of the cited report (Part III):
+#  - Overall ranking score = KPI score + score for Compliance with Regulatory Requirements (CRR).
+#  - Each KPI's score is the sum of four component scores — best performer (SBP, interpolated
+#    between minimum, national median and best), attainment of the business-plan target (SPT),
+#    confidence grading (SCG, data reliability A/B/C and accuracy bands) and attainment of the
+#    service-level benchmark (SSLB) — multiplied by the KPI's weight (Table "Key Performance
+#    Indicator Weights").
+#  - Utilities are ranked within clusters I, II and III; a separate "utility ranking" sums target
+#    attainment only.
+#  - The KPI names and CRR obligations listed below.
+# NOT verified: every number — the KPI/CRR shares (the research benchmark records 60% / 40%; the
+# digits in this PDF's text layer could not be read), KPI weights, boundaries, benchmarks and the
+# points for each component and obligation. MadziHub's engine scores one rule per indicator; the
+# four-component KPI method needs the "components" extension before this pack can be approved.
+regulator: EWURA
+jurisdiction: Tanzania
+cycle: "FY2023/24"
+title: "EWURA water utilities performance ranking (overall ranking)"
+method: weighted_points
+source:
+  title: "Water Utilities Performance Review Report for FY 2023-24"
+  url: "https://www.ewura.go.tz/uploads/documents/en-1743160797-Water%20Utilities%20Performance%20Review%20Report%202023-24%20Final.pdf"
+  accessed: 2026-09-25
+verification:
+  source_checked: false
+  notes: "Method and names verified from report text; numbers unreadable in the text layer. See header."
+groups:
+  - {code: KPI, name: "Key performance indicators", share_pct: 60, verified: false,
+     source_ref: "Part III 'Overall Ranking Procedure' (60% per research benchmark; not re-read)"}
+  - {code: CRR, name: "Compliance with regulatory requirements", share_pct: 40, verified: false,
+     source_ref: "Part III 'Overall Ranking Procedure' (40% per research benchmark; not re-read)"}
+peer_groups:
+  - {code: cluster, name: "Clusters I, II and III", verified: true, source_ref: "Part III 'Results of Performance Ranking'"}
+indicators:
+  - {code: KPI1, name: "Proportion of population served with water", group: KPI, unit: "%", polarity: higher,
+     weight: null, in_score: true, verified: false, validation: {min: 0, max: 100},
+     scoring: {type: peer_interpolation, min_points: null, median_points: null, best_points: null}}
+  - {code: KPI2, name: "Proportion of population receiving regulated sanitation services", group: KPI, unit: "%",
+     polarity: higher, weight: null, in_score: true, verified: false, validation: {min: 0, max: 100},
+     scoring: {type: peer_interpolation, min_points: null, median_points: null, best_points: null}}
+  - {code: KPI3, name: "Average hours of supply", group: KPI, unit: "hours/day", polarity: higher, weight: null,
+     in_score: true, verified: false, validation: {min: 0, max: 24},
+     scoring: {type: peer_interpolation, min_points: null, median_points: null, best_points: null}}
+  - {code: KPI4, name: "Water quality compliance (E. coli and turbidity)", group: KPI, unit: "%", polarity: higher,
+     weight: null, in_score: true, verified: false, validation: {min: 0, max: 100},
+     scoring: {type: peer_interpolation, min_points: null, median_points: null, best_points: null}}
+  - {code: KPI5, name: "Percentage of complaints resolved", group: KPI, unit: "%", polarity: higher, weight: null,
+     in_score: true, verified: false, validation: {min: 0, max: 100},
+     scoring: {type: peer_interpolation, min_points: null, median_points: null, best_points: null}}
+  - {code: KPI6, name: "Metering ratio", group: KPI, unit: "%", polarity: higher, weight: null, in_score: true,
+     verified: false, validation: {min: 0, max: 100},
+     scoring: {type: peer_interpolation, min_points: null, median_points: null, best_points: null}}
+  - {code: KPI7, name: "Non-revenue water", group: KPI, unit: "%", polarity: lower, weight: null, in_score: true,
+     verified: false, validation: {min: 0, max: 100}, madzihub_metric: nrw_pct,
+     scoring: {type: peer_interpolation, min_points: null, median_points: null, best_points: null}}
+  - {code: KPI8, name: "Revenue collection efficiency", group: KPI, unit: "%", polarity: higher, weight: null,
+     in_score: true, verified: false, validation: {min: 0, max: 150}, madzihub_metric: collection_efficiency,
+     scoring: {type: peer_interpolation, min_points: null, median_points: null, best_points: null}}
+  - {code: KPI9, name: "Working ratio", group: KPI, unit: "ratio", polarity: lower, weight: null, in_score: true,
+     verified: false, validation: {min: 0},
+     scoring: {type: peer_interpolation, min_points: null, median_points: null, best_points: null}}
+  - {code: KPI10, name: "Operating ratio", group: KPI, unit: "ratio", polarity: lower, weight: null, in_score: true,
+     verified: false, validation: {min: 0},
+     scoring: {type: peer_interpolation, min_points: null, median_points: null, best_points: null}}
+  - {code: KPI11, name: "Personnel expenditure to connections ratio", group: KPI, unit: "ratio", polarity: lower,
+     weight: null, in_score: true, verified: false, validation: {min: 0},
+     scoring: {type: peer_interpolation, min_points: null, median_points: null, best_points: null}}
+  - {code: KPI12, name: "Effluent quality compliance (COD and BOD)", group: KPI, unit: "%", polarity: higher,
+     weight: null, in_score: true, verified: false, validation: {min: 0, max: 100},
+     scoring: {type: peer_interpolation, min_points: null, median_points: null, best_points: null}}
+  - {code: CRR1, name: "Submission of utility plans (business plan, water quality monitoring programme)", group: CRR,
+     polarity: yes_no, weight: null, in_score: true, verified: false, scoring: {type: yes_no, points: null}}
+  - {code: CRR2, name: "Timely submission of reports (monthly MajIs, annual, financial statements)", group: CRR,
+     polarity: yes_no, weight: null, in_score: true, verified: false, scoring: {type: yes_no, points: null}}
+  - {code: CRR3, name: "NRW management (reduction strategy, annual water balance)", group: CRR, polarity: yes_no,
+     weight: null, in_score: true, verified: false, scoring: {type: yes_no, points: null}}
+  - {code: CRR4, name: "Water meter management (policy, database, bulk meters, meter reverification)", group: CRR,
+     polarity: yes_no, weight: null, in_score: true, verified: false, scoring: {type: yes_no, points: null}}
+  - {code: CRR5, name: "Customer service management (charter, complaints register, satisfaction survey)",
+     group: CRR, polarity: yes_no, weight: null, in_score: true, verified: false, scoring: {type: yes_no, points: null}}
+  - {code: CRR6, name: "Faecal sludge management (treatment facilities, approved SOPs)", group: CRR,
+     polarity: yes_no, weight: null, in_score: true, verified: false, scoring: {type: yes_no, points: null}}
+  - {code: CRR7, name: "Payment of regulatory levy", group: CRR, polarity: yes_no, weight: null, in_score: true,
+     verified: false, scoring: {type: yes_no, points: null}}
+export_template:
+  sheet: "EWURA return"
+  columns: [code, name, unit, value, source]

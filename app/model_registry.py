@@ -10,3 +10,5 @@ from app.modules.scorecard import models as _scorecard  # noqa: F401
 from app.modules.reporting import models as _reporting  # noqa: F401
 from app.modules.documents import models as _documents  # noqa: F401
 from app.modules.governance import models as _governance  # noqa: F401
+from app.modules.regulatory import models as _regulatory  # noqa: F401
+from app.modules.people import models as _people  # noqa: F401
