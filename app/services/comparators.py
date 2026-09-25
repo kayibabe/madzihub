@@ -10,8 +10,10 @@ A rule states what each verdict boundary is and where it comes from, kept distin
 A value is GOOD at or beyond ``good``, WATCH up to ``warn``, otherwise HIGH. A missing value
 or a measure without a rule is Not assessed; there is no fallback to another rule.
 
-Product defaults marked ``default`` were chosen where screens disagreed and still need product
-confirmation (docs/GUI_UX_REVIEW_2026-09-25.md, Slice 1b record).
+Product defaults marked ``default`` were chosen where screens disagreed. The product owner
+accepted them as the shipped defaults on 25 September 2026 (docs/GUI_UX_REVIEW_2026-09-25.md,
+Slice 1b record); a tenant still overrides any of them through the named ``thresholds`` or
+``targets`` key.
 """
 from __future__ import annotations
 
