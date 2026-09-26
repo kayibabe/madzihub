@@ -91,7 +91,12 @@ def sync_org_units(scope: Scope = Depends(get_scope), db: Session = Depends(get_
 
 @router.get("/assignable-users")
 def assignable_users(unit: str, scope: Scope = Depends(get_scope), db: Session = Depends(get_db)):
-    scope.require(unit, "contributor", "work on this unit")
+    # Strategy managers need to read this list to correct routing even when their unit role is
+    # viewer-only; ordinary callers still require contributor so they cannot enumerate users freely.
+    if scope.has_function("strategy_manager"):
+        scope.require_see(unit, "Unit")
+    else:
+        scope.require(unit, "contributor", "work on this unit")
     out = []
     for u in db.query(User).filter(User.is_active.is_(True)).order_by(User.username):
         s = resolve_scope(db, u)

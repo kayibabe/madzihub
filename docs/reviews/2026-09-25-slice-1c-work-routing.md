@@ -79,3 +79,47 @@ Breakdown: `RoutingTests` (4 new), updated `test_dqa_records_problems_without_ch
 2. **`resolve()` scope:** the function closes ALL unread notices of the given kinds for the entity, not just the most recent one. If an approver returns, then re-approves after a resubmission, prior `report_submitted` notices from the first submission would already be closed. Is that the right behaviour?
 3. **`submissions_contract` in frozen data:** the field is added after `freeze()`, inside `build()`, not in the model. A future migration or schema change won't touch frozen report blobs. Is this the intended durability story, or should `submissions_contract` be a column on `report_instance`?
 4. **People dialog `assignable-users` endpoint:** the endpoint is now called per-assignment when the cycle detail loads for a manager, and again when each People dialog opens. For a cycle with many assignments this could be expensive. Is caching at the JS level (one call per unit, shared across the page) worth adding here?
+
+---
+
+## Round 1: review
+
+- **Reviewed:** `codex-review-fixes` at `0ba0f7f` (range `620ef46..0ba0f7f`).
+- **Verdict:** Changes requested.
+
+| ID | Severity | Location | Issue | Suggested fix |
+|----|----------|----------|-------|---------------|
+| CR-01 | Medium | `app/platform/router.py:93`; `app/static/assets/js/mod-strategy.js:398` | The cycle detail renders the **People** control for anyone with the `strategy_manager` duty, but its `assignable-users` request requires that caller to have the contributor role on the assignment unit. A strategy manager who can manage a cycle but is a viewer on that unit therefore receives 403 and cannot correct the routing the feature identifies as unsafe. The current fixture gives the planner sufficient unit role, so it does not cover this boundary. | Authorize this endpoint for a strategy manager who can see the unit, while retaining the contributor requirement for ordinary callers, or use a dedicated manager-only endpoint. Add a regression for a strategy manager with viewer scope who can open the People dialog and save a valid reassignment. |
+| CR-02 | Low | `app/platform/scope.py:193-206` | `closest_holders()` does not distinguish a direct unit grant from a parent-unit grant: after scope expansion, both are only `org_wide=False` and the same role rank. It then notifies every username in that tie. This is a workable broadcast fallback, but it is not the documented "closest" ordering and can produce a large request fan-out. | Either preserve enough grant-origin/distance information to select the nearest group, or document the current non-org-wide, lowest-role broadcast rule and record why notifying all ties is intended. |
+
+---
+
+## Round 2: developer response
+
+- **Branch / commit:** `codex-review-fixes` at HEAD (after `0ba0f7f`).
+
+| ID | Fix applied |
+|----|-------------|
+| CR-01 | `app/platform/router.py`: `assignable_users` now accepts callers with `strategy_manager` duty who can see the unit (`require_see`), while ordinary callers still require contributor. Regression added: `RoutingTests.test_strategy_manager_with_viewer_scope_can_read_assignable_users_and_reassign` — creates a `strategy_manager` with viewer-only scope on north, asserts 200 from `assignable-users`, asserts the reassignment PUT succeeds, and asserts a plain viewer still gets 403. |
+| CR-02 | `app/platform/scope.py`: `closest_holders` docstring now documents the actual broadcast semantics — scope expansion makes direct-unit and parent-unit grants indistinguishable; all ties in the nearest (org_wide, role_rank) tier are notified intentionally; a manager who needs a single accountable actor should name them in the People dialog. No code change: the current behaviour is correct. |
+
+### Validation
+
+**Tests** — Verified
+
+```
+python -m pytest tests/test_strategy_me.py tests/test_reporting.py tests/test_populated_year.py -x -q
+42 passed, 3708 warnings in 283.33s
+```
+
+Breakdown: 41 tests from Round 1 + 1 new `test_strategy_manager_with_viewer_scope_can_read_assignable_users_and_reassign`.
+
+- **Checked and fine:**
+  - The submitted commit adds server-side acknowledgement enforcement before a failing update is persisted; the client is advisory and the server remains authoritative.
+  - Hand-off notices are resolved on the next state transition, and report approval work is derived from each caller's allowed actions, so a listed report is actionable for that caller.
+  - `submissions_contract` is included in the data returned by `builders.freeze()` and therefore is part of the frozen report blob and its data hash. A column is not needed for this rendering contract unless reports must be queried or migrated by contract version.
+  - `resolve()` closing every unread request of a completed step is appropriate for an entity-level workflow: a return/approval makes all earlier requests for that step obsolete. Resubmission creates a fresh request.
+  - The People endpoint is requested when the **People** action opens, not when cycle detail first loads. The premise of question 4 is therefore false; client caching is unnecessary for this slice. It could be added later only if telemetry shows repeated dialog opens are costly.
+  - `closest_holders()` should not introduce an arbitrary single-person tie-break. When a single accountable actor is required, a manager should name that actor in the People dialog; CR-02 covers making the fallback semantics exact.
+  - **Verified:** `git diff --check 620ef46..0ba0f7f`; Python byte-compilation of the changed Python modules; `node --check` for the three changed JavaScript modules. The checkout has only documentation changes after `0ba0f7f`, so these static checks exercised the reviewed code.
+  - **Developer-reported, not rerun in this review:** focused pytest suite, 41 passed; isolated browser QA.

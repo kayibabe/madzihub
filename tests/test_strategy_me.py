@@ -6,6 +6,7 @@ from datetime import date, timedelta
 
 from sqlalchemy import text
 
+from tests._access import add_user
 from tests._fixture import AppFixture
 
 
@@ -380,6 +381,25 @@ class RoutingTests(StrategyFixture):
             db.close()
         self.assertEqual(self.notices(self.sam), [("update_due_soon", str(south))])
         self.assertEqual(self.notices(self.sue), [])
+
+
+    def test_strategy_manager_with_viewer_scope_can_read_assignable_users_and_reassign(self):
+        # CR-01: a strategy_manager who holds only viewer role on a unit must not receive 403
+        # from the assignable-users endpoint — they need it to correct routing.
+        coord = add_user(self.database, self.auth, "coord", "user", {"north": "viewer"},
+                         functions=("strategy_manager",))
+        cycle, north, _ = self.open_cycle()
+        # Viewer-scoped strategy manager can read the People list for north.
+        people = self.get(f"/api/platform/assignable-users?unit=north", coord)
+        usernames = [p["username"] for p in people]
+        self.assertIn("nick", usernames)
+        # They can also save a reassignment via the assignment PUT endpoint.
+        self.put(f"/api/strategy/assignments/{north}", coord, {"contributor": "nick"})
+        row = next(a for a in self.get(f"/api/strategy/cycles/{cycle['id']}", coord)["assignments"]
+                   if a["id"] == north)
+        self.assertEqual(row["contributor"], "nick")
+        # A plain user with viewer scope on north cannot call assignable-users (403).
+        self.assertEqual(self.status("get", f"/api/platform/assignable-users?unit=north", self.vic), 403)
 
 
 class EvaluationTests(StrategyFixture):

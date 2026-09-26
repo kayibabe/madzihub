@@ -193,10 +193,16 @@ def user_scopes(db: Session) -> dict[str, Scope]:
 def closest_holders(scopes: dict[str, Scope], unit: str, role: str, exclude=()) -> list[str]:
     """The people who should be asked to act as ``role`` on ``unit``: those who can, closest first.
 
-    Holders granted on the unit (or a unit above it) come before organisation-wide holders,
-    and the lowest sufficient role before higher ones, so a unit's own contributor is asked
-    before its approver and a unit approver before an organisation-wide one. Only the
-    closest group is returned; nobody is asked when nobody can act.
+    "Closest" is determined by two criteria in order:
+      1. Non-org-wide before org-wide (a unit-scoped grant beats an organisation-wide one).
+      2. Lowest sufficient role rank (contributor before reviewer before approver).
+
+    Scope expansion means a direct-unit grant and a parent-unit grant that covers the same unit
+    are indistinguishable after resolution — both appear as non-org-wide with the same role rank.
+    When multiple people share the same (org_wide, role_rank) tier, *all* of them are returned and
+    notified; this is an intentional broadcast: when a single accountable actor is required, a
+    manager should name that person explicitly in the People dialog rather than relying on this
+    fallback. Only the closest tier is returned; nobody is asked when nobody can act.
     """
     able = [(s.org_wide, ROLE_RANK[s.role_on(unit)], name) for name, s in scopes.items()
             if name not in exclude and s.can(unit, role)]
